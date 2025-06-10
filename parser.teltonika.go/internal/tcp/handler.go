@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
 
 	"go.uber.org/zap"
@@ -37,24 +38,36 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 		codecID := int(packet[8])
 		logger.Debug("", zap.Int("CodecID", codecID))
 
-		teltonikaAvlPacket, err := teltonika.ParseCodec8(packet)
+		var avlDataPacket *model.AvlDataPacket
+		var err error
+
+		switch codecID {
+		case 8:
+			avlDataPacket, err = teltonika.ParseCodec8(packet)
+
+		case 142:
+			avlDataPacket, err = teltonika.ParseCodec8ex(packet)
+
+		default:
+			avlDataPacket, err = nil, fmt.Errorf("CodecID %d not supported", codecID)
+		}
 
 		if err != nil {
 			// Send 0x00 (NAK) to device on parsing error
+			logger.Error("Teltonika Parser Error", zap.Error(err))
 			conn.Write([]byte{0x00})
 			return
 		}
 
 		// Prepare 4-byte ACK: number of records received, as required by Teltonika protocol
 		ack := make([]byte, 4)
-		binary.BigEndian.PutUint32(ack, uint32(teltonikaAvlPacket.Quantity1))
+		binary.BigEndian.PutUint32(ack, uint32(avlDataPacket.Quantity1))
 		// Send ACK to device (must be exactly 4 bytes)
 		conn.Write(ack)
 
 		// Print packet content in human-readable form (for debugging/logging)
-		util.PrettyPrint(teltonikaAvlPacket)
+		util.PrettyPrint(avlDataPacket)
 	}
-
 }
 
 // ---------------------------------------------------------------------

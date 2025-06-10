@@ -10,7 +10,7 @@ import (
 	"iotrack.live/internal/util"
 )
 
-func ParseCodec8(data []byte) (*model.TeltonikaAvlPacket, error) {
+func ParseCodec8(data []byte) (*model.AvlDataPacket, error) {
 
 	offset := 0
 
@@ -19,7 +19,7 @@ func ParseCodec8(data []byte) (*model.TeltonikaAvlPacket, error) {
 		return nil, err
 	}
 
-	packet := model.TeltonikaAvlPacket{}
+	packet := model.AvlDataPacket{}
 
 	// Save hex string for full packet
 	packet.Packet = hex.EncodeToString(data)
@@ -75,7 +75,7 @@ func ParseCodec8(data []byte) (*model.TeltonikaAvlPacket, error) {
 
 		// --- IOelement (start: Event ID + N Total)
 		ioElem := model.IOelement{}
-		ioElem.EventID = (data[offset])
+		ioElem.EventID = int(data[offset])
 		offset += 1
 		ioElem.ElementCount = int(data[offset])
 		offset += 1

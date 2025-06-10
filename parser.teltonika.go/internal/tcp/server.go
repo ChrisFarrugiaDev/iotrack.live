@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -13,83 +14,80 @@ import (
 	"iotrack.live/internal/model"
 )
 
-func StartServer() {
-
+func StartServer(ctx context.Context) {
 	port, err := strconv.Atoi(os.Getenv("TCP_PORT"))
-
 	if err != nil {
-		logger.Warn("TCP_PORT environment variable not set")
+		logger.Warn("TCP_PORT environment variable not set, using default 5027")
 		port = 5027
 	}
 
-	// Start listening on the specified TCP port
+	// Start listening for incoming TCP connections on the specified port.
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-
 	if err != nil {
 		logger.Error("Failed to start TCP server", zap.Error(err))
 		return
 	}
-
 	defer ln.Close()
+	logger.Info("TCP server is listening", zap.Int("Port", port))
 
-	logger.Info("TCP Server Listening", zap.Int("Port", port))
+	// Wait for shutdown signal; closes listener to stop accepting new connections.
+	go func() {
+		<-ctx.Done()
+		logger.Info("Context cancelled: shutting down TCP listener...")
+		ln.Close() // This will unblock Accept() below.
+	}()
 
 	for {
-		// Accept incoming connections
-		conn, err := ln.Accept()
-
+		conn, err := ln.Accept() // Accept incoming connections
 		if err != nil {
-			logger.Error("Failed to accept TCP connection", zap.Error(err))
-			continue // Try the next connection
+			select {
+			case <-ctx.Done():
+				logger.Info("Stopped accepting new TCP connections (shutdown in progress)")
+				return
+			default:
+				logger.Error("Failed to accept TCP connection", zap.Error(err))
+				continue
+			}
 		}
-
-		// Handle the connection in a new goroutine
+		// Handle each connection in its own goroutine for concurrency.
 		go handleConnection(conn)
 	}
-
 }
 
 func handleConnection(conn net.Conn) {
 	deviceMeta := model.Meta{}
-
 	defer conn.Close()
-	defer handleTcpClose(&deviceMeta) // Optional, not need it only for Dev
+	defer handleTcpClose(&deviceMeta) // Optional: logs connection close for debugging.
 
 	timeoutSec, err := strconv.Atoi(os.Getenv("TCP_TIMEOUT"))
-
 	if err != nil {
-		logger.Warn("TCP_TIMEOUT environment variable not set")
+		logger.Warn("TCP_TIMEOUT environment variable not set, using default 30s")
 		timeoutSec = 30
 	}
 
-	// -- Set a timeout (optional, similar to setTimeout and 'timeout' event in Node)
-	conn.SetDeadline(time.Now().Add(time.Duration(timeoutSec) * time.Second)) // 30s timeout
+	// Set an initial timeout on the connection.
+	conn.SetDeadline(time.Now().Add(time.Duration(timeoutSec) * time.Second))
 
 	buf := make([]byte, 4096)
-
 	for {
 		n, err := conn.Read(buf)
-
 		if err != nil {
 			if os.IsTimeout(err) {
 				handleTcpTimeout(&deviceMeta)
-				return // connection closed after timeout
+				return // Connection closed due to timeout
 			}
-
 			if err == io.EOF {
 				handleTcpEnd(&deviceMeta)
-				return // connection closed by remote
+				return // Connection closed by client
 			}
-
 			handleTcpError(&deviceMeta, err)
 			return
 		}
 
-		// -- Reset deadline after successful read!
+		// Reset deadline after successful read to keep connection alive.
 		conn.SetDeadline(time.Now().Add(time.Duration(timeoutSec) * time.Second))
 
-		// -- Process the data...
+		// Process the received TCP data.
 		handleTcpData(buf[:n], conn, &deviceMeta)
 	}
-
 }

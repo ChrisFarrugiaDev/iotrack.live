@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -10,15 +11,19 @@ func initializeAppSettings() {
 	loadEnv()
 }
 
+var envPath = "./"
+
 func loadEnv() error {
 	env := os.Getenv("GO_ENV")
+	var err error
 
 	switch env {
 	case "production":
-		godotenv.Load(".env")
+		err = godotenv.Load(fmt.Sprintf("%s.env", envPath))
 	default:
-		godotenv.Load(".env.development") // Load development environment
+		err = godotenv.Load(fmt.Sprintf("%s.env.development", envPath)) // Load development environment
+
 	}
 
-	return nil
+	return err
 }

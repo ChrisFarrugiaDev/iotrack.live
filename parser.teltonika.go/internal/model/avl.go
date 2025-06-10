@@ -5,8 +5,8 @@ type Meta struct {
 	AssetID *string `json:"asset_id,omitempty"` // pointer if asset_id can be missing
 }
 
-// TeltonikaAvlPacket is the root structure for a decoded Codec8 packet
-type TeltonikaAvlPacket struct {
+// AvlDataPacket is the root structure for a decoded Codec8 packet
+type AvlDataPacket struct {
 	Meta       Meta    `json:"meta"`
 	Packet     string  `json:"packet"`
 	Preamble   uint32  `json:"preamble"`
@@ -44,7 +44,10 @@ type GPSelement struct {
 
 // IOelement holds IO data for each record
 type IOelement struct {
-	EventID      uint8          `json:"event_id"`
+	EventID      int            `json:"event_id"`
 	ElementCount int            `json:"element_count"`
 	Elements     map[string]any `json:"elements"` // use any for flexibility (could be int or string)
+}
+
+type FlatAvlRecord struct {
 }
