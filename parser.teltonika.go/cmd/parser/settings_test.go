@@ -1,8 +1,11 @@
 package main
 
 import (
+	// "os"
 	"os"
 	"testing"
+
+	"iotrack.live/internal/logger"
 )
 
 func Test_loadEnv(t *testing.T) {
@@ -53,4 +56,29 @@ func Test_loadEnv(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_initializeCache(t *testing.T) {
+	loadEnv()
+
+	logger.InitLogger()
+	defer logger.Log.Sync() // Ensure logs are flushed on exit
+
+	env := map[string]string{
+		"REDIS_HOST":         "127.0.0.1",
+		"REDIS_PORT":         "16379",
+		"REDIS_DB":           "2",
+		"REDIS_CACHE_EXPIRE": "3600",
+	}
+	for k, v := range env {
+		os.Setenv(k, v)
+	}
+
+	initializeCache()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Function panicked: %v", r)
+		}
+	}()
 }

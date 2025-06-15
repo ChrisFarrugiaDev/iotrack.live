@@ -12,10 +12,13 @@ import (
 )
 
 func main() {
-	initializeAppSettings()
+	// Load environment and configuration
+	loadEnv()
 
 	logger.InitLogger()
 	defer logger.Log.Sync() // Ensure logs are flushed on exit
+
+	initializeCache()
 
 	// Create a context that will be cancelled when an interrupt or termination signal is received.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -38,6 +41,6 @@ func main() {
 	case <-serverClosed:
 		logger.Log.Info("TCP server has shut down cleanly.")
 	case <-time.After(5 * time.Second):
-		logger.Log.Warn("TCP server shutdown timeout – forcing exit.")
+		logger.Log.Warn("TCP server shutdown timeout - forcing exit.")
 	}
 }

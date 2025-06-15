@@ -10,7 +10,7 @@ import (
 	"iotrack.live/internal/util"
 )
 
-func ParseCodec8ex(data []byte) (*model.AvlDataPacket, error) {
+func ParseCodec8Extended(data []byte) (*model.Codec8AvlRecord, error) {
 
 	offset := 0
 
@@ -19,7 +19,7 @@ func ParseCodec8ex(data []byte) (*model.AvlDataPacket, error) {
 		return nil, err
 	}
 
-	packet := model.AvlDataPacket{}
+	packet := model.Codec8AvlRecord{}
 
 	// Save hex string for full packet
 	packet.Packet = hex.EncodeToString(data)
@@ -30,7 +30,7 @@ func ParseCodec8ex(data []byte) (*model.AvlDataPacket, error) {
 	offset += 4
 	packet.CodecID = data[offset]
 	offset += 1
-	packet.CodecType = "data sending"
+	packet.CodecType = "AVL_Data"
 
 	packet.Quantity1 = data[offset]
 	offset += 1

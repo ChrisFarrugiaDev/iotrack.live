@@ -19,8 +19,8 @@ import (
 func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 	if len(packet) == 17 {
-		// IMEI handshake packet (first message from device: 2 header bytes + 15 bytes IMEI)
 
+		// --- 1. IMEI Handshake: 000F + 15 ASCII bytes (hex, 34 chars) -----
 		imei, err := teltonika.ImeiParser(packet)
 		if err != nil {
 			// Send 0x00 (NAK) to device on parsing error (negative acknowledgment)
@@ -32,42 +32,56 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 		// Send 0x01 (ACK) to device to acknowledge IMEI (positive acknowledgment)
 		conn.Write([]byte{0x01})
+		return
 
-	} else {
-		// AVL data packet (Codec 8/8E/etc)
-		codecID := int(packet[8])
-		logger.Debug("", zap.Int("CodecID", codecID))
-
-		var avlDataPacket *model.AvlDataPacket
-		var err error
-
-		switch codecID {
-		case 8:
-			avlDataPacket, err = teltonika.ParseCodec8(packet)
-
-		case 142:
-			avlDataPacket, err = teltonika.ParseCodec8ex(packet)
-
-		default:
-			avlDataPacket, err = nil, fmt.Errorf("CodecID %d not supported", codecID)
-		}
-
-		if err != nil {
-			// Send 0x00 (NAK) to device on parsing error
-			logger.Error("Teltonika Parser Error", zap.Error(err))
-			conn.Write([]byte{0x00})
-			return
-		}
-
-		// Prepare 4-byte ACK: number of records received, as required by Teltonika protocol
-		ack := make([]byte, 4)
-		binary.BigEndian.PutUint32(ack, uint32(avlDataPacket.Quantity1))
-		// Send ACK to device (must be exactly 4 bytes)
-		conn.Write(ack)
-
-		// Print packet content in human-readable form (for debugging/logging)
-		util.PrettyPrint(avlDataPacket)
 	}
+
+	// --- 3. Data Packet: Codec 8/8ex (telemetry) or Codec 12 (commands) ---
+
+	// Codec ID is at position 8 (1 byte)
+	codecID := int(packet[8])
+	logger.Debug("", zap.Int("CodecID", codecID))
+
+	var dataPacket model.TeltonikaPacket
+	var err error
+
+	switch codecID {
+	case 8:
+		dataPacket, err = teltonika.ParseCodec8(packet)
+
+	case 142:
+		dataPacket, err = teltonika.ParseCodec8Extended(packet)
+
+	case 12:
+		dataPacket, err = teltonika.ParseCodec12(packet)
+
+	default:
+		dataPacket, err = nil, fmt.Errorf("CodecID %d not supported", codecID)
+	}
+
+	if err != nil {
+		// Send 0x00 (NAK) to device on parsing error
+		logger.Error("Teltonika Parser Error", zap.Error(err))
+		conn.Write([]byte{0x00})
+		return
+	}
+
+	// -----------------------------------------------------------------
+	// TODO: 1. Determine message type (AVL or Command) from dataPacket.
+	// TODO: 2. If pending Codec 12 commands, send them to device before processing AVL data.
+	// TODO: 3. Forward parsed data to TS DB via RabbitMQ/Kafka; publish last record via Redis for real-time updates.
+	// TODO: 4. Always send correct ACK/NACK back to the device per protocol.
+	// -----------------------------------------------------------------
+
+	// Prepare 4-byte ACK: number of records received, as required by Teltonika protocol
+	ack := make([]byte, 4)
+	binary.BigEndian.PutUint32(ack, uint32(dataPacket.GetQuantity1()))
+	// Send ACK to device (must be exactly 4 bytes)
+	conn.Write(ack)
+
+	// Print packet content in human-readable form (for debugging/logging)
+	util.PrettyPrint(dataPacket)
+
 }
 
 // ---------------------------------------------------------------------

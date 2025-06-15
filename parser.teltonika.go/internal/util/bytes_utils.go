@@ -1,5 +1,7 @@
 package util
 
+import "encoding/hex"
+
 // Helpers to convert byte slices to integer types
 
 func BytesToUint8(b byte) uint8 {
@@ -37,4 +39,24 @@ func BytesToUint64(b []byte) uint64 {
 	// Use for 8-byte unsigned (big endian)
 	return uint64(b[0])<<56 | uint64(b[1])<<48 | uint64(b[2])<<40 | uint64(b[3])<<32 |
 		uint64(b[4])<<24 | uint64(b[5])<<16 | uint64(b[6])<<8 | uint64(b[7])
+}
+
+// -----------------------------------------------------------------------------
+
+// Converts bytes to string like "30000:270000019FE5E501;..."
+func BytesToHexPairsString(data []byte) string {
+	// If you want to chunk by a key:value format, implement accordingly.
+	// For now, just return as hex pairs, adjust to your needs.
+	return hex.EncodeToString(data)
+}
+
+// -----------------------------------------------------------------------------
+
+func IsPrintableASCII(data []byte) bool {
+	for _, b := range data {
+		if b < 32 || b > 126 {
+			return false
+		}
+	}
+	return true
 }

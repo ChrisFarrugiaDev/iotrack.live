@@ -5,8 +5,8 @@ type Meta struct {
 	AssetID *string `json:"asset_id,omitempty"` // pointer if asset_id can be missing
 }
 
-// AvlDataPacket is the root structure for a decoded Codec8 packet
-type AvlDataPacket struct {
+// Codec8AvlRecord is the root structure for a decoded Codec8 packet
+type Codec8AvlRecord struct {
 	Meta       Meta    `json:"meta"`
 	Packet     string  `json:"packet"`
 	Preamble   uint32  `json:"preamble"`
@@ -17,6 +17,18 @@ type AvlDataPacket struct {
 	Content    Content `json:"content"`
 	Quantity2  uint8   `json:"quantity2"`
 	CRC        uint32  `json:"crc"`
+}
+
+func (m *Codec8AvlRecord) GetMeta() Meta {
+	return m.Meta
+}
+
+func (m *Codec8AvlRecord) GetCodecID() uint8 {
+	return m.CodecID
+}
+
+func (m *Codec8AvlRecord) GetQuantity1() uint8 {
+	return m.Quantity1
 }
 
 // Content wraps the records (for output parity)

@@ -5,11 +5,12 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
+	"iotrack.live/internal/cache"
+	"iotrack.live/internal/logger"
 )
 
-func initializeAppSettings() {
-	loadEnv()
-}
+// ---------------------------------------------------------------------
 
 var envPath = "./"
 
@@ -27,3 +28,18 @@ func loadEnv() error {
 
 	return err
 }
+
+// ---------------------------------------------------------------------
+
+func initializeCache() {
+
+	// Initialize a Redis connection pool
+	_, err := cache.CreateRedisPool()
+	if err != nil {
+		logger.Error("Failed to connect to Redis", zap.Error(err))
+		os.Exit(1)
+	}
+	logger.Info("Successfully connected to Redis")
+}
+
+// ---------------------------------------------------------------------
