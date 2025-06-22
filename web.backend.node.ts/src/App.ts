@@ -2,7 +2,8 @@ import { Server as ServerHttp } from "node:http";
 import { Server as ServerHttps } from "node:https";
 
 import express, { Express } from "express";
-
+import cors from "cors";
+import router from "./api/routes";
 
 
 class App {
@@ -12,10 +13,9 @@ class App {
     public httpServer?: ServerHttp | ServerHttps;
     public expressApp: Express;
 
-
-
     private constructor() {
         this.expressApp = express();
+        this.initializeSingleton();
         console.log("App instance created")
     }
 
@@ -32,8 +32,33 @@ class App {
 
     // -----------------------------------------------------------------
 
+    // Central method to organize all initialization functions
+    initializeSingleton() {
+        // this.setupAppDependencies();
+        // this.initializeDatabaseConnections();
+        this.initializeMiddleware();
+        this.initializeRoutes();
+        // this.scheduleCronTasks();
+    }
+
+    // -----------------------------------------------------------------
+
+    // initializeMiddleware - initialize middleware for parsing request bodies
+    initializeMiddleware() {
+        this.expressApp.use(cors());
+        this.expressApp.use(express.urlencoded({ extended: false }));          // Middleware for URL-encoded data
+        this.expressApp.use(express.json());                                   // Middleware for JSON data
+    }
+    // -----------------------------------------------------------------
+
+    // initializeRoutes - initialize and attach routers
+    initializeRoutes() {
+        this.expressApp.use('/teltonika-parser', router);
+    }
+    // -----------------------------------------------------------------
+
     public start(httpPort = 80) {
-        this.httpServer = this.expressApp.listen(httpPort, ()=>{
+        this.httpServer = this.expressApp.listen(httpPort, () => {
             console.log(`HTTP server listening on port ${httpPort}`)
         });
     }
@@ -44,12 +69,12 @@ class App {
         console.log("Graceful shutdown initiated...");
 
         try {
-            this.httpServer!.close(()=>{
+            this.httpServer!.close(() => {
                 console.log("HTTP server closed.")
             });
             process.exit(0);
 
-        } catch(err: unknown) {
+        } catch (err: unknown) {
 
             if (err instanceof Error) {
                 console.error("Error during shutdown:", err.message)
@@ -59,7 +84,7 @@ class App {
 
             process.exit(1);
         }
-    }    
+    }
 }
 
 // ---------------------------------------------------------------------

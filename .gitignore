@@ -76,3 +76,4 @@ database.yml
 
 # Docker files
 docker-compose.yml
+/generated/prisma

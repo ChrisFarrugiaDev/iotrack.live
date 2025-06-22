@@ -31,3 +31,20 @@ https://www.npmjs.com/package/ioredis
     $ npm install ioredis
 
 <!-- --------------------------------------------------------------- -->
+### uuidv7
+
+https://www.npmjs.com/package/uuidv7
+
+    $ npm install uuidv7
+
+<!-- --------------------------------------------------------------- -->
+npm install cors -save
+npm install @types/cors --save-dev
+
+<!-- --------------------------------------------------------------- -->
+
+npm install @prisma/client
+npm install -D prisma
+npm install -D dotenv-cli
+
+<!-- --------------------------------------------------------------- -->

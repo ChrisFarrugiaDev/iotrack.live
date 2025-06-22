@@ -1,8 +1,12 @@
 
 
-import express from "express"
+import { Router } from "express";
+import Codec12Controller from "../controllers/Code12Controller";
 
 
-const router = express.Router();
+const router = Router();
 
-router.post("/commands/:imei", )
+router.post("/commands/:imei", Codec12Controller.addCommand );
+
+
+export default router;
