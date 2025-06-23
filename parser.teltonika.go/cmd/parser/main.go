@@ -11,6 +11,8 @@ import (
 	"iotrack.live/internal/tcp"
 )
 
+var app App
+
 func main() {
 	// Load environment and configuration
 	loadEnv()

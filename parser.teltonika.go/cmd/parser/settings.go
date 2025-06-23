@@ -34,12 +34,14 @@ func loadEnv() error {
 func initializeCache() {
 
 	// Initialize a Redis connection pool
-	_, err := cache.CreateRedisPool()
+	redisPool, err := cache.CreateRedisPool()
 	if err != nil {
 		logger.Error("Failed to connect to Redis", zap.Error(err))
 		os.Exit(1)
 	}
 	logger.Info("Successfully connected to Redis")
+
+	app.Cache = cache.NewCache(redisPool, os.Getenv("REDIS_PREFIX"))
 }
 
 // ---------------------------------------------------------------------

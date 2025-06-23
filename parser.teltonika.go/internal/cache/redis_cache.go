@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -100,4 +101,31 @@ func CreateRedisPool() (*redis.Pool, error) {
 	}
 
 	return pool, err
+}
+
+// Set stores a key-value pair in Redis with an optional TTL.
+func (rc *RedisCache) Set(key string, value any, ttlSeconds int) error {
+	conn := rc.Conn.Get()
+	defer conn.Close()
+
+	// Marshal the value to JSON for storage
+	jsonData, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal value: %v", err)
+	}
+
+	// Set the key with the prefixed key
+	if ttlSeconds > 0 {
+		// Set with expiration if TTL is specified
+		_, err = conn.Do("SETEX", rc.Prefix+key, ttlSeconds, jsonData)
+	} else {
+		// Set without expiration
+		_, err = conn.Do("SET", rc.Prefix+key, jsonData)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to set key in Redis: %w", err)
+	}
+
+	return nil
 }

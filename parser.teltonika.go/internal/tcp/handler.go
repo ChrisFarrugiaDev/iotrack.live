@@ -6,10 +6,11 @@ import (
 	"net"
 
 	"go.uber.org/zap"
+	"iotrack.live/internal/cache"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/model"
 	"iotrack.live/internal/teltonika"
-	"iotrack.live/internal/util"
+	// "iotrack.live/internal/util"
 )
 
 // ---------------------------------------------------------------------
@@ -67,6 +68,18 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	}
 
 	// -----------------------------------------------------------------
+
+	itemRaw, err := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
+
+	if err != nil {
+		logger.Error("Unable retrive codec12 pending", zap.String("imei", deviceMeta.IMEI), zap.Error(err))
+	}
+
+	if itemRaw != nil {
+		fmt.Println(itemRaw)
+	}
+
+	// -----------------------------------------------------------------
 	// TODO: 1. Determine message type (AVL or Command) from dataPacket.
 	// TODO: 2. If pending Codec 12 commands, send them to device before processing AVL data.
 	// TODO: 3. Forward parsed data to TS DB via RabbitMQ/Kafka; publish last record via Redis for real-time updates.
@@ -80,7 +93,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	conn.Write(ack)
 
 	// Print packet content in human-readable form (for debugging/logging)
-	util.PrettyPrint(dataPacket)
+	// util.PrettyPrint(dataPacket)
 
 }
 
