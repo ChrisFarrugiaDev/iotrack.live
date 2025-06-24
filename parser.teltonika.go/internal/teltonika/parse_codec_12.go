@@ -8,7 +8,7 @@ import (
 	"iotrack.live/internal/util"
 )
 
-func ParseCodec12(data []byte) (*model.Codec12CommandMessage, error) {
+func ParseCodec12(data []byte) (*model.Codec12Message, error) {
 	offset := 0
 
 	// Check minimum length for header, type, response size, CRC
@@ -16,7 +16,7 @@ func ParseCodec12(data []byte) (*model.Codec12CommandMessage, error) {
 		return nil, err
 	}
 
-	packet := model.Codec12CommandMessage{}
+	packet := model.Codec12Message{}
 	packet.Packet = hex.EncodeToString(data)
 
 	packet.Preamble = util.BytesToUint32(data[offset:])

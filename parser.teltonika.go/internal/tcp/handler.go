@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
 
@@ -10,6 +11,7 @@ import (
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/model"
 	"iotrack.live/internal/teltonika"
+	"iotrack.live/internal/util"
 	// "iotrack.live/internal/util"
 )
 
@@ -69,15 +71,39 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 	// -----------------------------------------------------------------
 
-	itemRaw, err := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
+	//  1st check if codec12:inflight-commands is set and if so get value
+	inflightExist, _ := cache.AppCache.Exists("codec12:inflight-commands:" + deviceMeta.IMEI)
+	logger.Debug(">", zap.Bool("inflightExist", inflightExist))
 
-	if err != nil {
-		logger.Error("Unable retrive codec12 pending", zap.String("imei", deviceMeta.IMEI), zap.Error(err))
+	pendingExist, _ := cache.AppCache.Exists("codec12:pending-commands:" + deviceMeta.IMEI)
+
+	cmd := []byte{}
+
+	if pendingExist {
+		rawJson, _ := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
+
+		var pendingCommand model.Codec12Command
+
+		_ = json.Unmarshal([]byte(rawJson), &pendingCommand)
+
+		_ = pendingCommand.SetToInflight()
+
+		cmd, _ = pendingCommand.ToPacket()
 	}
 
-	if itemRaw != nil {
-		fmt.Println(itemRaw)
-	}
+	// if not set check if codec12:pending-commands: is set and if is get first value
+
+	// if not set proced with the ack
+
+	// itemRaw, err := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
+
+	// if err != nil {
+	// 	logger.Error("Unable retrive codec12 pending", zap.String("imei", deviceMeta.IMEI), zap.Error(err))
+	// }
+
+	// if itemRaw != nil {
+	// 	fmt.Println(itemRaw)
+	// }
 
 	// -----------------------------------------------------------------
 	// TODO: 1. Determine message type (AVL or Command) from dataPacket.
@@ -90,10 +116,18 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	ack := make([]byte, 4)
 	binary.BigEndian.PutUint32(ack, uint32(dataPacket.GetQuantity1()))
 	// Send ACK to device (must be exactly 4 bytes)
+
+	if len(cmd) > 0 {
+		ack = cmd
+	}
 	conn.Write(ack)
 
 	// Print packet content in human-readable form (for debugging/logging)
-	// util.PrettyPrint(dataPacket)
+
+	if codecID == 12 {
+		util.PrettyPrint(dataPacket)
+	}
+	fmt.Println(codecID)
 
 }
 

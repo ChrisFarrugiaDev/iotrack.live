@@ -31,6 +31,10 @@ func (m *Codec8AvlRecord) GetQuantity1() uint8 {
 	return m.Quantity1
 }
 
+func (m *Codec8AvlRecord) GetCodecType() string {
+	return m.CodecType
+}
+
 // Content wraps the records (for output parity)
 type Content struct {
 	AVL_Datas []AvlData `json:"avl_datas"`

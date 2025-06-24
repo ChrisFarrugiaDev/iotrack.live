@@ -1,8 +1,9 @@
 ### Send Codec12 commands to a Teltonika device
 
-POST http://57.129.22.122:3000/teltonika-parser/codec12/commands/864636060448814
+# POST http://57.129.22.122:3000/teltonika-parser/codec12/commands/864636060448814
+POST http://57.129.22.122:3000/teltonika-parser/codec12/commands/864275075869761
 Content-Type: application/json
 
 {
-  "commands": ["web_connect", "cpureset"]
+  "commands": [ "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps"]
 }

@@ -1,6 +1,6 @@
 package model
 
-type Codec12CommandMessage struct {
+type Codec12Message struct {
 	Meta       Meta   `json:"meta"`
 	Packet     string `json:"Packet"`
 	Preamble   uint32 `json:"Preamble"`
@@ -19,14 +19,17 @@ type GPRS struct {
 	ResponseStr string `json:"responseStr"` // Decoded ASCII or "New value..." string
 }
 
-func (m *Codec12CommandMessage) GetMeta() Meta {
+func (m *Codec12Message) GetMeta() Meta {
 	return m.Meta
 }
 
-func (m *Codec12CommandMessage) GetCodecID() uint8 {
+func (m *Codec12Message) GetCodecID() uint8 {
 	return m.CodecID
 }
 
-func (m *Codec12CommandMessage) GetQuantity1() uint8 {
+func (m *Codec12Message) GetQuantity1() uint8 {
 	return m.Quantity1
+}
+func (m *Codec12Message) GetCodecType() string {
+	return m.CodecType
 }
