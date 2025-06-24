@@ -33,3 +33,6 @@ func (m *Codec12Message) GetQuantity1() uint8 {
 func (m *Codec12Message) GetCodecType() string {
 	return m.CodecType
 }
+func (m *Codec12Message) GetResponse() string {
+	return m.Content.ResponseStr
+}

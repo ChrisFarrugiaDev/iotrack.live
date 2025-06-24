@@ -78,6 +78,17 @@ func (c *Codec12Command) SetToInflight() error {
 
 	t := time.Now().UTC()
 	c.SentAt = &t
+	c.Status = "sent"
 	err := cache.AppCache.Set("codec12:inflight-commands:"+c.IMEI, c, -1)
+	return err
+}
+
+func (c *Codec12Command) SetToSync(status, response string) error {
+	c.Status = status
+	t := time.Now().UTC()
+	c.RespondedAt = &t
+	c.Response = response
+
+	err := cache.AppCache.HSet("codec12:sync-commands", c.UUID, c)
 	return err
 }

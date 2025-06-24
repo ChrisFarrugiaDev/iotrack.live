@@ -11,7 +11,6 @@ import (
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/model"
 	"iotrack.live/internal/teltonika"
-	"iotrack.live/internal/util"
 	// "iotrack.live/internal/util"
 )
 
@@ -71,15 +70,51 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 	// -----------------------------------------------------------------
 
-	//  1st check if codec12:inflight-commands is set and if so get value
-	inflightExist, _ := cache.AppCache.Exists("codec12:inflight-commands:" + deviceMeta.IMEI)
-	logger.Debug(">", zap.Bool("inflightExist", inflightExist))
-
-	pendingExist, _ := cache.AppCache.Exists("codec12:pending-commands:" + deviceMeta.IMEI)
-
 	cmd := []byte{}
 
-	if pendingExist {
+	inflightExist, _ := cache.AppCache.Exists("codec12:inflight-commands:" + deviceMeta.IMEI)
+
+	if inflightExist {
+
+		rawJson, _ := cache.AppCache.Get("codec12:inflight-commands:" + deviceMeta.IMEI)
+
+		var inflightCommand model.Codec12Command
+
+		_ = json.Unmarshal([]byte(rawJson), &inflightCommand)
+
+		if dataPacket.GetCodecType() == "GPRS messages" {
+
+			// delete from inflight
+			cache.AppCache.Delete("codec12:inflight-commands:" + deviceMeta.IMEI)
+
+			// move to sync
+			codec12Message := dataPacket.(*model.Codec12Message)
+			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
+		}
+
+		if dataPacket.GetCodecType() == "AVL_Data" {
+
+			if inflightCommand.Retries < 10 {
+
+				inflightCommand.SetToInflight()
+				cmd, _ = inflightCommand.ToPacket()
+
+			} else {
+				// delete from inflight
+				cache.AppCache.Delete("codec12:inflight-commands:" + deviceMeta.IMEI)
+
+				// move to sync
+				codec12Message := dataPacket.(*model.Codec12Message)
+				inflightCommand.SetToSync("failed ", codec12Message.GetResponse())
+			}
+		}
+	}
+
+	// -----------------------------------------------------------------
+	inflightExist, _ = cache.AppCache.Exists("codec12:inflight-commands:" + deviceMeta.IMEI)
+	pendingExist, _ := cache.AppCache.Exists("codec12:pending-commands:" + deviceMeta.IMEI)
+
+	if !inflightExist && pendingExist {
 		rawJson, _ := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
 
 		var pendingCommand model.Codec12Command
@@ -125,9 +160,9 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	// Print packet content in human-readable form (for debugging/logging)
 
 	if codecID == 12 {
-		util.PrettyPrint(dataPacket)
+		// util.PrettyPrint(dataPacket)
 	}
-	fmt.Println(codecID)
+	// fmt.Println(codecID)
 
 }
 

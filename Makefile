@@ -1,73 +1,46 @@
-# Define the password variable
 pw ?=
 
-# Define the hashed password 
-# HASHED_PASSWORD = a6f6b908d98bb8de5d31318569f976f35c58a1b8e44cf3dacd9c72e061a9b83b10a7d9988026563c18f8f837dd573ecaa95a74086ea583aad092852a0572e224
 HASHED_PASSWORD = effa4822613d21714b52ff776576f05a564eb2ad30ad7328c0f6e071a2240ad8026bbcb91e217a5e42cd380e496b1c390d65ad3ceeddf082d634859f05a0db4f
 
-
-# Define the paths to the scripts
 ENCRYPT_SCRIPT = ./scripts/encrypt.sh
 DECRYPT_SCRIPT = ./scripts/decrypt.sh
+DOCKER_COMPOSE_FILE = ./docker-compose.yml
 
-# Define paths to docker-compose files
-DOCKER_COMPOSE_FILE = ./dockerfiles/track.iotsolutions.shared/docker-compose.yml
-
-# Check if password is provided
-ifeq ($(pw),)
-$(error PASSWORD is not set. Usage: make target pw=<password>)
-endif
-
-# Function to hash the password
-define CHECK_PASSWORD
-  echo -n "$(1)" | sha512sum | awk '{print $$1}'
+define require_password
+	@if [ -z "$(pw)" ]; then \
+		echo "PASSWORD is not set. Usage: make $@ pw=<password>"; \
+		exit 1; \
+	fi; \
+	hashed="`echo -n $(pw) | sha512sum | awk '{print $$1}'`"; \
+	if [ "$$hashed" != "$(HASHED_PASSWORD)" ]; then \
+		echo "PASSWORD does not match"; \
+		exit 1; \
+	fi
 endef
 
-# Check if the provided password matches the hashed password
-CHECKED_PASSWORD := $(shell $(call CHECK_PASSWORD,$(pw)))
-ifeq ($(CHECKED_PASSWORD),$(HASHED_PASSWORD))
-# Password is correct, continue
-else
-$(error PASSWORD does not match)
-endif
-
-# --------------------------------------------------
-# Encryption and Decryption Targets
-# --------------------------------------------------
-
-# Target to encrypt .env files and notes/*.md files
 encrypt:
+	$(call require_password)
 	chmod +x $(ENCRYPT_SCRIPT)
 	$(ENCRYPT_SCRIPT) $(pw)
 
-# Target to decrypt .env files and notes/*.md files
 decrypt:
+	$(call require_password)
 	chmod +x $(DECRYPT_SCRIPT)
 	$(DECRYPT_SCRIPT) $(pw)
 
-# --------------------------------------------------
-# Docker Compose Targets
-# --------------------------------------------------
-
-# Target to bring up docker services
 docker-up:
+	$(call require_password)
 	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
 
-# Target to bring down docker services
 docker-down:
+	$(call require_password)
 	docker-compose -f $(DOCKER_COMPOSE_FILE) down
 
-# --------------------------------------------------
-# Default target (if needed)
-# --------------------------------------------------
+sync:
+	rsync -az --delete --exclude=node_modules -e "ssh -i ~/.ssh/ssh_iot/id_ecdsa" /home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live ubuntu@57.129.22.122:/home/ubuntu/projects
 
-all: encrypt decrypt
-
-# 	------------------------------------------------
-
-#	make encrypt pw=<password>
-
-#	make decrypt pw=<password>
-
-# 	------------------------------------------------
+post-codec12:
+	curl -X POST http://57.129.22.122:3000/teltonika-parser/codec12/commands/864636060448814 \
+		-H "Content-Type: application/json" \
+		-d '{"commands": ["getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps"]}'
 

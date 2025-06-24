@@ -63,3 +63,17 @@ func (rc *RedisCache) Set(key string, value any, ttlSeconds int) error {
 
 	return nil
 }
+
+// Delete removes a key from Redis.
+func (rc *RedisCache) Delete(key string) error {
+	conn := rc.Conn.Get()
+	defer conn.Close()
+
+	// Delete the key
+	_, err := conn.Do("DEL", rc.Prefix+key)
+	if err != nil {
+		return fmt.Errorf("failed to delete key from Redis: %w", err)
+	}
+
+	return nil
+}
