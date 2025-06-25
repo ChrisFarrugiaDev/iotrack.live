@@ -3,14 +3,14 @@ import { PrismaClient, codec12_commands } from '../../generated/prisma';
 import * as types from "../types/index"
 const prisma = new PrismaClient();
 
-export class Codec12Commands {
+export class TeltonikaCodec12Commands {
 
     // -----------------------------------------------------------------
 
     // Create a new command
-    static async createCommand(payload: Omit<codec12_commands, 'id' | 'uuid' | 'created_at' | 'sent_at' | 'responded_at' | 'response' | 'retries'>
-    ):Promise<types.Codec12Command> {
-        const record = await prisma.codec12_commands.create({
+    static async createCommand(payload: Omit<codec12_commands, 'id' | 'uuid' | 'created_at' | 'updated_at' | 'sent_at' | 'responded_at' | 'response' | 'retries'>
+    ):Promise<types.TeltonikaCodec12Command> {
+        const record = await prisma. codec12_commands.create({
             data: {
                 ...payload,
                 uuid: uuidv7(),
@@ -26,7 +26,7 @@ export class Codec12Commands {
     // -----------------------------------------------------------------
 
     static async createBulk(
-        records: Array<Omit<codec12_commands, 'id' | 'uuid' | 'created_at' | 'sent_at' | 'responded_at' | 'response' | 'retries'>>
+        records: Array<Omit<codec12_commands, 'id' | 'uuid' | 'created_at' | 'updated_at' | 'sent_at' | 'responded_at' | 'response' | 'retries'>>
     ): Promise<string[]> {
         // Add uuid to each record
         const recordsWithUUID = records.map(data => ({
@@ -47,7 +47,7 @@ export class Codec12Commands {
 
     // -----------------------------------------------------------------
 
-    static async findManyByUUID(uuids: string[]): Promise<types.Codec12Command[]> {
+    static async findManyByUUID(uuids: string[]): Promise<types.TeltonikaCodec12Command[]> {
         const records = await prisma.codec12_commands.findMany({
             where: {
                 uuid: {in: uuids}

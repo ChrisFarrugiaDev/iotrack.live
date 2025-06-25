@@ -36,15 +36,7 @@ npx prisma init --datasource-provider=postgresql
 ---
 
 ## 3. **Custom Schema File / Multiple Schemas**
-### Did not implemented this step, I using a single schema (public)
-### And a single database setup, and left the defaul Prisma folder structure
-```txt
-For this project, I decided not to implement custom schemas.
-All tables are created in the default public schema for simplicity and to ensure maximum
-compatibility with TimescaleDB features and tools.
-If the project grows or requires stricter logical separation in the future, migrating tables to separate 
-schemas can be done later with minimal disruption.
-```
+
 
 - **You can rename `schema.prisma`** to something like `schema.iot_solutions.prisma` for clarity or multi-DB setups.
     

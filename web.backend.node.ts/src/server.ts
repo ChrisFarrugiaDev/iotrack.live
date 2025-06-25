@@ -1,4 +1,4 @@
-import _env from "./config/envConfig";
+import _env from "./config/env.config";
 import app from "./App";
 
 app.start(Number(_env.HTTP_PORT));

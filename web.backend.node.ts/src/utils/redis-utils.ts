@@ -1,5 +1,5 @@
-import redis, {redisKeyPrefix} from "../config/redisConfig";
-import { logDev, logError } from "./loggerUtils";
+import redis, {redisKeyPrefix} from "../config/redis.config";
+import { logDev, logError } from "./logger-utils";
 
 
 

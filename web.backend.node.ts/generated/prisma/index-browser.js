@@ -127,6 +127,7 @@ exports.Prisma.Codec12_commandsScalarFieldEnum = {
   command: 'command',
   status: 'status',
   created_at: 'created_at',
+  updated_at: 'updated_at',
   sent_at: 'sent_at',
   responded_at: 'responded_at',
   response: 'response',

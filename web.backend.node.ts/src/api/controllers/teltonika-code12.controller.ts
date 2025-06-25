@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import * as redisUtils from "../../utils/redisUtils";
-import { logError } from "../../utils/loggerUtils";
+import * as redisUtils from "../../utils/redis-utils";
+import { logError } from "../../utils/logger-utils";
 import * as types from "../../types";
 import { uuidv7 } from 'uuidv7';
-import { Codec12Commands } from "../../models/Codec12Commands";
+import { TeltonikaCodec12Commands } from "../../models/teltonika-codec12-commands.model";
 
-class Codec12Controller {
+class TeltonikaCodec12Controller {
     // Handles API call to add Codec 12 command(s) for a device
     static async addCommand(req: Request, res: Response, next: NextFunction): Promise<void> {
         const imei = req.params.imei;
@@ -53,8 +53,8 @@ class Codec12Controller {
         const redisKey = `codec12:pending-commands:${imei}`;
 
         try {
-            const insertedUuids = await Codec12Commands.createBulk(payload);
-            const insertedCmd = await Codec12Commands.findManyByUUID(insertedUuids);
+            const insertedUuids = await TeltonikaCodec12Commands.createBulk(payload);
+            const insertedCmd = await TeltonikaCodec12Commands.findManyByUUID(insertedUuids);
 
        
             // Save all commands to Redis list for this device
@@ -64,7 +64,7 @@ class Codec12Controller {
             const pendingCode12CommandsNo = await redisUtils.listLength(redisKey, "parser.teltonika:");
 
             // Respond with success and command details
-            const response: types.ApiSuccessResponse<types.Codec12Command[]> = {
+            const response: types.ApiSuccessResponse<types.TeltonikaCodec12Command[]> = {
                 success: true,
                 message: `${pendingCode12CommandsNo} command(s) queued for device ${imei}`,
                 data: insertedCmd 
@@ -84,12 +84,12 @@ class Codec12Controller {
 
             if (err instanceof Error) {
                 response.details = err.message;
-                logError("! Codec12Controller addCommand !", err);
+                logError("! TeltonikaCodec12Controller addCommand !", err);
             } else if (typeof err === 'string') {
                 if (process.env.DEBUG === 'true') response.details = err;
-                logError("! Codec12Controller addCommand !", new Error(err));
+                logError("! TeltonikaCodec12Controller addCommand !", new Error(err));
             } else {
-                logError("! Codec12Controller addCommand !", new Error('Unknown error object'));
+                logError("! TeltonikaCodec12Controller addCommand !", new Error('Unknown error object'));
             }
 
             res.status(500).json(response);
@@ -98,4 +98,4 @@ class Codec12Controller {
     }
 }
 
-export default Codec12Controller;
+export default TeltonikaCodec12Controller;

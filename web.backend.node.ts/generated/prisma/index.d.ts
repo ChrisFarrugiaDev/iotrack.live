@@ -898,6 +898,7 @@ export namespace Prisma {
     command: string | null
     status: string | null
     created_at: Date | null
+    updated_at: Date | null
     sent_at: Date | null
     responded_at: Date | null
     response: string | null
@@ -912,6 +913,7 @@ export namespace Prisma {
     command: string | null
     status: string | null
     created_at: Date | null
+    updated_at: Date | null
     sent_at: Date | null
     responded_at: Date | null
     response: string | null
@@ -926,6 +928,7 @@ export namespace Prisma {
     command: number
     status: number
     created_at: number
+    updated_at: number
     sent_at: number
     responded_at: number
     response: number
@@ -952,6 +955,7 @@ export namespace Prisma {
     command?: true
     status?: true
     created_at?: true
+    updated_at?: true
     sent_at?: true
     responded_at?: true
     response?: true
@@ -966,6 +970,7 @@ export namespace Prisma {
     command?: true
     status?: true
     created_at?: true
+    updated_at?: true
     sent_at?: true
     responded_at?: true
     response?: true
@@ -980,6 +985,7 @@ export namespace Prisma {
     command?: true
     status?: true
     created_at?: true
+    updated_at?: true
     sent_at?: true
     responded_at?: true
     response?: true
@@ -1081,6 +1087,7 @@ export namespace Prisma {
     command: string
     status: string
     created_at: Date
+    updated_at: Date
     sent_at: Date | null
     responded_at: Date | null
     response: string | null
@@ -1114,6 +1121,7 @@ export namespace Prisma {
     command?: boolean
     status?: boolean
     created_at?: boolean
+    updated_at?: boolean
     sent_at?: boolean
     responded_at?: boolean
     response?: boolean
@@ -1128,6 +1136,7 @@ export namespace Prisma {
     command?: boolean
     status?: boolean
     created_at?: boolean
+    updated_at?: boolean
     sent_at?: boolean
     responded_at?: boolean
     response?: boolean
@@ -1142,6 +1151,7 @@ export namespace Prisma {
     command?: boolean
     status?: boolean
     created_at?: boolean
+    updated_at?: boolean
     sent_at?: boolean
     responded_at?: boolean
     response?: boolean
@@ -1156,6 +1166,7 @@ export namespace Prisma {
     command?: boolean
     status?: boolean
     created_at?: boolean
+    updated_at?: boolean
     sent_at?: boolean
     responded_at?: boolean
     response?: boolean
@@ -1163,7 +1174,7 @@ export namespace Prisma {
     comment?: boolean
   }
 
-  export type codec12_commandsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "uuid" | "imei" | "command" | "status" | "created_at" | "sent_at" | "responded_at" | "response" | "retries" | "comment", ExtArgs["result"]["codec12_commands"]>
+  export type codec12_commandsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "uuid" | "imei" | "command" | "status" | "created_at" | "updated_at" | "sent_at" | "responded_at" | "response" | "retries" | "comment", ExtArgs["result"]["codec12_commands"]>
 
   export type $codec12_commandsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "codec12_commands"
@@ -1175,6 +1186,7 @@ export namespace Prisma {
       command: string
       status: string
       created_at: Date
+      updated_at: Date
       sent_at: Date | null
       responded_at: Date | null
       response: string | null
@@ -1609,6 +1621,7 @@ export namespace Prisma {
     readonly command: FieldRef<"codec12_commands", 'String'>
     readonly status: FieldRef<"codec12_commands", 'String'>
     readonly created_at: FieldRef<"codec12_commands", 'DateTime'>
+    readonly updated_at: FieldRef<"codec12_commands", 'DateTime'>
     readonly sent_at: FieldRef<"codec12_commands", 'DateTime'>
     readonly responded_at: FieldRef<"codec12_commands", 'DateTime'>
     readonly response: FieldRef<"codec12_commands", 'String'>
@@ -2001,6 +2014,7 @@ export namespace Prisma {
     command: 'command',
     status: 'status',
     created_at: 'created_at',
+    updated_at: 'updated_at',
     sent_at: 'sent_at',
     responded_at: 'responded_at',
     response: 'response',
@@ -2123,6 +2137,7 @@ export namespace Prisma {
     command?: StringFilter<"codec12_commands"> | string
     status?: StringFilter<"codec12_commands"> | string
     created_at?: DateTimeFilter<"codec12_commands"> | Date | string
+    updated_at?: DateTimeFilter<"codec12_commands"> | Date | string
     sent_at?: DateTimeNullableFilter<"codec12_commands"> | Date | string | null
     responded_at?: DateTimeNullableFilter<"codec12_commands"> | Date | string | null
     response?: StringNullableFilter<"codec12_commands"> | string | null
@@ -2137,6 +2152,7 @@ export namespace Prisma {
     command?: SortOrder
     status?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     sent_at?: SortOrderInput | SortOrder
     responded_at?: SortOrderInput | SortOrder
     response?: SortOrderInput | SortOrder
@@ -2154,6 +2170,7 @@ export namespace Prisma {
     command?: StringFilter<"codec12_commands"> | string
     status?: StringFilter<"codec12_commands"> | string
     created_at?: DateTimeFilter<"codec12_commands"> | Date | string
+    updated_at?: DateTimeFilter<"codec12_commands"> | Date | string
     sent_at?: DateTimeNullableFilter<"codec12_commands"> | Date | string | null
     responded_at?: DateTimeNullableFilter<"codec12_commands"> | Date | string | null
     response?: StringNullableFilter<"codec12_commands"> | string | null
@@ -2168,6 +2185,7 @@ export namespace Prisma {
     command?: SortOrder
     status?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     sent_at?: SortOrderInput | SortOrder
     responded_at?: SortOrderInput | SortOrder
     response?: SortOrderInput | SortOrder
@@ -2190,6 +2208,7 @@ export namespace Prisma {
     command?: StringWithAggregatesFilter<"codec12_commands"> | string
     status?: StringWithAggregatesFilter<"codec12_commands"> | string
     created_at?: DateTimeWithAggregatesFilter<"codec12_commands"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"codec12_commands"> | Date | string
     sent_at?: DateTimeNullableWithAggregatesFilter<"codec12_commands"> | Date | string | null
     responded_at?: DateTimeNullableWithAggregatesFilter<"codec12_commands"> | Date | string | null
     response?: StringNullableWithAggregatesFilter<"codec12_commands"> | string | null
@@ -2204,6 +2223,7 @@ export namespace Prisma {
     command: string
     status?: string
     created_at?: Date | string
+    updated_at?: Date | string
     sent_at?: Date | string | null
     responded_at?: Date | string | null
     response?: string | null
@@ -2218,6 +2238,7 @@ export namespace Prisma {
     command: string
     status?: string
     created_at?: Date | string
+    updated_at?: Date | string
     sent_at?: Date | string | null
     responded_at?: Date | string | null
     response?: string | null
@@ -2232,6 +2253,7 @@ export namespace Prisma {
     command?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     responded_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     response?: NullableStringFieldUpdateOperationsInput | string | null
@@ -2246,6 +2268,7 @@ export namespace Prisma {
     command?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     responded_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     response?: NullableStringFieldUpdateOperationsInput | string | null
@@ -2260,6 +2283,7 @@ export namespace Prisma {
     command: string
     status?: string
     created_at?: Date | string
+    updated_at?: Date | string
     sent_at?: Date | string | null
     responded_at?: Date | string | null
     response?: string | null
@@ -2274,6 +2298,7 @@ export namespace Prisma {
     command?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     responded_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     response?: NullableStringFieldUpdateOperationsInput | string | null
@@ -2288,6 +2313,7 @@ export namespace Prisma {
     command?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     sent_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     responded_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     response?: NullableStringFieldUpdateOperationsInput | string | null
@@ -2393,6 +2419,7 @@ export namespace Prisma {
     command?: SortOrder
     status?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     sent_at?: SortOrder
     responded_at?: SortOrder
     response?: SortOrder
@@ -2412,6 +2439,7 @@ export namespace Prisma {
     command?: SortOrder
     status?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     sent_at?: SortOrder
     responded_at?: SortOrder
     response?: SortOrder
@@ -2426,6 +2454,7 @@ export namespace Prisma {
     command?: SortOrder
     status?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     sent_at?: SortOrder
     responded_at?: SortOrder
     response?: SortOrder

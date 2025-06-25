@@ -1,6 +1,6 @@
 
 import express, {Response, Request, json}from "express";
-import codec12Router from "./codec12Router"
+import codec12Router from "./teltonika-codec12.router"
 
 // ---------------------------------------------------------------------
 
