@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/tcp"
 )
@@ -38,11 +39,22 @@ func main() {
 	// This keeps the main function alive while the TCP server runs in the background.
 	<-ctx.Done()
 
+	// Gracefully close Tcp Server
 	logger.Log.Info("Shutdown signal received, attempting graceful shutdown...")
 	select {
 	case <-serverClosed:
 		logger.Log.Info("TCP server has shut down cleanly.")
 	case <-time.After(5 * time.Second):
 		logger.Log.Warn("TCP server shutdown timeout - forcing exit.")
+	}
+
+	// Gracefully close Redis pool
+	if app.Cache != nil {
+		err := app.Cache.Close()
+		if err != nil {
+			logger.Log.Warn("Failed to close Redis connection pool", zap.Error(err))
+		} else {
+			logger.Log.Info("Redis connection pool closed gracefully.")
+		}
 	}
 }

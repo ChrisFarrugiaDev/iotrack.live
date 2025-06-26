@@ -101,3 +101,10 @@ func CreateRedisPool() (*redis.Pool, error) {
 
 	return pool, err
 }
+
+func (r *RedisCache) Close() error {
+	if r == nil || r.Conn == nil {
+		return nil
+	}
+	return r.Conn.Close()
+}

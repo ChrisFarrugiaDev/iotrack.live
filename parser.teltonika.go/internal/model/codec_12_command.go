@@ -3,8 +3,6 @@ package model
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
-	"strings"
 	"time"
 
 	"iotrack.live/internal/cache"
@@ -65,10 +63,6 @@ func (c *Codec12Command) ToPacket() ([]byte, error) {
 
 	// Return the full binary packet
 	return message.Bytes(), nil
-}
-
-func (c *Codec12Command) BytesToHexString(b []byte) string {
-	return strings.ToUpper(hex.EncodeToString(b))
 }
 
 func (c *Codec12Command) SetToInflight() error {

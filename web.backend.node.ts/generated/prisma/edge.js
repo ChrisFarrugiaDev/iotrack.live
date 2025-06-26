@@ -137,7 +137,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live/web.backend.node.ts/generated/prisma",
+      "value": "/mnt/c/Chris/projects/iotrack.live-main/web.backend.node.ts/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -153,12 +153,11 @@ const config = {
     "previewFeatures": [
       "multiSchema"
     ],
-    "sourceFilePath": "/home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live/web.backend.node.ts/prisma/schema.prisma",
+    "sourceFilePath": "/mnt/c/Chris/projects/iotrack.live-main/web.backend.node.ts/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../prisma",
   "clientVersion": "6.10.1",
@@ -167,7 +166,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {

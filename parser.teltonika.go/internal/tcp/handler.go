@@ -20,29 +20,35 @@ import (
 // It distinguishes between IMEI handshake (first packet) and data packets.
 func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
-	if len(packet) == 17 {
+	cmd := []byte{}
+	ack := make([]byte, 4)
 
-		// --- 1. IMEI Handshake: 000F + 15 ASCII bytes (hex, 34 chars) -----
+	// Place this at the top of your function:
+	fail := func(msg string, err error) {
+		logger.Error(msg, zap.String("imei", deviceMeta.IMEI), zap.Error(err))
+		conn.Write(ack)
+	}
+
+	// --- 1. IMEI Handshake: 000F + 15 ASCII bytes (hex, 34 chars) -----
+	if len(packet) == 17 {
 		imei, err := teltonika.ImeiParser(packet)
 		if err != nil {
-			// Send 0x00 (NAK) to device on parsing error (negative acknowledgment)
+			// Negative ACK on error
 			conn.Write([]byte{0x00})
 			return
 		}
 
 		deviceMeta.IMEI = imei
-
-		// Send 0x01 (ACK) to device to acknowledge IMEI (positive acknowledgment)
+		// Positive ACK
 		conn.Write([]byte{0x01})
 		return
-
 	}
 
-	// --- 3. Data Packet: Codec 8/8ex (telemetry) or Codec 12 (commands) ---
+	// --- 2. Data Packet: Codec 8/8ex (telemetry) or Codec 12 (commands) ---
 
-	// Codec ID is at position 8 (1 byte)
+	// Get Codec ID (always at byte 8)
 	codecID := int(packet[8])
-	logger.Debug("", zap.Int("CodecID", codecID))
+	logger.Debug("CodecID detected", zap.Int("CodecID", codecID))
 
 	var dataPacket model.TeltonikaPacket
 	var err error
@@ -50,120 +56,145 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	switch codecID {
 	case 8:
 		dataPacket, err = teltonika.ParseCodec8(packet)
-
 	case 142:
 		dataPacket, err = teltonika.ParseCodec8Extended(packet)
-
 	case 12:
 		dataPacket, err = teltonika.ParseCodec12(packet)
-
 	default:
 		dataPacket, err = nil, fmt.Errorf("CodecID %d not supported", codecID)
 	}
 
 	if err != nil {
-		// Send 0x00 (NAK) to device on parsing error
 		logger.Error("Teltonika Parser Error", zap.Error(err))
 		conn.Write([]byte{0x00})
 		return
 	}
 
-	// -----------------------------------------------------------------
+	// -------------------- Command Send/Retry Logic --------------------
 
-	cmd := []byte{}
+	// Check if a Codec 12 command is currently in-flight for this device
+	inflightKey := "codec12:inflight-commands:" + deviceMeta.IMEI
+	inflightExist, err := cache.AppCache.Exists(inflightKey)
 
-	inflightExist, _ := cache.AppCache.Exists("codec12:inflight-commands:" + deviceMeta.IMEI)
+	if err != nil {
+		fail("Redis error while checking inflight command existence", err)
+		return
+	}
 
 	if inflightExist {
+		rawJson, err := cache.AppCache.Get(inflightKey)
 
-		rawJson, _ := cache.AppCache.Get("codec12:inflight-commands:" + deviceMeta.IMEI)
-
-		var inflightCommand model.Codec12Command
-
-		_ = json.Unmarshal([]byte(rawJson), &inflightCommand)
-
-		if dataPacket.GetCodecType() == "GPRS messages" {
-
-			// delete from inflight
-			cache.AppCache.Delete("codec12:inflight-commands:" + deviceMeta.IMEI)
-
-			// move to sync
-			codec12Message := dataPacket.(*model.Codec12Message)
-			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
+		if err != nil {
+			fail("Redis error while getting inflight command", err)
+			return
 		}
 
-		if dataPacket.GetCodecType() == "AVL_Data" {
+		var inflightCommand model.Codec12Command
+		err = json.Unmarshal([]byte(rawJson), &inflightCommand)
 
+		if err != nil {
+			fail("JSON unmarshal error for inflight command (1)", err)
+			return
+		}
+
+		switch dataPacket.GetCodecType() {
+		case "GPRS messages":
+			// Codec 12 response: command completed successfully
+			cache.AppCache.Delete(inflightKey)
+			codec12Message := dataPacket.(*model.Codec12Message)
+			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
+			// (Send to DB or sync cache later)
+
+		case "AVL_Data":
+			// Still no Codec 12 response—try resend or fail after N tries
 			if inflightCommand.Retries < 10 {
+				inflightCommand.SetToInflight() // (should increment retry count)
+				cmd, err = inflightCommand.ToPacket()
 
-				inflightCommand.SetToInflight()
-				cmd, _ = inflightCommand.ToPacket()
+				if err != nil {
+					fail("JSON unmarshal error for inflight command (2)", err)
+					return
+				}
 
 			} else {
-				// delete from inflight
-				cache.AppCache.Delete("codec12:inflight-commands:" + deviceMeta.IMEI)
-
-				// move to sync
-				codec12Message := dataPacket.(*model.Codec12Message)
-				inflightCommand.SetToSync("failed ", codec12Message.GetResponse())
+				cache.AppCache.Delete(inflightKey)
+				inflightCommand.SetToSync("failed", "no_response")
 			}
 		}
 	}
 
-	// -----------------------------------------------------------------
-	inflightExist, _ = cache.AppCache.Exists("codec12:inflight-commands:" + deviceMeta.IMEI)
-	pendingExist, _ := cache.AppCache.Exists("codec12:pending-commands:" + deviceMeta.IMEI)
+	// If no inflight command, check for pending commands for this device
+	pendingKey := "codec12:pending-commands:" + deviceMeta.IMEI
+	pendingExist := false
+	inflightExist, err = cache.AppCache.Exists(inflightKey)
 
-	if !inflightExist && pendingExist {
-		rawJson, _ := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
+	if err != nil {
+		fail("Redis error while checking inflight command existence (pending check)", err)
+		return
+	}
+
+	if !inflightExist {
+		pendingExist, err = cache.AppCache.Exists(pendingKey)
+		if err != nil {
+			fail("Redis error while checking pending command existence", err)
+			return
+		}
+	}
+
+	if pendingExist {
+
+		rawJson, err := cache.AppCache.LPop(pendingKey)
+		if err != nil {
+			fail("Redis error while popping pending command", err)
+			return
+		}
 
 		var pendingCommand model.Codec12Command
 
-		_ = json.Unmarshal([]byte(rawJson), &pendingCommand)
+		err = json.Unmarshal([]byte(rawJson), &pendingCommand)
 
-		_ = pendingCommand.SetToInflight()
+		if err != nil {
+			fail("JSON unmarshal error for pending command", err)
+			return
+		}
+		err = pendingCommand.SetToInflight()
 
-		cmd, _ = pendingCommand.ToPacket()
+		if err != nil {
+			fail("Failed to set pending command to inflight", err)
+			return
+		}
+
+		cmd, err = pendingCommand.ToPacket()
+
+		if err != nil {
+			fail("Failed to convert pending command to packet", err)
+			return
+		}
 	}
 
-	// if not set check if codec12:pending-commands: is set and if is get first value
+	// ------------- Send Command (or Telemetry ACK) to Device -------------
 
-	// if not set proced with the ack
-
-	// itemRaw, err := cache.AppCache.LPop("codec12:pending-commands:" + deviceMeta.IMEI)
-
-	// if err != nil {
-	// 	logger.Error("Unable retrive codec12 pending", zap.String("imei", deviceMeta.IMEI), zap.Error(err))
-	// }
-
-	// if itemRaw != nil {
-	// 	fmt.Println(itemRaw)
-	// }
-
-	// -----------------------------------------------------------------
-	// TODO: 1. Determine message type (AVL or Command) from dataPacket.
-	// TODO: 2. If pending Codec 12 commands, send them to device before processing AVL data.
-	// TODO: 3. Forward parsed data to TS DB via RabbitMQ/Kafka; publish last record via Redis for real-time updates.
-	// TODO: 4. Always send correct ACK/NACK back to the device per protocol.
-	// -----------------------------------------------------------------
-
-	// Prepare 4-byte ACK: number of records received, as required by Teltonika protocol
-	ack := make([]byte, 4)
+	// Teltonika expects a 4-byte ACK (number of records)
 	binary.BigEndian.PutUint32(ack, uint32(dataPacket.GetQuantity1()))
-	// Send ACK to device (must be exactly 4 bytes)
 
 	if len(cmd) > 0 {
-		ack = cmd
+		// Send command to device (Codec 12 packet)
+		conn.Write(cmd)
+	} else {
+		// ACK to device (for telemetry/etc)
+		conn.Write(ack)
 	}
-	conn.Write(ack)
 
-	// Print packet content in human-readable form (for debugging/logging)
+	// ------------------- TODO: Data Forwarding --------------------
+	// If telemetry, forward to RabbitMQ/Redis for DB and UI consumption
 
-	if codecID == 12 {
-		// util.PrettyPrint(dataPacket)
-	}
-	// fmt.Println(codecID)
-
+	// if codecID == 8 {
+	// 	a := dataPacket.(*model.Codec8AvlRecord)
+	// 	for _, i := range a.Content.AVL_Datas {
+	// 		fmt.Println(i.Timestamp)
+	// 	}
+	// }
+	// -- end ------------------------------------------------------
 }
 
 // ---------------------------------------------------------------------
