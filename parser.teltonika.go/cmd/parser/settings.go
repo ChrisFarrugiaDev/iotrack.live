@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -39,7 +40,8 @@ func initializeCache() {
 		logger.Error("Failed to connect to Redis", zap.Error(err))
 		os.Exit(1)
 	}
-	logger.Info("Successfully connected to Redis")
+	port, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
+	logger.Info("Successfully connected to Redis", zap.Int("Port", port))
 
 	app.Cache = cache.NewCache(redisPool, os.Getenv("REDIS_PREFIX"))
 }

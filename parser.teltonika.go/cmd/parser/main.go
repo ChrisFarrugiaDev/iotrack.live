@@ -2,26 +2,40 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
+	"iotrack.live/internal/appcore"
 	"iotrack.live/internal/logger"
+	"iotrack.live/internal/rabbitmq"
 	"iotrack.live/internal/tcp"
 )
 
-var app App
+var app appcore.App
 
 func main() {
-	// Load environment and configuration
+
 	loadEnv()
 
-	logger.InitLogger()
-	defer logger.Log.Sync() // Ensure logs are flushed on exit
+	app.Log = logger.InitLogger()
 
 	initializeCache()
+
+	rabbitConfig, err := rabbitmq.LoadRabbitMQConfig("./rabbitmq_config.json")
+	if err != nil {
+		logger.Error("Failed to load RabbitMQ configuration file", zap.String("path", "./rabbitmq_config.json"), zap.Error(err))
+		os.Exit(1)
+	}
+
+	app.MQProducer = rabbitmq.NewRabbitMQProducer(rabbitConfig)
+	go app.MQProducer.Run()
+
+	// Start the message producer routine
+	go app.MQProducer.Run()
 
 	// Create a context that will be cancelled when an interrupt or termination signal is received.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -31,7 +45,8 @@ func main() {
 
 	// Start the TCP server in a new goroutine so main can keep control.
 	go func() {
-		tcp.StartServer(ctx)
+		tcpServer := tcp.NewTCPServer(&app)
+		tcpServer.Start(ctx)
 		close(serverClosed) // Signal that the server has shut down.
 	}()
 
@@ -57,4 +72,16 @@ func main() {
 			logger.Log.Info("Redis connection pool closed gracefully.")
 		}
 	}
+
+	// Gracefully close RabbitMQ producer
+	if app.MQProducer != nil {
+		app.MQProducer.Close()
+	}
+
+	// Ensure logs are flushed on exit
+	if err := logger.Log.Sync(); err != nil {
+		// Print to stderr as last resort
+		fmt.Fprintf(os.Stderr, "Logger sync failed: %v\n", err)
+	}
+
 }

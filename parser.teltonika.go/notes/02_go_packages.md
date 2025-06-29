@@ -25,3 +25,18 @@ https://github.com/joho/godotenv
 https://github.com/gomodule/redigo
 
     $ go get github.com/gomodule/redigo/redis
+
+<!-- --------------------------------------------------------------- -->
+
+### google/uuid
+
+https://github.com/google/uuid
+
+    $ go get github.com/google/uuid
+
+<!-- --------------------------------------------------------------- -->
+### amqp091-go
+
+https://github.com/rabbitmq/amqp091-go
+
+    $ go get github.com/rabbitmq/amqp091-go

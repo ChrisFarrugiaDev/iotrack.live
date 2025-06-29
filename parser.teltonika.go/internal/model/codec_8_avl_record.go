@@ -7,7 +7,6 @@ type Meta struct {
 
 // Codec8AvlRecord is the root structure for a decoded Codec8 packet
 type Codec8AvlRecord struct {
-	Meta       Meta    `json:"meta"`
 	Packet     string  `json:"packet"`
 	Preamble   uint32  `json:"preamble"`
 	DataLength uint32  `json:"data_length"`
@@ -17,10 +16,6 @@ type Codec8AvlRecord struct {
 	Content    Content `json:"content"`
 	Quantity2  uint8   `json:"quantity2"`
 	CRC        uint32  `json:"crc"`
-}
-
-func (m *Codec8AvlRecord) GetMeta() Meta {
-	return m.Meta
 }
 
 func (m *Codec8AvlRecord) GetCodecID() uint8 {

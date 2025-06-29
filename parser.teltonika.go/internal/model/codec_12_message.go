@@ -1,7 +1,6 @@
 package model
 
 type Codec12Message struct {
-	Meta       Meta   `json:"meta"`
 	Packet     string `json:"Packet"`
 	Preamble   uint32 `json:"Preamble"`
 	DataLength uint32 `json:"Data_Length"`
@@ -17,10 +16,6 @@ type GPRS struct {
 	IsResponse  bool   `json:"isResponse"`
 	Type        byte   `json:"type"`        // 6 = response
 	ResponseStr string `json:"responseStr"` // Decoded ASCII or "New value..." string
-}
-
-func (m *Codec12Message) GetMeta() Meta {
-	return m.Meta
 }
 
 func (m *Codec12Message) GetCodecID() uint8 {

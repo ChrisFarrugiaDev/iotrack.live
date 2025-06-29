@@ -10,11 +10,20 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"iotrack.live/internal/appcore"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/model"
 )
 
-func StartServer(ctx context.Context) {
+type TCPServer struct {
+	App *appcore.App
+}
+
+func NewTCPServer(app *appcore.App) *TCPServer {
+	return &TCPServer{App: app}
+}
+
+func (s *TCPServer) Start(ctx context.Context) {
 	port, err := strconv.Atoi(os.Getenv("TCP_PORT"))
 	if err != nil {
 		logger.Warn("TCP_PORT environment variable not set, using default 5027")
@@ -50,14 +59,14 @@ func StartServer(ctx context.Context) {
 			}
 		}
 		// Handle each connection in its own goroutine for concurrency.
-		go handleConnection(conn)
+		go s.handleConnection(conn)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func (s *TCPServer) handleConnection(conn net.Conn) {
 	deviceMeta := model.Meta{}
 	defer conn.Close()
-	defer handleTcpClose(&deviceMeta) // Optional: logs connection close for debugging.
+	defer s.handleTcpClose(&deviceMeta) // Optional: logs connection close for debugging.
 
 	timeoutSec, err := strconv.Atoi(os.Getenv("TCP_TIMEOUT"))
 	if err != nil {
@@ -73,14 +82,14 @@ func handleConnection(conn net.Conn) {
 		n, err := conn.Read(buf)
 		if err != nil {
 			if os.IsTimeout(err) {
-				handleTcpTimeout(&deviceMeta)
+				s.handleTcpTimeout(&deviceMeta)
 				return // Connection closed due to timeout
 			}
 			if err == io.EOF {
-				handleTcpEnd(&deviceMeta)
+				s.handleTcpEnd(&deviceMeta)
 				return // Connection closed by client
 			}
-			handleTcpError(&deviceMeta, err)
+			s.handleTcpError(&deviceMeta, err)
 			return
 		}
 
@@ -88,6 +97,6 @@ func handleConnection(conn net.Conn) {
 		conn.SetDeadline(time.Now().Add(time.Duration(timeoutSec) * time.Second))
 
 		// Process the received TCP data.
-		handleTcpData(buf[:n], conn, &deviceMeta)
+		s.handleTcpData(buf[:n], conn, &deviceMeta)
 	}
 }

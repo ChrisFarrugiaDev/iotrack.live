@@ -11,7 +11,7 @@ import (
 
 var Log *zap.Logger
 
-func InitLogger() {
+func InitLogger() *zap.Logger {
 	var logger *zap.Logger
 	mode := os.Getenv("LOG_MODE")
 
@@ -51,6 +51,8 @@ func InitLogger() {
 	}
 
 	Log = logger
+
+	return Log
 }
 
 func Info(msg string, fields ...zap.Field) {

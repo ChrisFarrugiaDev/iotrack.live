@@ -1,81 +1,66 @@
 package rabbitmq
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 )
-
-// Configuration for RabbitMQ connection
-type RabbitConfig struct {
-	URL            string
-	ReconnectDelay time.Duration
-	Queues         map[string]Queue
-	Exchanges      map[string]Exchange
-	RoutingKey     map[string]Bind
-}
 
 // ---------------------------------------------------------------------
 
 type Exchange struct {
-	Name    string
-	Type    string // "direct" or "fanout"
-	Durable bool
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Durable bool   `json:"durable"`
 }
 
 type Queue struct {
-	Name    string
-	Durable bool
+	Name    string `json:"name"`
+	Durable bool   `json:"durable"`
 }
 
-type Bind struct {
-	Exchange string
-	Queue    string
+type RoutingKey struct {
+	Name     string `json:"name"`
+	Exchange string `json:"exchange"`
+	Queue    string `json:"queue"`
 }
 
-// ---------------------------------------------------------------------
-
-var Exchanges = map[string]Exchange{
-	"teltonika": {
-		Name:    "teltonika",
-		Type:    "direct",
-		Durable: true,
-	},
-}
-
-var Queues = map[string]Queue{
-	"telemetry": {
-		Name:    "telemetry",
-		Durable: true,
-	},
-}
-
-var RoutingKeys = map[string]Bind{
-	"teltonika_telemetry": {
-		Exchange: "teltonika",
-		Queue:    "telemetry",
-	},
+// Configuration for RabbitMQ connection
+type RabbitMQConfig struct {
+	URL                string       `json:"url"`
+	ReconnectDelaySecs int          `json:"reconnect_delay_seconds"`
+	Exchanges          []Exchange   `json:"exchanges"`
+	Queues             []Queue      `json:"queues"`
+	RoutingKeys        []RoutingKey `json:"routing_keys"`
 }
 
 // ---------------------------------------------------------------------
 
-func SetupRabbitMQConfig() RabbitConfig {
-	// Setup your RabbitMQ configuration here
-	var rabbitmqPort string
+func LoadRabbitMQConfig(path string) (RabbitMQConfig, error) {
 
-	switch os.Getenv("GO_ENV") {
-	case "production":
-		rabbitmqPort = os.Getenv("RABBITMQ_PORT")
-	default:
-		rabbitmqPort = os.Getenv("RABBITMQ_PORT_EX")
-	}
-	urlStr := fmt.Sprintf("amqp://%s:%s@%s:%s/", os.Getenv("RABBITMQ_USER"), os.Getenv("RABBITMQ_PASSWORD"), os.Getenv("RABBITMQ_HOST"), rabbitmqPort)
-	return RabbitConfig{
-		URL:            urlStr,
-		ReconnectDelay: 10 * time.Second,
+	var cfg RabbitMQConfig
 
-		Queues:     Queues,
-		Exchanges:  Exchanges,
-		RoutingKey: RoutingKeys,
+	f, err := os.Open(path)
+	if err != nil {
+		return cfg, fmt.Errorf("failed to open config file: %w", err)
 	}
+
+	defer f.Close()
+
+	err = json.NewDecoder(f).Decode(&cfg)
+	if err != nil {
+		return cfg, fmt.Errorf("failed to decode JSON: %w", err)
+	}
+
+	urlStr := fmt.Sprintf(
+		"amqp://%s:%s@%s:%s/",
+		os.Getenv("RABBITMQ_USER"),
+		os.Getenv("RABBITMQ_PASSWORD"),
+		os.Getenv("RABBITMQ_HOST"),
+		os.Getenv("RABBITMQ_PORT"),
+	)
+
+	cfg.URL = urlStr
+
+	return cfg, nil
 }

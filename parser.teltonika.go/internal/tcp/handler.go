@@ -7,7 +7,6 @@ import (
 	"net"
 
 	"go.uber.org/zap"
-	"iotrack.live/internal/cache"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/model"
 	"iotrack.live/internal/teltonika"
@@ -18,7 +17,7 @@ import (
 
 // handleTcpData processes incoming TCP data packets from a Teltonika device.
 // It distinguishes between IMEI handshake (first packet) and data packets.
-func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 	cmd := []byte{}
 	ack := make([]byte, 4)
@@ -74,7 +73,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 	// Check if a Codec 12 command is currently in-flight for this device
 	inflightKey := "codec12:inflight-commands:" + deviceMeta.IMEI
-	inflightExist, err := cache.AppCache.Exists(inflightKey)
+	inflightExist, err := s.App.Cache.Exists(inflightKey)
 
 	if err != nil {
 		fail("Redis error while checking inflight command existence", err)
@@ -82,7 +81,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	}
 
 	if inflightExist {
-		rawJson, err := cache.AppCache.Get(inflightKey)
+		rawJson, err := s.App.Cache.Get(inflightKey)
 
 		if err != nil {
 			fail("Redis error while getting inflight command", err)
@@ -100,7 +99,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 		switch dataPacket.GetCodecType() {
 		case "GPRS messages":
 			// Codec 12 response: command completed successfully
-			cache.AppCache.Delete(inflightKey)
+			s.App.Cache.Delete(inflightKey)
 			codec12Message := dataPacket.(*model.Codec12Message)
 			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
 			// (Send to DB or sync cache later)
@@ -117,7 +116,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 				}
 
 			} else {
-				cache.AppCache.Delete(inflightKey)
+				s.App.Cache.Delete(inflightKey)
 				inflightCommand.SetToSync("failed", "no_response")
 			}
 		}
@@ -126,7 +125,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	// If no inflight command, check for pending commands for this device
 	pendingKey := "codec12:pending-commands:" + deviceMeta.IMEI
 	pendingExist := false
-	inflightExist, err = cache.AppCache.Exists(inflightKey)
+	inflightExist, err = s.App.Cache.Exists(inflightKey)
 
 	if err != nil {
 		fail("Redis error while checking inflight command existence (pending check)", err)
@@ -134,7 +133,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	}
 
 	if !inflightExist {
-		pendingExist, err = cache.AppCache.Exists(pendingKey)
+		pendingExist, err = s.App.Cache.Exists(pendingKey)
 		if err != nil {
 			fail("Redis error while checking pending command existence", err)
 			return
@@ -143,7 +142,7 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 
 	if pendingExist {
 
-		rawJson, err := cache.AppCache.LPop(pendingKey)
+		rawJson, err := s.App.Cache.LPop(pendingKey)
 		if err != nil {
 			fail("Redis error while popping pending command", err)
 			return
@@ -188,19 +187,41 @@ func handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
 	// ------------------- TODO: Data Forwarding --------------------
 	// If telemetry, forward to RabbitMQ/Redis for DB and UI consumption
 
-	// if codecID == 8 {
-	// 	a := dataPacket.(*model.Codec8AvlRecord)
-	// 	for _, i := range a.Content.AVL_Datas {
-	// 		fmt.Println(i.Timestamp)
-	// 	}
-	// }
+	if dataPacket.GetCodecType() == "AVL_Data" {
+
+		codec8Record := dataPacket.(*model.Codec8AvlRecord)
+		for _, avl := range codec8Record.Content.AVL_Datas {
+			telemetry := model.Telemetry{
+				IMEI:       deviceMeta.IMEI,
+				AssetID:    deviceMeta.AssetID,
+				Timestamp:  avl.Timestamp,
+				Priority:   avl.Priority,
+				Longitude:  avl.GPSelement.Longitude,
+				Latitude:   avl.GPSelement.Latitude,
+				Altitude:   avl.GPSelement.Altitude,
+				Angle:      avl.GPSelement.Angle,
+				Satellites: avl.GPSelement.Satellites,
+				Speed:      avl.GPSelement.Speed,
+				EventID:    avl.IOelement.EventID,
+				Elements:   avl.IOelement.Elements,
+			}
+			msg, _ := json.Marshal(telemetry)
+			s.App.MQProducer.SendDirectMessage("teltonika_telemetry", "teltonika", string(msg))
+
+			// TODO:  remove only for testing
+
+			if deviceMeta.IMEI == "867747078708748" {
+				s.App.MQProducer.SendDirectMessage("teltonika_tat240", "teltonika", string(msg))
+			}
+		}
+	}
 	// -- end ------------------------------------------------------
 }
 
 // ---------------------------------------------------------------------
 
 // handleTcpTimeout logs when a TCP connection times out.
-func handleTcpTimeout(deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpTimeout(deviceMeta *model.Meta) {
 	if deviceMeta.IMEI != "" {
 		logger.Debug("TCP connection timeout", zap.String("imei", deviceMeta.IMEI))
 	} else {
@@ -209,7 +230,7 @@ func handleTcpTimeout(deviceMeta *model.Meta) {
 }
 
 // handleTcpClose logs when a TCP connection is closed.
-func handleTcpClose(deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpClose(deviceMeta *model.Meta) {
 	if deviceMeta.IMEI != "" {
 		logger.Debug("TCP connection closed", zap.String("imei", deviceMeta.IMEI))
 	} else {
@@ -218,7 +239,7 @@ func handleTcpClose(deviceMeta *model.Meta) {
 }
 
 // handleTcpEnd logs when the remote end closes the TCP connection.
-func handleTcpEnd(deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpEnd(deviceMeta *model.Meta) {
 	if deviceMeta.IMEI != "" {
 		logger.Debug("TCP connection ended (remote closed)", zap.String("imei", deviceMeta.IMEI))
 	} else {
@@ -227,7 +248,7 @@ func handleTcpEnd(deviceMeta *model.Meta) {
 }
 
 // handleTcpError logs any errors that occur during TCP communication.
-func handleTcpError(deviceMeta *model.Meta, err error) {
+func (s *TCPServer) handleTcpError(deviceMeta *model.Meta, err error) {
 	if deviceMeta.IMEI != "" {
 		logger.Error("TCP error", zap.String("imei", deviceMeta.IMEI), zap.Error(err))
 	} else {
