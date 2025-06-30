@@ -21,3 +21,12 @@ npm install -D prisma
 npm install -D dotenv-cli
 
 <!-- --------------------------------------------------------------- -->
+
+
+### amqplib
+
+https://www.npmjs.com/package/amqplib
+
+    $ npm install amqplib
+
+<!-- --------------------------------------------------------------- -->
