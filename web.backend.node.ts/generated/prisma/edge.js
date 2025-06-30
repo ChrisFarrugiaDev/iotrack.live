@@ -137,7 +137,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/mnt/c/Chris/projects/iotrack.live-main/web.backend.node.ts/generated/prisma",
+      "value": "/home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live/web.backend.node.ts/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -153,11 +153,12 @@ const config = {
     "previewFeatures": [
       "multiSchema"
     ],
-    "sourceFilePath": "/mnt/c/Chris/projects/iotrack.live-main/web.backend.node.ts/prisma/schema.prisma",
+    "sourceFilePath": "/home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live/web.backend.node.ts/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../.env"
   },
   "relativePath": "../../prisma",
   "clientVersion": "6.10.1",

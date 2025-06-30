@@ -22,8 +22,8 @@ files_to_encrypt=(
   # .env.development  
   web.backend.node.ts/.env
   web.backend.node.ts/.env.development  
-  parser.teltonika.go/.env
-  parser.teltonika.go/.env.development  
+  teltonika.parser.go/.env
+  teltonika.parser.go/.env.development  
 )
 
 # Find and encrypt the files

@@ -23,8 +23,8 @@ files_to_decrypt=(
   .env.development.gpg  
   web.backend.node.ts/.env.gpg
   web.backend.node.ts/.env.development.gpg  
-  parser.teltonika.go/.env.gpg
-  parser.teltonika.go/.env.development.gpg  
+  teltonika.parser.go/.env.gpg
+  teltonika.parser.go/.env.development.gpg  
 )
 
 # Find and decrypt the files

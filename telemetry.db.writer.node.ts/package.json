@@ -1,0 +1,23 @@
+{
+  "name": "telemetry.db.writer.node.ts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "dev": "nodemon --ignore files dist/server.js nodemon-watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.7",
+    "dotenv-cli": "^8.0.0",
+    "prisma": "^6.10.1",
+    "typescript": "^5.8.3"
+  }
+}
