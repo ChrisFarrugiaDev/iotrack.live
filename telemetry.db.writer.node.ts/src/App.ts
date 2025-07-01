@@ -1,16 +1,73 @@
-class App {
-    private static _instance: App;
+import _env from "./config/env.config";
+import fs from 'fs/promises';
+import { ConsumerConfig, RabbitBatchConsumer } from './rabbitmq/consumer';
+import { logError } from './utils/logger-utils';
 
+
+class App {
+
+    private static _instance: App;
+    private consumer?: RabbitBatchConsumer;
+
+    // -----------------------------------------------------------------
 
     private constructor() {
         console.log("App instance created");
     }
+
+    // -----------------------------------------------------------------
 
     public static get instance(): App {
         if (!App._instance) {
             App._instance = new App();
         }
         return App._instance;
+    }
+
+    // -----------------------------------------------------------------
+
+    public async init() {
+
+        try {
+            const configData = await fs.readFile('./rabbitmq_config.json', 'utf8');
+            const config: ConsumerConfig = JSON.parse(configData);
+            
+            
+            config.url = `amqp://${_env.RABBITMQ_USER}:${_env.RABBITMQ_PASSWORD}@${_env.RABBITMQ_HOST}:${_env.RABBITMQ_PORT}/`;
+     
+            this.consumer = new RabbitBatchConsumer(config);
+            await this.consumer.start();
+
+        } catch (err) {
+            logError("! App.init !", err)
+        }
+    }
+
+    // -----------------------------------------------------------------
+
+    public async gracefulShutdown() {
+
+        console.log("Graceful shutdown initiated...");
+        
+        try {
+            // Close the RabbitMQ consumer/channel/connection if present
+            if (this.consumer && typeof this.consumer.close === 'function') {
+                await this.consumer.close();
+                console.log("RabbitMQ consumer closed.");
+            }
+            // Add shutdown of any other resources (db, redis, etc) here
+
+            process.exit(0);
+
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error("Error during shutdown:", err.message)
+            } else {
+                console.error("Non-Error thrown during shutdown:", err);
+            }
+
+            process.exit(1);
+        }
     }
 }
 
