@@ -28,5 +28,8 @@ npm install -D dotenv-cli
 https://www.npmjs.com/package/amqplib
 
     $ npm install amqplib
+    $ npm i @types/amqplib
+
+    npm install amqplib@latest @types/amqplib@latest
 
 <!-- --------------------------------------------------------------- -->

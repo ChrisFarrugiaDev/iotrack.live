@@ -4,8 +4,14 @@
     { "name": "teltonika", "type": "direct", "durable": true }
   ],
   "queues": [
-    { "name": "telemetry", "durable": true }
-
+    {
+      "name": "telemetry",
+      "durable": true,
+      "batch": {
+        "max_size": 500,
+        "max_wait_seconds": 10
+      }
+    }
   ],
   "routing_keys": [
     { "name": "teltonika_telemetry", "exchange": "teltonika", "queue": "telemetry" }

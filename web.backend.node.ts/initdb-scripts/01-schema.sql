@@ -39,3 +39,149 @@ CREATE TRIGGER set_updated_at
 BEFORE UPDATE ON teltonika.codec12_commands
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+
+
+
+-- ---------------------------------------------------------------------
+CREATE TABLE app.organizations (
+    id              BIGSERIAL PRIMARY KEY,                  -- Dev/admin-friendly, internal PK
+    uuid            UUID UNIQUE DEFAULT gen_random_uuid(),  -- Globally unique, use in APIs/relations
+
+    name            VARCHAR(128) NOT NULL,
+    description     TEXT,
+
+    parent_org_id   BIGINT REFERENCES app.organizations(id) ON DELETE SET NULL,
+    maps_api_key    VARCHAR(255),
+    can_inherit_key BOOLEAN DEFAULT TRUE,
+
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_organizations_name ON app.organizations (name);
+
+CREATE TRIGGER set_updated_at
+BEFORE UPDATE ON app.organizations
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+
+-- Root org (if not already present)
+INSERT INTO app.organizations (uuid, name)
+VALUES ('00000000-0000-0000-0000-000000000000', 'Root Org')
+ON CONFLICT (uuid) DO NOTHING;
+
+INSERT INTO app.organizations (uuid, name)
+VALUES ('11111111-1111-1111-1111-111111111111', 'Archive Org')
+ON CONFLICT (uuid) DO NOTHING;
+
+-- ------------------------------------
+
+
+CREATE TABLE app.assets (
+    id                BIGSERIAL PRIMARY KEY,
+    uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
+    organisation_uuid UUID NOT NULL DEFAULT '11111111-1111-1111-1111-111111111111'
+        REFERENCES app.organizations(uuid) ON DELETE SET DEFAULT
+    name              VARCHAR(128) NOT NULL,
+    asset_type        VARCHAR(32),
+    description       TEXT,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_assets_organisation_uuid ON app.assets (organisation_uuid);
+CREATE INDEX idx_assets_name ON app.assets (name);
+
+CREATE TRIGGER set_updated_at
+BEFORE UPDATE ON app.assets
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+
+
+-- ------------------------------------
+
+CREATE TABLE app.devices (
+    id                BIGSERIAL PRIMARY KEY,
+    uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
+
+    organisation_uuid UUID NOT NULL DEFAULT '11111111-1111-1111-1111-111111111111'
+        REFERENCES app.organizations(uuid) ON DELETE SET DEFAULT,
+
+    asset_uuid        UUID REFERENCES app.assets(uuid) ON DELETE SET NULL,
+
+    external_id       VARCHAR(64) NOT NULL,
+    external_id_type  VARCHAR(16) NOT NULL,
+    protocol          VARCHAR(32) NOT NULL,
+    vendor            VARCHAR(64),
+    model             VARCHAR(64),
+    description       TEXT,
+    registered_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes and triggers as before...
+CREATE UNIQUE INDEX idx_devices_idtype_org ON app.devices (external_id, external_id_type);
+CREATE UNIQUE INDEX idx_devices_uuid ON app.devices (uuid);
+CREATE INDEX idx_devices_organisation_uuid ON app.devices (organisation_uuid);
+CREATE INDEX idx_devices_asset_uuid ON app.devices (asset_uuid);
+
+CREATE TRIGGER set_updated_at
+BEFORE UPDATE ON app.devices
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+
+CREATE OR REPLACE FUNCTION check_device_asset_org_match()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- If asset_uuid is NOT NULL, check org UUIDs match
+    IF NEW.asset_uuid IS NOT NULL THEN
+        IF (SELECT organisation_uuid FROM app.assets WHERE uuid = NEW.asset_uuid) != NEW.organisation_uuid THEN
+            RAISE EXCEPTION 'Device and assigned asset must belong to the same organization';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_device_asset_org_match
+BEFORE INSERT OR UPDATE ON app.devices
+FOR EACH ROW
+EXECUTE FUNCTION check_device_asset_org_match();
+
+
+
+-- ---------------------------------------------------------------------
+
+CREATE TABLE teltonika.telemetry (
+    id                BIGSERIAL PRIMARY KEY,                         -- Internal dev/admin PK
+    device_id         BIGINT NOT NULL,                               -- Reference to app.devices(id)
+    asset_id          BIGINT,                                        -- Reference to app.assets(id), nullable
+    organisation_id   BIGINT,                                        -- Reference to app.organizations(id), nullable
+    timestamp         TIMESTAMPTZ NOT NULL,                          -- When event occurred (from device)
+    protocol          VARCHAR(32) NOT NULL,                          -- E.g. 'codec8', 'codec8e', 'codec12'
+    model             VARCHAR(64),                                   -- Device model, if known
+    telemetry         JSONB NOT NULL,                                -- Flexible data payload
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_teltonika_telemetry_device_id ON teltonika.telemetry (device_id);
+CREATE INDEX idx_teltonika_telemetry_asset_id ON teltonika.telemetry (asset_id);
+CREATE INDEX idx_teltonika_telemetry_org_id ON teltonika.telemetry (organisation_id);
+CREATE INDEX idx_teltonika_telemetry_timestamp ON teltonika.telemetry (timestamp);
+
+
+-- Convert table to hypertable (primary "partition" on timestamp):
+SELECT create_hypertable('teltonika.telemetry', 'timestamp');
+
+-- For fast device-specific queries
+CREATE INDEX idx_teltonika_telemetry_device_id ON teltonika.telemetry (device_id);
+
+-- For time-range queries (on top of the hypertable time index)
+CREATE INDEX idx_teltonika_telemetry_timestamp ON teltonika.telemetry (timestamp);
+
+-- For org/asset filters (if your queries need them)
+CREATE INDEX idx_teltonika_telemetry_asset_id ON teltonika.telemetry (asset_id);
+

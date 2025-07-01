@@ -78,3 +78,30 @@ SELECT maps_api_key FROM org_tree WHERE maps_api_key IS NOT NULL LIMIT 1;
     
 
 Let me know if you want example queries, sample migration scripts, or a JSON schema for API calls!
+
+
+```sql
+WITH RECURSIVE org_chain AS (
+    SELECT
+        uuid,
+        name,
+        parent_org_uuid
+    FROM app.organizations
+    WHERE uuid = :start_uuid  -- <-- replace with your org's uuid
+    UNION ALL
+    SELECT
+        o.uuid,
+        o.name,
+        o.parent_org_uuid
+    FROM app.organizations o
+    INNER JOIN org_chain oc ON o.uuid = oc.parent_org_uuid
+    WHERE o.uuid != o.parent_org_uuid  -- stop recursion at root
+)
+SELECT * FROM org_chain;
+How It Works:
+Start with any org (replace :start_uuid).
+```
+
+Follows the parent chain until reaching the root org (where uuid = parent_org_uuid).
+
+Lists the full ancestry up to the root.

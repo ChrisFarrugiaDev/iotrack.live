@@ -4,6 +4,7 @@ import { Server as ServerHttps } from "node:https";
 import express, { Express } from "express";
 import cors from "cors";
 import router from "./api/routes";
+import { logError } from "./utils/logger-utils";
 
 
 class App {
@@ -57,10 +58,15 @@ class App {
     }
     // -----------------------------------------------------------------
 
-    public start(httpPort = 80) {
-        this.httpServer = this.expressApp.listen(httpPort, () => {
-            console.log(`HTTP server listening on port ${httpPort}`)
-        });
+    public init(httpPort = 80) {
+        try {
+            this.httpServer = this.expressApp.listen(httpPort, () => {
+                console.log(`HTTP server listening on port ${httpPort}`)
+            });
+        } catch (err) {
+            logError("! App.init !", err)
+        }
+
     }
 
     // -----------------------------------------------------------------
