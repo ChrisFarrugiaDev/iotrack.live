@@ -1,0 +1,105 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["app", "teltonika"]
+}
+
+model assets {
+  id                BigInt        @id @default(autoincrement())
+  uuid              String?       @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organisation_uuid String        @default(dbgenerated("'11111111-1111-1111-1111-111111111111'::uuid")) @db.Uuid
+  name              String        @db.VarChar(128)
+  asset_type        String?       @db.VarChar(32)
+  description       String?
+  created_at        DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime      @default(now()) @db.Timestamptz(6)
+  organizations     organizations @relation(fields: [organisation_uuid], references: [uuid], onDelete: SetDefault, onUpdate: NoAction)
+  devices           devices[]
+
+  @@index([name], map: "idx_assets_name")
+  @@index([organisation_uuid], map: "idx_assets_organisation_uuid")
+  @@schema("app")
+}
+
+model devices {
+  id                BigInt        @id @default(autoincrement())
+  uuid              String?       @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organisation_uuid String        @default(dbgenerated("'11111111-1111-1111-1111-111111111111'::uuid")) @db.Uuid
+  asset_uuid        String?       @db.Uuid
+  external_id       String        @db.VarChar(64)
+  external_id_type  String        @db.VarChar(16)
+  protocol          String        @db.VarChar(32)
+  vendor            String?       @db.VarChar(64)
+  model             String?       @db.VarChar(64)
+  description       String?
+  registered_at     DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime      @default(now()) @db.Timestamptz(6)
+  assets            assets?       @relation(fields: [asset_uuid], references: [uuid], onUpdate: NoAction)
+  organizations     organizations @relation(fields: [organisation_uuid], references: [uuid], onDelete: SetDefault, onUpdate: NoAction)
+
+  @@unique([external_id, external_id_type], map: "idx_devices_idtype_org")
+  @@index([asset_uuid], map: "idx_devices_asset_uuid")
+  @@index([organisation_uuid], map: "idx_devices_organisation_uuid")
+  @@schema("app")
+}
+
+model organizations {
+  id                  BigInt          @id @default(autoincrement())
+  uuid                String?         @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String          @db.VarChar(128)
+  description         String?
+  parent_org_id       BigInt?
+  maps_api_key        String?         @db.VarChar(255)
+  can_inherit_key     Boolean?        @default(true)
+  created_at          DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime        @default(now()) @db.Timestamptz(6)
+  assets              assets[]
+  devices             devices[]
+  organizations       organizations?  @relation("organizationsToorganizations", fields: [parent_org_id], references: [id], onUpdate: NoAction)
+  other_organizations organizations[] @relation("organizationsToorganizations")
+
+  @@index([name], map: "idx_organizations_name")
+  @@schema("app")
+}
+
+model codec12_commands {
+  id           BigInt    @id @default(autoincrement())
+  uuid         String?   @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  imei         String    @db.VarChar(20)
+  command      String
+  status       String    @default("pending") @db.VarChar(20)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime  @default(now()) @db.Timestamptz(6)
+  sent_at      DateTime? @db.Timestamptz(6)
+  responded_at DateTime? @db.Timestamptz(6)
+  response     String?
+  retries      Int       @default(0)
+  comment      String?
+
+  @@schema("teltonika")
+}
+
+model telemetry {
+  id              BigInt   @default(autoincrement())
+  device_id       BigInt
+  asset_id        BigInt?
+  organisation_id BigInt?
+  timestamp       DateTime @db.Timestamptz(6)
+  protocol        String   @db.VarChar(32)
+  model           String?  @db.VarChar(64)
+  telemetry       Json
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([id, timestamp])
+  @@index([asset_id], map: "idx_teltonika_telemetry_asset_id")
+  @@index([device_id], map: "idx_teltonika_telemetry_device_id")
+  @@index([timestamp], map: "idx_teltonika_telemetry_timestamp")
+  @@index([timestamp(sort: Desc)])
+  @@schema("teltonika")
+}
