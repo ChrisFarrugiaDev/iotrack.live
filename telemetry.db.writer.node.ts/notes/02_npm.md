@@ -16,9 +16,9 @@ npm install dotenv
 
 
 
-npm install @prisma/client
-npm install -D prisma
-npm install -D dotenv-cli
+npm install @prisma/client;
+npm install -D prisma;
+npm install -D dotenv-cli;
 
 <!-- --------------------------------------------------------------- -->
 

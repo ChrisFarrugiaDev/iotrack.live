@@ -135,9 +135,63 @@ exports.Prisma.Codec12_commandsScalarFieldEnum = {
   comment: 'comment'
 };
 
+exports.Prisma.AssetsScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  organisation_uuid: 'organisation_uuid',
+  name: 'name',
+  asset_type: 'asset_type',
+  description: 'description',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.DevicesScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  organisation_uuid: 'organisation_uuid',
+  asset_uuid: 'asset_uuid',
+  external_id: 'external_id',
+  external_id_type: 'external_id_type',
+  protocol: 'protocol',
+  vendor: 'vendor',
+  model: 'model',
+  description: 'description',
+  registered_at: 'registered_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.OrganizationsScalarFieldEnum = {
+  id: 'id',
+  uuid: 'uuid',
+  name: 'name',
+  description: 'description',
+  parent_org_id: 'parent_org_id',
+  maps_api_key: 'maps_api_key',
+  can_inherit_key: 'can_inherit_key',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.TelemetryScalarFieldEnum = {
+  id: 'id',
+  device_id: 'device_id',
+  asset_id: 'asset_id',
+  organisation_id: 'organisation_id',
+  timestamp: 'timestamp',
+  protocol: 'protocol',
+  model: 'model',
+  telemetry: 'telemetry',
+  created_at: 'created_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -150,9 +204,19 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
-  codec12_commands: 'codec12_commands'
+  codec12_commands: 'codec12_commands',
+  assets: 'assets',
+  devices: 'devices',
+  organizations: 'organizations',
+  telemetry: 'telemetry'
 };
 
 /**

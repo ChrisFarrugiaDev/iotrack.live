@@ -82,7 +82,7 @@ CREATE TABLE app.assets (
     id                BIGSERIAL PRIMARY KEY,
     uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
     organisation_uuid UUID NOT NULL DEFAULT '11111111-1111-1111-1111-111111111111'
-        REFERENCES app.organizations(uuid) ON DELETE SET DEFAULT
+        REFERENCES app.organizations(uuid) ON DELETE SET DEFAULT,
     name              VARCHAR(128) NOT NULL,
     asset_type        VARCHAR(32),
     description       TEXT,
@@ -156,32 +156,39 @@ EXECUTE FUNCTION check_device_asset_org_match();
 -- ---------------------------------------------------------------------
 
 CREATE TABLE teltonika.telemetry (
-    id                BIGSERIAL PRIMARY KEY,                         -- Internal dev/admin PK
-    device_id         BIGINT NOT NULL,                               -- Reference to app.devices(id)
-    asset_id          BIGINT,                                        -- Reference to app.assets(id), nullable
-    organisation_id   BIGINT,                                        -- Reference to app.organizations(id), nullable
-    timestamp         TIMESTAMPTZ NOT NULL,                          -- When event occurred (from device)
-    protocol          VARCHAR(32) NOT NULL,                          -- E.g. 'codec8', 'codec8e', 'codec12'
-    model             VARCHAR(64),                                   -- Device model, if known
-    telemetry         JSONB NOT NULL,                                -- Flexible data payload
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id                BIGSERIAL,
+    device_id         BIGINT NOT NULL,
+    asset_id          BIGINT,
+    organisation_id   BIGINT,
+    timestamp         TIMESTAMPTZ NOT NULL,
+    protocol          VARCHAR(32) NOT NULL,
+    model             VARCHAR(64),
+    telemetry         JSONB NOT NULL,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (id, timestamp)
 );
 
-CREATE INDEX idx_teltonika_telemetry_device_id ON teltonika.telemetry (device_id);
-CREATE INDEX idx_teltonika_telemetry_asset_id ON teltonika.telemetry (asset_id);
-CREATE INDEX idx_teltonika_telemetry_org_id ON teltonika.telemetry (organisation_id);
-CREATE INDEX idx_teltonika_telemetry_timestamp ON teltonika.telemetry (timestamp);
-
-
--- Convert table to hypertable (primary "partition" on timestamp):
+-- Convert to hypertable (partitioned by timestamp)
 SELECT create_hypertable('teltonika.telemetry', 'timestamp');
 
--- For fast device-specific queries
+-- Useful indexes
 CREATE INDEX idx_teltonika_telemetry_device_id ON teltonika.telemetry (device_id);
-
--- For time-range queries (on top of the hypertable time index)
+CREATE INDEX idx_teltonika_telemetry_asset_id ON teltonika.telemetry (asset_id);
 CREATE INDEX idx_teltonika_telemetry_timestamp ON teltonika.telemetry (timestamp);
 
--- For org/asset filters (if your queries need them)
-CREATE INDEX idx_teltonika_telemetry_asset_id ON teltonika.telemetry (asset_id);
+-- Enable compression
+ALTER TABLE teltonika.telemetry SET (timescaledb.compress = true);
+
+-- Compression settings (segment by device or asset)
+ALTER TABLE teltonika.telemetry SET (timescaledb.compress_orderby = 'timestamp');
+ALTER TABLE teltonika.telemetry SET (timescaledb.compress_segmentby = 'device_id');
+
+-- Add a compression policy (example: compress rows older than 1 month)
+SELECT add_compression_policy('teltonika.telemetry', INTERVAL '1 month');
+
+-- Add a retention policy (example: drop rows older than 12 months)
+SELECT add_retention_policy('teltonika.telemetry', INTERVAL '12 months');
+
+-- Remove a retention policy (if needed)
+-- SELECT remove_retention_policy('teltonika.telemetry');
 
