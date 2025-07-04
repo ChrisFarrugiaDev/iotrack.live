@@ -1,4 +1,4 @@
-package model
+package apptypes
 
 type Codec12Message struct {
 	Packet     string `json:"Packet"`

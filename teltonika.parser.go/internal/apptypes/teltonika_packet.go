@@ -1,4 +1,4 @@
-package model
+package apptypes
 
 type TeltonikaPacket interface {
 	GetCodecID() uint8

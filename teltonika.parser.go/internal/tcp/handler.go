@@ -7,8 +7,8 @@ import (
 	"net"
 
 	"go.uber.org/zap"
+	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
-	"iotrack.live/internal/model"
 	"iotrack.live/internal/teltonika"
 	// "iotrack.live/internal/util"
 )
@@ -17,7 +17,7 @@ import (
 
 // handleTcpData processes incoming TCP data packets from a Teltonika device.
 // It distinguishes between IMEI handshake (first packet) and data packets.
-func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *apptypes.Meta) {
 
 	cmd := []byte{}
 	ack := make([]byte, 4)
@@ -49,7 +49,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *mode
 	codecID := int(packet[8])
 	logger.Debug("CodecID detected", zap.Int("CodecID", codecID))
 
-	var dataPacket model.TeltonikaPacket
+	var dataPacket apptypes.TeltonikaPacket
 	var err error
 
 	switch codecID {
@@ -88,7 +88,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *mode
 			return
 		}
 
-		var inflightCommand model.Codec12Command
+		var inflightCommand apptypes.Codec12Command
 		err = json.Unmarshal([]byte(rawJson), &inflightCommand)
 
 		if err != nil {
@@ -100,7 +100,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *mode
 		case "GPRS messages":
 			// Codec 12 response: command completed successfully
 			s.App.Cache.Delete(inflightKey)
-			codec12Message := dataPacket.(*model.Codec12Message)
+			codec12Message := dataPacket.(*apptypes.Codec12Message)
 			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
 			// (Send to DB or sync cache later)
 
@@ -148,7 +148,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *mode
 			return
 		}
 
-		var pendingCommand model.Codec12Command
+		var pendingCommand apptypes.Codec12Command
 
 		err = json.Unmarshal([]byte(rawJson), &pendingCommand)
 
@@ -189,9 +189,9 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *mode
 
 	if dataPacket.GetCodecType() == "AVL_Data" {
 
-		codec8Record := dataPacket.(*model.Codec8AvlRecord)
+		codec8Record := dataPacket.(*apptypes.Codec8AvlRecord)
 		for _, avl := range codec8Record.Content.AVL_Datas {
-			telemetry := model.Telemetry{
+			telemetry := apptypes.Telemetry{
 				IMEI:       deviceMeta.IMEI,
 				AssetID:    deviceMeta.AssetID,
 				Timestamp:  avl.Timestamp,
@@ -221,7 +221,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *mode
 // ---------------------------------------------------------------------
 
 // handleTcpTimeout logs when a TCP connection times out.
-func (s *TCPServer) handleTcpTimeout(deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpTimeout(deviceMeta *apptypes.Meta) {
 	if deviceMeta.IMEI != "" {
 		logger.Debug("TCP connection timeout", zap.String("imei", deviceMeta.IMEI))
 	} else {
@@ -230,7 +230,7 @@ func (s *TCPServer) handleTcpTimeout(deviceMeta *model.Meta) {
 }
 
 // handleTcpClose logs when a TCP connection is closed.
-func (s *TCPServer) handleTcpClose(deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpClose(deviceMeta *apptypes.Meta) {
 	if deviceMeta.IMEI != "" {
 		logger.Debug("TCP connection closed", zap.String("imei", deviceMeta.IMEI))
 	} else {
@@ -239,7 +239,7 @@ func (s *TCPServer) handleTcpClose(deviceMeta *model.Meta) {
 }
 
 // handleTcpEnd logs when the remote end closes the TCP connection.
-func (s *TCPServer) handleTcpEnd(deviceMeta *model.Meta) {
+func (s *TCPServer) handleTcpEnd(deviceMeta *apptypes.Meta) {
 	if deviceMeta.IMEI != "" {
 		logger.Debug("TCP connection ended (remote closed)", zap.String("imei", deviceMeta.IMEI))
 	} else {
@@ -248,7 +248,7 @@ func (s *TCPServer) handleTcpEnd(deviceMeta *model.Meta) {
 }
 
 // handleTcpError logs any errors that occur during TCP communication.
-func (s *TCPServer) handleTcpError(deviceMeta *model.Meta, err error) {
+func (s *TCPServer) handleTcpError(deviceMeta *apptypes.Meta, err error) {
 	if deviceMeta.IMEI != "" {
 		logger.Error("TCP error", zap.String("imei", deviceMeta.IMEI), zap.Error(err))
 	} else {

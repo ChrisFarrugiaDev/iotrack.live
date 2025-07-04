@@ -40,3 +40,24 @@ https://github.com/google/uuid
 https://github.com/rabbitmq/amqp091-go
 
     $ go get github.com/rabbitmq/amqp091-go
+
+<!-- --------------------------------------------------------------- -->
+
+### jackc/pgx
+
+https://github.com/jackc/pgx
+
+    go get github.com/jackc/pgx/v5
+    go get github.com/jackc/pgx/v5/pgxpool
+	go get github.com/jackc/pgx/v5/stdlib
+
+<!-- --------------------------------------------------------------- -->
+
+### upper/db
+
+https://upper.io/v4/    
+
+    go get github.com/upper/db/v4
+    go get github.com/upper/db/v4/adapter/postgresql
+
+<!-- --------------------------------------------------------------- -->

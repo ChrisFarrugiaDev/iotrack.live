@@ -4,11 +4,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"iotrack.live/internal/model"
+	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/util"
 )
 
-func ParseCodec12(data []byte) (*model.Codec12Message, error) {
+func ParseCodec12(data []byte) (*apptypes.Codec12Message, error) {
 	offset := 0
 
 	// Check minimum length for header, type, response size, CRC
@@ -16,7 +16,7 @@ func ParseCodec12(data []byte) (*model.Codec12Message, error) {
 		return nil, err
 	}
 
-	packet := model.Codec12Message{}
+	packet := apptypes.Codec12Message{}
 	packet.Packet = hex.EncodeToString(data)
 
 	packet.Preamble = util.BytesToUint32(data[offset:])
@@ -61,7 +61,7 @@ func ParseCodec12(data []byte) (*model.Codec12Message, error) {
 	packet.CRC = crc
 	packet.Quantity2 = quantity2
 	packet.CodecType = "GPRS messages"
-	packet.Content = model.GPRS{
+	packet.Content = apptypes.GPRS{
 		IsResponse:  true,
 		Type:        typ,
 		ResponseStr: respStr,
