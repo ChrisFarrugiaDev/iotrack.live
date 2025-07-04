@@ -1,4 +1,4 @@
-package model
+package apptypes
 
 type Meta struct {
 	IMEI    string  `json:"imei"`

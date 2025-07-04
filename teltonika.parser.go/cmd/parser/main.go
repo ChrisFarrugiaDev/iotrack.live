@@ -31,10 +31,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	app.MQProducer = rabbitmq.NewRabbitMQProducer(rabbitConfig)
-	go app.MQProducer.Run()
+	// Initialize database connection
+	initializeDatabase()
 
 	// Start the message producer routine
+	app.MQProducer = rabbitmq.NewRabbitMQProducer(rabbitConfig)
 	go app.MQProducer.Run()
 
 	// Create a context that will be cancelled when an interrupt or termination signal is received.
@@ -63,7 +64,7 @@ func main() {
 		logger.Log.Warn("TCP server shutdown timeout - forcing exit.")
 	}
 
-	// Gracefully close Redis pool
+	// Close Redis
 	if app.Cache != nil {
 		err := app.Cache.Close()
 		if err != nil {
@@ -73,9 +74,15 @@ func main() {
 		}
 	}
 
-	// Gracefully close RabbitMQ producer
+	// Close RabbitMQ
 	if app.MQProducer != nil {
 		app.MQProducer.Close()
+	}
+
+	// Close DB
+	if app.DB != nil {
+		app.DB.Close()
+		logger.Log.Info("Database connection pool closed gracefully.")
 	}
 
 	// Ensure logs are flushed on exit

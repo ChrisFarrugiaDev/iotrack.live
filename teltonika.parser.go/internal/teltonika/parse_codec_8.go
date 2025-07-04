@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"iotrack.live/internal/model"
+	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/util"
 )
 
-func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
+func ParseCodec8(data []byte) (*apptypes.Codec8AvlRecord, error) {
 
 	offset := 0
 
@@ -19,7 +19,7 @@ func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
 		return nil, err
 	}
 
-	packet := model.Codec8AvlRecord{}
+	packet := apptypes.Codec8AvlRecord{}
 
 	// Save hex string for full packet
 	packet.Packet = hex.EncodeToString(data)
@@ -35,7 +35,7 @@ func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
 	packet.Quantity1 = data[offset]
 	offset += 1
 
-	avlDatas := make([]model.AvlData, 0, packet.Quantity1)
+	avlDatas := make([]apptypes.AvlData, 0, packet.Quantity1)
 
 	// 2. Parse each AVL record (skeleton, you’ll fill details below)
 
@@ -45,7 +45,7 @@ func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
 			return nil, err
 		}
 
-		avl := model.AvlData{}
+		avl := apptypes.AvlData{}
 		// Timestamp (8 bytes, ms since epoch)
 		ts := util.BytesToUint64(data[offset:])
 		avl.Timestamp = time.UnixMilli(int64(ts)).UTC().Format(time.RFC3339Nano)
@@ -56,7 +56,7 @@ func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
 		offset += 1
 
 		// --- GPSelement (15 bytes: 4+4+2+2+1+2)
-		gps := model.GPSelement{}
+		gps := apptypes.GPSelement{}
 		longitudeRaw := int32(util.BytesToUint32(data[offset : offset+4]))
 		gps.Longitude = float64(longitudeRaw) / 10000000
 		offset += 4
@@ -74,7 +74,7 @@ func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
 		avl.GPSelement = gps
 
 		// --- IOelement (start: Event ID + N Total)
-		ioElem := model.IOelement{}
+		ioElem := apptypes.IOelement{}
 		ioElem.EventID = int(data[offset])
 		offset += 1
 		ioElem.ElementCount = int(data[offset])
@@ -158,7 +158,7 @@ func ParseCodec8(data []byte) (*model.Codec8AvlRecord, error) {
 	packet.CRC = util.BytesToUint32(data[offset:])
 	offset += 4
 
-	packet.Content = model.Content{AVL_Datas: avlDatas}
+	packet.Content = apptypes.Content{AVL_Datas: avlDatas}
 
 	// Final check
 	if offset != len(data) {

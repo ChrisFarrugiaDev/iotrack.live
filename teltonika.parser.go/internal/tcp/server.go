@@ -11,8 +11,8 @@ import (
 
 	"go.uber.org/zap"
 	"iotrack.live/internal/appcore"
+	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
-	"iotrack.live/internal/model"
 )
 
 type TCPServer struct {
@@ -64,7 +64,7 @@ func (s *TCPServer) Start(ctx context.Context) {
 }
 
 func (s *TCPServer) handleConnection(conn net.Conn) {
-	deviceMeta := model.Meta{}
+	deviceMeta := apptypes.Meta{}
 	defer conn.Close()
 	defer s.handleTcpClose(&deviceMeta) // Optional: logs connection close for debugging.
 

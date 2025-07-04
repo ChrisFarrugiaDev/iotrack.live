@@ -1,4 +1,4 @@
-package model
+package apptypes
 
 type Telemetry struct {
 	IMEI       string         `json:"imei"`
