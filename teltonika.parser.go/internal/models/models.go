@@ -18,6 +18,7 @@ type Models struct {
 	// Add your model fields here, e.g.:
 	// Device DeviceModel
 	// User   UserModel
+	AppDevice AppDevice
 }
 
 // AppModels is a global instance for sharing initialized models.

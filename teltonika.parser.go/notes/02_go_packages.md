@@ -34,6 +34,15 @@ https://github.com/google/uuid
 
     $ go get github.com/google/uuid
 
+    to remove it:
+    go get github.com/google/uuid@none
+
+
+### GoWebProd/uuid7
+
+https://pkg.go.dev/github.com/GoWebProd/uuid7
+    go get github.com/GoWebProd/uuid7
+
 <!-- --------------------------------------------------------------- -->
 ### amqp091-go
 

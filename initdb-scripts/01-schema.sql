@@ -101,21 +101,27 @@ EXECUTE FUNCTION update_timestamp();
 
 
 -- ------------------------------------
+-- create the ENUM type for status
+
+CREATE TYPE device_status AS ENUM ('new', 'active', 'disabled', 'retired');
 
 CREATE TABLE app.devices (
     id                BIGSERIAL PRIMARY KEY,
     uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
 
+    organisation_id   BIGINT, 
     organisation_uuid UUID NOT NULL DEFAULT '11111111-1111-1111-1111-111111111111'
         REFERENCES app.organizations(uuid) ON DELETE SET DEFAULT,
 
+    asset_id          BIGINT REFERENCES app.assets(id) ON DELETE SET NULL,
     asset_uuid        UUID REFERENCES app.assets(uuid) ON DELETE SET NULL,
 
     external_id       VARCHAR(64) NOT NULL,
     external_id_type  VARCHAR(16) NOT NULL,
-    protocol          VARCHAR(32) NOT NULL,
+    protocol          VARCHAR(32),
     vendor            VARCHAR(64),
     model             VARCHAR(64),
+    status            device_status NOT NULL DEFAULT 'new',
     description       TEXT,
     registered_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -126,6 +132,7 @@ CREATE UNIQUE INDEX idx_devices_idtype_org ON app.devices (external_id, external
 CREATE UNIQUE INDEX idx_devices_uuid ON app.devices (uuid);
 CREATE INDEX idx_devices_organisation_uuid ON app.devices (organisation_uuid);
 CREATE INDEX idx_devices_asset_uuid ON app.devices (asset_uuid);
+CREATE INDEX idx_devices_status ON app.devices (status);
 
 CREATE TRIGGER set_updated_at
 BEFORE UPDATE ON app.devices
@@ -145,6 +152,24 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION set_org_id_from_uuid()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- If organisation_id is not provided, get it from organisation_uuid
+    IF NEW.organisation_id IS NULL THEN
+        SELECT id INTO NEW.organisation_id
+        FROM app.organizations
+        WHERE uuid = NEW.organisation_uuid;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_org_id_from_uuid
+BEFORE INSERT OR UPDATE ON app.devices
+FOR EACH ROW
+EXECUTE FUNCTION set_org_id_from_uuid();
 
 CREATE TRIGGER trg_check_device_asset_org_match
 BEFORE INSERT OR UPDATE ON app.devices

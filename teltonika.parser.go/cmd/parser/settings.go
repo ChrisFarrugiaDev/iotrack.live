@@ -15,18 +15,33 @@ import (
 
 // ---------------------------------------------------------------------
 
+// loadEnv loads environment variables from a .env file if not running in Docker.
 var envPath = "./"
 
 func loadEnv() error {
+
+	os.Setenv("TZ", "UTC")
+
+	// Check for DOCKERIZED (set as env in Docker Compose)
+	if os.Getenv("DOCKERIZED") == "true" {
+		// In Docker, assume envs are passed by Docker and skip loading .env files.
+		return nil
+	}
+
 	env := os.Getenv("GO_ENV")
-	var err error
+	var filename string
 
 	switch env {
 	case "production":
-		err = godotenv.Load(fmt.Sprintf("%s.env", envPath))
+		filename = ".env"
 	default:
-		err = godotenv.Load(fmt.Sprintf("%s.env.development", envPath)) // Load development environment
+		filename = ".env.development"
+	}
 
+	fullPath := fmt.Sprintf("%s%s", envPath, filename)
+	err := godotenv.Load(fullPath)
+	if err != nil {
+		fmt.Printf("[envConfig] WARNING: Env file does not exist at: %s\n", fullPath)
 	}
 
 	return err

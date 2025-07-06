@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
+	"iotrack.live/internal/models"
 	"iotrack.live/internal/teltonika"
 	// "iotrack.live/internal/util"
 )
@@ -37,7 +38,45 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			return
 		}
 
-		deviceMeta.IMEI = imei
+		currentDevice, ok := s.App.Devices[imei]
+
+		// -- If device not found in cache, create it in DB and cache
+		if !ok {
+			newDevice := &models.AppDevice{
+				ExternalID:     imei,
+				ExternalIDType: "imei",
+			}
+			vendor := "teltonika"
+			newDevice.Vendor = &vendor
+			newDevice.UUID = s.App.UUID.Next().String()
+			newDevice.Status = "new"
+
+			// Persist to DB
+			newDevice, err = s.App.Models.AppDevice.Create(newDevice)
+			if err != nil {
+				logger.Error("Failed to create device in DB", zap.Error(err))
+				conn.Write([]byte{0x00})
+				return
+			}
+
+			// Update in-memory cache
+			if err := s.App.Cache.HSet("devices", imei, newDevice); err != nil {
+				logger.Error("Failed to cache new device", zap.Error(err))
+				conn.Write([]byte{0x00})
+				return
+			}
+
+			currentDevice = newDevice
+		}
+
+		// -- Build deviceMeta for downstream processing
+		deviceMeta.IMEI = currentDevice.ExternalID
+		deviceMeta.OrganisationID = currentDevice.OrganisationID
+
+		if currentDevice.AssetID != nil {
+			deviceMeta.AssetID = currentDevice.AssetID
+		}
+
 		// Positive ACK
 		conn.Write([]byte{0x01})
 		return
@@ -192,18 +231,19 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		codec8Record := dataPacket.(*apptypes.Codec8AvlRecord)
 		for _, avl := range codec8Record.Content.AVL_Datas {
 			telemetry := apptypes.Telemetry{
-				IMEI:       deviceMeta.IMEI,
-				AssetID:    deviceMeta.AssetID,
-				Timestamp:  avl.Timestamp,
-				Priority:   avl.Priority,
-				Longitude:  avl.GPSelement.Longitude,
-				Latitude:   avl.GPSelement.Latitude,
-				Altitude:   avl.GPSelement.Altitude,
-				Angle:      avl.GPSelement.Angle,
-				Satellites: avl.GPSelement.Satellites,
-				Speed:      avl.GPSelement.Speed,
-				EventID:    avl.IOelement.EventID,
-				Elements:   avl.IOelement.Elements,
+				IMEI:           deviceMeta.IMEI,
+				AssetID:        deviceMeta.AssetID,
+				OrganisationID: deviceMeta.OrganisationID,
+				Timestamp:      avl.Timestamp,
+				Priority:       avl.Priority,
+				Longitude:      avl.GPSelement.Longitude,
+				Latitude:       avl.GPSelement.Latitude,
+				Altitude:       avl.GPSelement.Altitude,
+				Angle:          avl.GPSelement.Angle,
+				Satellites:     avl.GPSelement.Satellites,
+				Speed:          avl.GPSelement.Speed,
+				EventID:        avl.IOelement.EventID,
+				Elements:       avl.IOelement.Elements,
 			}
 			msg, _ := json.Marshal(telemetry)
 			s.App.MQProducer.SendDirectMessage("teltonika_telemetry", "teltonika", string(msg))

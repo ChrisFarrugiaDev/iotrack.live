@@ -1,8 +1,9 @@
 package apptypes
 
 type Meta struct {
-	IMEI    string  `json:"imei"`
-	AssetID *string `json:"asset_id,omitempty"` // pointer if asset_id can be missing
+	IMEI           string `json:"imei"`
+	AssetID        *int64 `json:"asset_id,omitempty"`
+	OrganisationID int64  `json:"organisation_id"`
 }
 
 // Codec8AvlRecord is the root structure for a decoded Codec8 packet

@@ -9,6 +9,7 @@ import (
 )
 
 func Test_loadEnv(t *testing.T) {
+
 	envPath = "../../"
 	t.Run("basic env load", func(t *testing.T) {
 

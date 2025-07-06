@@ -23,3 +23,4 @@ ssh-add ~/.ssh/chris_farrugia_dev_git/chris_farrugia_dev_git
 chatgpt setions:
 https://chatgpt.com/c/684868ac-01b8-8013-9c5f-4ac0033a3744
 https://chatgpt.com/c/68433197-4d68-8013-a554-b6dbe783acc5
+https://chatgpt.com/c/685d4c36-9530-8013-89eb-10c1b5f4b8eb

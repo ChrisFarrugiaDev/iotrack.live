@@ -1,5 +1,5 @@
 import amqp, { ChannelModel, Channel, ConsumeMessage } from "amqplib";
-import { logError } from "../utils/logger-utils";
+import { logError, logOutput } from "../utils/logger-utils";
 
 // ---------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ export class RabbitBatchConsumer {
         this.channel = await this.connection.createChannel();
 
         this.connection.on('close', async () => {
-            logError("RabbitMQ connection closed. Reconnecting...");
+            logOutput("RabbitMQ connection closed. Reconnecting...");
 
             setTimeout(() => this.start(), this.config.reconnect_delay_seconds * 1000);
 

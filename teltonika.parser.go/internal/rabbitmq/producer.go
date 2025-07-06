@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/GoWebProd/uuid7"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"iotrack.live/internal/logger"
@@ -23,6 +22,8 @@ type RabbitMQProducer struct {
 	exchangesMap   map[string]Exchange
 	queuesMap      map[string]Queue
 	routingKeysMap map[string]RoutingKey
+
+	UUID *uuid7.Generator
 }
 
 var AppRabbitMQProducer *RabbitMQProducer
@@ -34,6 +35,7 @@ func NewRabbitMQProducer(config RabbitMQConfig) *RabbitMQProducer {
 		exchangesMap:   make(map[string]Exchange),
 		queuesMap:      make(map[string]Queue),
 		routingKeysMap: make(map[string]RoutingKey),
+		UUID:           uuid7.New(),
 	}
 
 	for _, ex := range config.Exchanges {
@@ -163,7 +165,7 @@ func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(message),
-			MessageId:   uuid.NewString(),
+			MessageId:   p.UUID.Next().String(),
 		},
 	)
 
@@ -202,7 +204,7 @@ func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, messa
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(message),
-			MessageId:   uuid.NewString(),
+			MessageId:   p.UUID.Next().String(),
 		},
 	)
 
