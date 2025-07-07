@@ -15,7 +15,7 @@ type App struct {
 	MQProducer *rabbitmq.RabbitMQProducer
 	DB         *pgxpool.Pool
 	Models     models.Models
-	Devices    map[string]*models.AppDevice
+	Devices    map[string]*models.Device
 	MU         sync.Mutex
 	UUID       *uuid7.Generator
 }

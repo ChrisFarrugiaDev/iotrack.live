@@ -22,14 +22,14 @@ func NewDeviceService(app *appcore.App) *DeviceService {
 
 func (s *DeviceService) SyncDevicesFromDBToRedis() error {
 	// Fetch all devices from the database
-	devices, err := s.App.Models.AppDevice.GetAllDevices()
+	devices, err := s.App.Models.Device.GetAllDevices()
 	if err != nil {
 		logger.Error("failed to get devices from database", zap.Error(err))
 		return fmt.Errorf("failed to get devices from database: %w", err)
 	}
 
 	// Map devices by ExternalID
-	devicesMap := make(map[string]*models.AppDevice)
+	devicesMap := make(map[string]*models.Device)
 	for _, d := range devices {
 		devicesMap[d.ExternalID] = d
 	}
@@ -60,11 +60,11 @@ func (s *DeviceService) SyncDevicesFromRedisToVar() error {
 		return fmt.Errorf("failed to fetch devices from Redis: %w", err)
 	}
 
-	devices := make(map[string]*models.AppDevice)
+	devices := make(map[string]*models.Device)
 	var unmarshallErrCount int
 
 	for deviceID, jsonItem := range items {
-		var d models.AppDevice
+		var d models.Device
 		if err := json.Unmarshal([]byte(jsonItem), &d); err != nil {
 			logger.Error("failed to unmarshal device from Redis", zap.String("device_id", deviceID), zap.Error(err))
 			unmarshallErrCount++

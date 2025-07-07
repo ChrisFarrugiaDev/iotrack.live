@@ -42,7 +42,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 
 		// -- If device not found in cache, create it in DB and cache
 		if !ok {
-			newDevice := &models.AppDevice{
+			newDevice := &models.Device{
 				ExternalID:     imei,
 				ExternalIDType: "imei",
 			}
@@ -50,9 +50,10 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			newDevice.Vendor = &vendor
 			newDevice.UUID = s.App.UUID.Next().String()
 			newDevice.Status = "new"
+			newDevice.Protocol = "4G"
 
 			// Persist to DB
-			newDevice, err = s.App.Models.AppDevice.Create(newDevice)
+			newDevice, err = s.App.Models.Device.Create(newDevice)
 			if err != nil {
 				logger.Error("Failed to create device in DB", zap.Error(err))
 				conn.Write([]byte{0x00})

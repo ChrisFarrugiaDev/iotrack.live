@@ -47,7 +47,7 @@ func (rc *RedisCache) HGetAll(mapKey string) (map[string]string, error) {
 // ---------------------------------------------------------------------
 func (rc *RedisCache) ReplaceDeviceHashWithLua(
 	key string,
-	devices map[string]*models.AppDevice,
+	devices map[string]*models.Device,
 ) error {
 
 	conn := rc.Conn.Get()
