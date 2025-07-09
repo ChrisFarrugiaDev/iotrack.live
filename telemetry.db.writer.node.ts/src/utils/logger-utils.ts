@@ -13,9 +13,6 @@ const colors: Record<string, string> = {
 const isDevelopment: boolean = Boolean(Number(process.env.DEV_LOGGER_ON));
 
 
-
-
-
 function getLogDetails() {
     const stack = new Error().stack;
     const stackLines = stack?.split("\n")!;
@@ -54,13 +51,13 @@ export function logError(message:string, error: unknown = null) {
     console.error(`${dateTime} ${getLogDetails()} : ${message}\n`, error);
 }
 
-export function logOutput(message: string, col: string='reset') {
-    console.log(`${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
+export function logInfo(message: string, col: string='reset') {
+    logInfo(`${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
     
 }
 
 export function logDev(message: string, col: string='blue') {
     if (isDevelopment) {
-        console.log(`${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
+        logInfo(`${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
     }
 }

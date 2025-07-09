@@ -1,7 +1,7 @@
 import _env from "./config/env.config";
 import fs from 'fs/promises';
 import { ConsumerConfig, RabbitBatchConsumer } from './rabbitmq/consumer';
-import { logError } from './utils/logger-utils';
+import { logError, logInfo } from './utils/logger-utils';
 
 
 class App {
@@ -12,7 +12,7 @@ class App {
     // -----------------------------------------------------------------
 
     private constructor() {
-        console.log("App instance created");
+        logInfo("App instance created");
     }
 
     // -----------------------------------------------------------------
@@ -47,13 +47,13 @@ class App {
 
     public async gracefulShutdown() {
 
-        console.log("Graceful shutdown initiated...");
+        logInfo("Graceful shutdown initiated...");
         
         try {
             // Close the RabbitMQ consumer/channel/connection if present
             if (this.consumer && typeof this.consumer.close === 'function') {
                 await this.consumer.close();
-                console.log("RabbitMQ consumer closed.");
+                logInfo("RabbitMQ consumer closed.");
             }
             // Add shutdown of any other resources (db, redis, etc) here
 
@@ -61,9 +61,9 @@ class App {
 
         } catch (err: unknown) {
             if (err instanceof Error) {
-                console.error("Error during shutdown:", err.message)
+                logError("Error during shutdown", err.message)
             } else {
-                console.error("Non-Error thrown during shutdown:", err);
+                logError("Non-Error thrown during shutdown", err);
             }
 
             process.exit(1);

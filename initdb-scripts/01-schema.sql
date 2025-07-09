@@ -100,7 +100,7 @@ EXECUTE FUNCTION update_timestamp();
 -- ------------------------------------
 -- create the ENUM type for status
 
-CREATE TYPE device_status AS ENUM ('new', 'active', 'disabled', 'retired');
+-- CREATE TYPE device_status AS ENUM ('new', 'active', 'disabled', 'retired');
 
 CREATE TABLE app.devices (
     id                BIGSERIAL PRIMARY KEY,
@@ -115,7 +115,7 @@ CREATE TABLE app.devices (
     protocol          VARCHAR(32),
     vendor            VARCHAR(64),
     model             VARCHAR(64),
-    status            device_status NOT NULL DEFAULT 'new',
+    status VARCHAR CHECK (status IN ('new', 'active', 'disabled', 'retired')) NOT NULL DEFAULT 'new',
     description       TEXT,
     registered_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()

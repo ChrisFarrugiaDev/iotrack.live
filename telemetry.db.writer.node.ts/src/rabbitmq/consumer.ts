@@ -1,5 +1,5 @@
 import amqp, { ChannelModel, Channel, ConsumeMessage } from "amqplib";
-import { logError, logOutput } from "../utils/logger-utils";
+import { logError, logInfo } from "../utils/logger-utils";
 
 // ---------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ export class RabbitBatchConsumer {
         this.channel = await this.connection.createChannel();
 
         this.connection.on('close', async () => {
-            logOutput("RabbitMQ connection closed. Reconnecting...");
+            logInfo("RabbitMQ connection closed. Reconnecting...");
 
             setTimeout(() => this.start(), this.config.reconnect_delay_seconds * 1000);
 
@@ -111,7 +111,7 @@ export class RabbitBatchConsumer {
         try {
             // ---- Insert your DB bulk write logic here ----
             const data = messages.map((msg) => JSON.parse(msg.content.toString()));
-            console.log(`[${queueName}] Processing batch of ${messages.length} messages`);
+            logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
             // await db.insertMany(data);
 
             // Ack all processed messages
@@ -124,7 +124,7 @@ export class RabbitBatchConsumer {
         } catch (err) {
             // Nack all (requeue) on failure
             messages.forEach((msg) => this.channel.nack(msg, false, true));
-            console.error(`Error processing batch for queue ${queueName}:`, err);
+            logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
         }
         this.batches[queueName] = [];
     }

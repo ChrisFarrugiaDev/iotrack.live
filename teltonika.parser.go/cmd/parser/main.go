@@ -51,6 +51,8 @@ func main() {
 
 	// Create a context that will be cancelled when an interrupt or termination signal is received.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	// stop() will stop the context from listening for further OS signals
 	defer stop()
 
 	serverClosed := make(chan struct{})
