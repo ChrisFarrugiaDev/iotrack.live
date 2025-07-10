@@ -5,7 +5,11 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "dev": "nodemon --ignore files dist/server.js nodemon-watch"
+    "dev": "nodemon --ignore files dist/server.js nodemon-watch",
+    "concurrently": "concurrently \"npm run cluster:1\" \"npm run cluster:2\"",
+    "cluster:1": "CONSUMER_NAME=worker1 nodemon dist/server.js",
+    "cluster:2": "CONSUMER_NAME=worker2 nodemon dist/server.js",
+    "concurrently2": "concurrently \"nodemon dist/server.js\" \"nodemon dist/server.js\" \"nodemon dist/server.js\""
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +22,7 @@
   "devDependencies": {
     "@types/amqplib": "^0.10.7",
     "@types/node": "^24.0.7",
+    "concurrently": "^9.2.0",
     "dotenv-cli": "^8.0.0",
     "prisma": "^6.11.1",
     "typescript": "^5.8.3"

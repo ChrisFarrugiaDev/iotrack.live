@@ -25,25 +25,15 @@ export type ConsumerConfig = {
 
 export class RabbitBatchConsumer {
 
-    // Holds the main connection object for RabbitMQ (from amqplib)
-    private connection!: ChannelModel;
+    private connection!: ChannelModel;                                    // RabbitMQ connection
+    private channel!: Channel;                                          // Channel for all queues
 
-    // Holds the channel object for RabbitMQ—used to send/receive messages
-    private channel!: Channel;
+    private batches: Record<string, ConsumeMessage[]> = {};             // Message buffers per queue
+    private timers: Record<string, NodeJS.Timeout> = {};                // Flush timers per queue
 
-    // For each queue, this stores an array (buffer) of unprocessed messages
-    private batches: Record<string, ConsumeMessage[]> = {};
-
-    // For each queue, this stores the timeout object for the current batch timer
-    private timers: Record<string, NodeJS.Timeout> = {};
-
-    // Stores the consumer config passed to this class
     private config: ConsumerConfig;
-    // Stores just the queue configs for easy access
     private queueConfigs: QueueConfig[];
 
-    // This flag ensures that only one flushBatch runs at a time per queue
-    private flushing: Record<string, boolean> = {};
 
     // -----------------------------------------------------------------
 
@@ -114,70 +104,42 @@ export class RabbitBatchConsumer {
 
     // -----------------------------------------------------------------
 
-    /**
-     * Processes up to max_size messages for a queue, saves them to the DB,
-     * then acknowledges them in RabbitMQ. Called when batch is full or timer fires.
-     */
-    private async flushBatch(queueName: string, batch: BatchSettings) {
-        // Prevent multiple concurrent flushes for the same queue
-        if (this.flushing?.[queueName]) {
-            logInfo(`[${queueName}] flushBatch: Already flushing, skipping.`);
-            return;
-        }
-        this.flushing[queueName] = true;
+    // Process and acknowledge (or requeue) all messages in the batch
+
+     private async flushBatch(queueName: string, batch: BatchSettings) {
+        const messages = this.batches[queueName];
+        if (!messages || messages.length === 0) return;
+        clearTimeout(this.timers[queueName]);
 
         try {
-            // Get (and work with) the message buffer for this queue
-            const batchArray = this.batches[queueName] || [];
-            if (batchArray.length === 0) {
-                // Nothing to process, release the lock and exit
-                this.flushing[queueName] = false;
-                return;
-            }
+            // ---- Insert your DB bulk write logic here ----
+            const data = messages.map((msg) => JSON.parse(msg.content.toString()));
 
-            // Cancel and remove the flush timer for this queue
-            clearTimeout(this.timers[queueName]);
-            delete this.timers[queueName];
+            await Telemetry.createBulk(data);
 
-            // Remove up to max_size messages from the buffer for this batch
-            const messages = batchArray.splice(0, batch.max_size);
-
-            // Put any remaining messages back in the buffer for later
-            this.batches[queueName] = batchArray;
-
-            // Business logic: parse messages and write to database
-            if (queueName == "telemetry") {
-                const data = messages.map((msg) => JSON.parse(msg.content.toString()));
-                await Telemetry.createBulk(data);
-            }
-
-            // Log batch processing for monitoring/debugging
             logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
+            // await db.insertMany(data);
 
-            // Ack all messages in this batch (up to and including the last) in RabbitMQ
+            // Ack all processed messages
+            // messages.forEach((msg) => this.channel.ack(msg));
+
+            // Ack all up to and including the last message in the batch
             const lastMsg = messages[messages.length - 1];
             if (lastMsg) this.channel.ack(lastMsg, true);
 
-            // If there are still messages buffered, schedule another flush right away
-            if (this.batches[queueName].length > 0) {
-                setImmediate(() => this.flushBatch(queueName, batch));
-            }
-
         } catch (err) {
-            // If DB/processing failed, NACK only the current batch so they are requeued
-            const messages = this.batches[queueName];
-            if (messages && messages.length > 0) {
-                messages.forEach((msg) => this.channel.nack(msg, false, true));
-            }
-            // Log the error
+            // Nack all (requeue) on failure
+            messages.forEach((msg) => this.channel.nack(msg, false, true));
             logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
-
-        } finally {
-            // Always release the "flushing" lock, even if error occurs
-            this.flushing[queueName] = false;
         }
+        this.batches[queueName] = [];
     }
-
+    
+    
+    
+    
+    
+    
 
     // -----------------------------------------------------------------
 

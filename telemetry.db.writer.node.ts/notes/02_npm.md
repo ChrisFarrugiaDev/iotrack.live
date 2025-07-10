@@ -33,3 +33,5 @@ https://www.npmjs.com/package/amqplib
     npm install amqplib@latest @types/amqplib@latest
 
 <!-- --------------------------------------------------------------- -->
+
+npm install --save-dev concurrently

@@ -9,7 +9,7 @@
       "durable": true,
       "batch": {
         "max_size": 500,
-        "max_wait_seconds": 10
+        "max_wait_seconds": 5
       }
     }
   ],
