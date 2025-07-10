@@ -1,11 +1,5 @@
 package apptypes
 
-type Meta struct {
-	IMEI           string `json:"imei"`
-	AssetID        *int64 `json:"asset_id,omitempty"`
-	OrganisationID int64  `json:"organisation_id"`
-}
-
 // Codec8AvlRecord is the root structure for a decoded Codec8 packet
 type Codec8AvlRecord struct {
 	Packet     string  `json:"packet"`
@@ -30,6 +24,8 @@ func (m *Codec8AvlRecord) GetQuantity1() uint8 {
 func (m *Codec8AvlRecord) GetCodecType() string {
 	return m.CodecType
 }
+
+// ---------------------------------------------------------------------
 
 // Content wraps the records (for output parity)
 type Content struct {
@@ -59,7 +55,4 @@ type IOelement struct {
 	EventID      int            `json:"event_id"`
 	ElementCount int            `json:"element_count"`
 	Elements     map[string]any `json:"elements"` // use any for flexibility (could be int or string)
-}
-
-type FlatAvlRecord struct {
 }

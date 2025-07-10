@@ -52,12 +52,12 @@ export function logError(message:string, error: unknown = null) {
 }
 
 export function logInfo(message: string, col: string='reset') {
-    logInfo(`${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
+    console.log(`${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
     
 }
 
 export function logDev(message: string, col: string='blue') {
     if (isDevelopment) {
-        logInfo(`${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
+        console.log(`${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
     }
 }

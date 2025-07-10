@@ -1,11 +1,15 @@
-import {PrismaClient, telemetry} from '../../generated/prisma'
+
+import { PrismaClient, Prisma } from '../../generated/prisma';
+const prisma = new PrismaClient();
 
 export class Telemetry {
-    static async create() {
 
-    }
 
-    static async createBulk(records: Array <Omit<telemetry, 'id' | 'uuid' | 'created_at'  > >) {
+    static async createBulk(records: Array<Omit<Prisma.telemetryCreateManyInput, 'id' | 'created_at'> >) {
 
+        await prisma.telemetry.createMany({
+            data:records,
+            skipDuplicates: false,
+        });       
     }
 }

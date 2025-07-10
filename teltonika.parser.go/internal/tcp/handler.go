@@ -67,16 +67,13 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				return
 			}
 
+			s.App.Devices[imei] = newDevice
+
 			currentDevice = newDevice
 		}
 
 		// -- Build deviceMeta for downstream processing
 		deviceMeta.IMEI = currentDevice.ExternalID
-		deviceMeta.OrganisationID = currentDevice.OrganisationID
-
-		if currentDevice.AssetID != nil {
-			deviceMeta.AssetID = currentDevice.AssetID
-		}
 
 		// Positive ACK
 		conn.Write([]byte{0x01})
@@ -230,23 +227,29 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	if dataPacket.GetCodecType() == "AVL_Data" {
 
 		codec8Record := dataPacket.(*apptypes.Codec8AvlRecord)
+		currentDevice := s.App.Devices[deviceMeta.IMEI]
+
 		for _, avl := range codec8Record.Content.AVL_Datas {
-			telemetry := apptypes.Telemetry{
-				IMEI:           deviceMeta.IMEI,
-				AssetID:        deviceMeta.AssetID,
-				OrganisationID: deviceMeta.OrganisationID,
-				Timestamp:      avl.Timestamp,
-				Priority:       avl.Priority,
-				Longitude:      avl.GPSelement.Longitude,
-				Latitude:       avl.GPSelement.Latitude,
-				Altitude:       avl.GPSelement.Altitude,
-				Angle:          avl.GPSelement.Angle,
-				Satellites:     avl.GPSelement.Satellites,
-				Speed:          avl.GPSelement.Speed,
-				EventID:        avl.IOelement.EventID,
-				Elements:       avl.IOelement.Elements,
+
+			record := map[string]any{}
+			record["device_id"] = currentDevice.ID
+			record["asset_id"] = currentDevice.AssetID
+			record["organisation_id"] = currentDevice.OrganisationID
+			record["timestamp"] = avl.Timestamp
+			record["protocol"] = currentDevice.Protocol
+			record["vendor"] = currentDevice.Vendor
+			record["telemetry"] = map[string]any{
+				"timestamp":  avl.Timestamp,
+				"priority":   avl.Priority,
+				"longitude":  avl.GPSelement.Longitude,
+				"latitude":   avl.GPSelement.Latitude,
+				"altitude":   avl.GPSelement.Altitude,
+				"angle":      avl.GPSelement.Angle,
+				"satellites": avl.GPSelement.Satellites,
+				"speed":      avl.GPSelement.Speed,
+				"elements":   avl.IOelement.Elements,
 			}
-			msg, _ := json.Marshal(telemetry)
+			msg, _ := json.Marshal(record)
 			s.App.MQProducer.SendDirectMessage("teltonika_telemetry", "teltonika", string(msg))
 
 			// TODO:  remove only for testing

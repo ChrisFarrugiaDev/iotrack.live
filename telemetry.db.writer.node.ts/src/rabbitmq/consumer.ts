@@ -1,5 +1,6 @@
 import amqp, { ChannelModel, Channel, ConsumeMessage } from "amqplib";
 import { logError, logInfo } from "../utils/logger-utils";
+import { Telemetry } from "../models/telemetry";
 
 // ---------------------------------------------------------------------
 
@@ -32,6 +33,7 @@ export class RabbitBatchConsumer {
 
     private config: ConsumerConfig;
     private queueConfigs: QueueConfig[];
+    private flushing: Record<string, boolean> = {};
 
     // -----------------------------------------------------------------
 
@@ -103,31 +105,43 @@ export class RabbitBatchConsumer {
     // -----------------------------------------------------------------
 
     // Process and acknowledge (or requeue) all messages in the batch
-    private async flushBatch(queueName: string, batch: BatchSettings) {
-        const messages = this.batches[queueName];
-        if (!messages || messages.length === 0) return;
-        clearTimeout(this.timers[queueName]);
-
-        try {
-            // ---- Insert your DB bulk write logic here ----
-            const data = messages.map((msg) => JSON.parse(msg.content.toString()));
-            logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
-            // await db.insertMany(data);
-
-            // Ack all processed messages
-            // messages.forEach((msg) => this.channel.ack(msg));
-
-            // Ack all up to and including the last message in the batch
-            const lastMsg = messages[messages.length - 1];
-            if (lastMsg) this.channel.ack(lastMsg, true);
-
-        } catch (err) {
-            // Nack all (requeue) on failure
-            messages.forEach((msg) => this.channel.nack(msg, false, true));
-            logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
-        }
-        this.batches[queueName] = [];
+private async flushBatch(queueName: string, batch: BatchSettings) {
+    if (this.flushing?.[queueName]) {
+        logInfo(`[${queueName}] flushBatch: Already flushing, skipping.`);
+        return;
     }
+    this.flushing = this.flushing || {};
+    this.flushing[queueName] = true;
+
+    try {
+        const messages = this.batches[queueName];
+        if (!messages || messages.length === 0) {
+            this.flushing[queueName] = false;
+            return;
+        }
+        clearTimeout(this.timers[queueName]);
+        delete this.timers[queueName];
+        this.batches[queueName] = [];
+
+        // Now, only one flushBatch per queue can run at a time.
+        const data = messages.map((msg) => JSON.parse(msg.content.toString()));
+        await Telemetry.createBulk(data);
+
+        logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
+
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg) this.channel.ack(lastMsg, true);
+    } catch (err) {
+        // Only NACK if messages are not empty
+        const messages = this.batches[queueName];
+        if (messages && messages.length > 0) {
+            messages.forEach((msg) => this.channel.nack(msg, false, true));
+        }
+        logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
+    } finally {
+        this.flushing[queueName] = false;
+    }
+}
 
     // -----------------------------------------------------------------
     
