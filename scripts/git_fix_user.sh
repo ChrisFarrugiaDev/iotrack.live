@@ -1,4 +1,4 @@
-git filter-branch --env-filter '
+git filter-branch -f --env-filter '
 OLD_EMAIL="foxcode9@gmail.com"
 CORRECT_NAME="Chris Farrugia"
 CORRECT_EMAIL="chrisfarrugia.dev@gmail.com"
