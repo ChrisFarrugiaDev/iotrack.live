@@ -92,6 +92,7 @@ onMounted(() => {
 	grid-template-columns: 4rem 1fr;
 	min-height: 100vh;
 	width: 100vw;
+}
 
 	.modal {
 		position: fixed;
@@ -99,7 +100,5 @@ onMounted(() => {
 		top: .25rem;
 		z-index: 500;
 	}
-
-}
 
 </style>
