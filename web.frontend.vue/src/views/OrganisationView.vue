@@ -27,10 +27,10 @@ import { reactive } from 'vue';
 
 // Reactive state to manage tab data and the active tab identifier
 const tabsObjectData_1 = reactive({
-    activeTab: 'OrganisationsList',
+    activeTab: 'OrganisationsTable',
     tabs: {
-        OrganisationsList: 'Orgs List',
-        CreateNewOrganisations: 'Create New Org',    
+        OrganisationsTable: 'All Organisations',
+        CreateOrganisationsForm: 'Add Organisation',    
     },
 });
 

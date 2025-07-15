@@ -14,7 +14,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item">
+        <div class="sidebar__item" @click="goToView('mapView')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/assets/svg/sprite.svg#icon-map"></use>
             </svg>
@@ -25,7 +25,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item">
+        <div class="sidebar__item" @click="goToView('organisationsView')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/assets/svg/sprite.svg#icon-company"></use>
             </svg>
@@ -44,7 +44,7 @@
                 <span>Users</span>
             </div>
         </div>
-        
+
         <div class="sidebar__line"></div>
 
         <div class="sidebar__item">
@@ -78,7 +78,7 @@
             </div>
         </div>
 
-      <div class="sidebar__line"></div>
+        <div class="sidebar__line"></div>
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
@@ -132,20 +132,34 @@
 
 <script setup lang="ts">
 import { useDashboardStore } from '@/stores/dashboardStore';
+import { useRouter } from 'vue-router';
+
+// - Router ------------------------------------------------------------
+
+const router = useRouter();
+
+// - Store -------------------------------------------------------------
+
+const dashboardStore = useDashboardStore()
+
+// -- methods ----------------------------------------------------------
 
 
-const dashboardStore =  useDashboardStore()
-
-function toggleUserMenu () {
+function toggleUserMenu() {
     console.log(1)
     dashboardStore.toggleUserMenuState();
 }
+
+function goToView(view: string) {
+    router.push({name: view})
+}
+
 </script>
 
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-.sidebar {   
+.sidebar {
 
 
     width: 4rem;
@@ -153,18 +167,18 @@ function toggleUserMenu () {
     height: 100vh; // Full viewport height
     max-height: 100vh;
 
-    display: flex;           // Use real flexbox!
-    flex-direction: column;  // Stack items vertically
+    display: flex; // Use real flexbox!
+    flex-direction: column; // Stack items vertically
     // align-items: ;     // Center items horizontally
     // justify-content: center; // Center items vertically
     background-color: $col-zinc-800;
 
-    @include respondMinHeight(700) {            
+    @include respondMinHeight(700) {
         background-color: transparent;
     }
 
-    
-    
+
+
 
     &__line {
         width: 100%;
@@ -202,17 +216,18 @@ function toggleUserMenu () {
         transition: all .1s ease;
 
 
-        @include respondMinHeight(700) {            
+        @include respondMinHeight(700) {
 
             &--first {
                 border-top-right-radius: $border-radius;
             }
+
             &--last {
                 border-bottom-right-radius: $border-radius;
             }
         }
 
-        
+
 
         &:hover {
             color: $col-zinc-800;
@@ -231,9 +246,9 @@ function toggleUserMenu () {
 
     &__space {
         flex: 1;
-        max-height: 0.0rem;       
+        max-height: 0.0rem;
 
-        @include respondMinHeight(700) {            
+        @include respondMinHeight(700) {
             max-height: 0.5rem;
         }
     }
