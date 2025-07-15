@@ -51,7 +51,7 @@ const email = ref("user@dev.com");
 const password = ref("DevPass");
 
 // const loginPageTitle = ref(GO_LOGIN_PAGE_TITLE);
-const loginPageTitle = ref("Welcome to <b>IoTrack</b> Live");
+const loginPageTitle = ref("Welcome to <b style='font-weight:600'>IoTrack</b> Live");
 
 const flashMessage = ref<string | null>("")
 

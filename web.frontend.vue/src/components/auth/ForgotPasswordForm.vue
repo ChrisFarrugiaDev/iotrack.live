@@ -64,13 +64,13 @@ async function submitForm() {}
         color: $col-slate-700;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: space-between;        
     }
 
     &__title {
         font-size: 1.8rem;
         font-weight: 200;
-        b { font-weight: 650; }
+        b { font-weight: 500; }
     }
 
     &__group {

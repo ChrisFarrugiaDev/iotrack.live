@@ -58,7 +58,7 @@ const currentFormComponent = computed(() => {
 }
 
 .background {
-    background-image: url("/background-image.avif");
+    background-image: url("/annie-spratt-BkbbuOdX06A-unsplash.jpg");
     background-size: cover;
     background-position: center;
     opacity: 0.5;
@@ -68,6 +68,7 @@ const currentFormComponent = computed(() => {
     width: 100%;
     height: 100%;
     z-index: 0; // Below .ssign
+   
 }
 
 .ssign {
@@ -93,7 +94,7 @@ const currentFormComponent = computed(() => {
     &__image {
         height: 100%;
         flex: 1;
-        background-image: url("/foreground-image.avif");
+        background-image: url("/mika-baumeister-nDciGidCdQo-unsplash.jpg");
         background-size: cover;
         background-position: center;
 

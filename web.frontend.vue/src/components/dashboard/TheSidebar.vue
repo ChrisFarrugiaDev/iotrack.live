@@ -44,6 +44,17 @@
                 <span>Users</span>
             </div>
         </div>
+        
+        <div class="sidebar__line"></div>
+
+        <div class="sidebar__item">
+            <svg class="sidebar__svg ">
+                <use xlink:href="@/assets/svg/sprite.svg#icon-groups"></use>
+            </svg>
+            <div class="sidebar__text">
+                <span>Groups</span>
+            </div>
+        </div>
 
         <div class="sidebar__line"></div>
 
@@ -134,8 +145,7 @@ function toggleUserMenu () {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-.sidebar {
-    
+.sidebar {   
 
 
     width: 4rem;

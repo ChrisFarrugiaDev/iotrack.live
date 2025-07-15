@@ -1,11 +1,11 @@
 <template>
 	<main class="dashboard">
 
-		<section class="modal" v-if="getIsUserMenuOpen">
+		<section class="modal" v-if="getIsUserMenuOpen && showSideBar">
 			<TheUserMenu></TheUserMenu>
 		</section>
 
-		<section class="sidebar">
+		<section class="sidebar" v-if="showSideBar">
 			<TheSidebar></TheSidebar>
 		</section>
 
@@ -14,7 +14,6 @@
 		</section>
 
 	</main>
-
 
 </template>
 
@@ -26,31 +25,45 @@ import TheUserMenu from './components/dashboard/TheUserMenu.vue';
 import TheSidebar from './components/dashboard/TheSidebar.vue';
 import { useDashboardStore } from './stores/dashboardStore';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 // - Store -------------------------------------------------------------
 
 const dashboardStore = useDashboardStore();
 const { getIsUserMenuOpen } = storeToRefs(dashboardStore);
 
+// - Routes ------------------------------------------------------------
+
+const route = useRoute();
+
+
+// - Page scrolling ----------------------------------------------------
+
+// const htmlEL = document.querySelector('html');
+// const isLocked = useScrollLock(htmlEL);
+// isLocked.value = getPageScrollDisabled.value;
+// watch(getPageScrollDisabled, (val) => {
+//     isLocked.value = val
+// });
 
 // - Clear keepalive when logged out -----------------------------------
 
 const useKeepAlive = ref(true);  // Initially use KeepAlive
 
-/*
-function handleLogout() {
-  useKeepAlive.value = false;  // Turn off KeepAlive on logout
-  setTimeout(() => { useKeepAlive.value = true; }, 100); // Reactivate KeepAlive after a brief pause
-}
+// function handleLogout() {
+//   useKeepAlive.value = false;  // Turn off KeepAlive on logout
+//   setTimeout(() => { useKeepAlive.value = true; }, 100); // Reactivate KeepAlive after a brief pause
+// }
 
-watch(()=>authStore.getLogCounter, ()=>{
-    handleLogout();
-})
+// watch(()=>authStore.getLogCounter, ()=>{
+//     handleLogout();
+// })
 
+// - Computed ----------------------------------------------------------
 
-*/
-
+const showSideBar = computed(() => {
+    return !['loginView', 'forgotPasswordView', 'resetPasswordView'].includes(route.name as string)
+});
 
 // - Methods -----------------------------------------------------------
 
@@ -66,6 +79,7 @@ function closeUserMenuOnClickOutside() {
 }
 
 // - Hooks -------------------------------------------------------------
+
 onMounted(() => {
 	closeUserMenuOnClickOutside();
 });
@@ -85,6 +99,7 @@ onMounted(() => {
     top: 0rem;
     bottom: 0;
     left: 0;
+	z-index: 20;
 }
 .dashboard {
 	background-color: $col-slate-50;

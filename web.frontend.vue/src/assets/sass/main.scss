@@ -4,6 +4,8 @@
 @use 'base/utilities';
 
 @use 'components/buttons';
+@use 'components/flash_messages';
+@use 'components/headers';
 
 @use 'layouts/views';
 @use 'pages/sign';

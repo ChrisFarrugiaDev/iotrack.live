@@ -143,6 +143,8 @@
             </g>
         </symbol>
 
-
+        <symbol id="icon-groups" viewBox="0 0 24 24">
+            <path d="M18 0h6v6h-6v-6zm-18 24h16v-24h-16v24zm18-9h6v-6h-6v6zm0 9h6v-6h-6v6z" />
+        </symbol>
     </defs>
 </svg>
