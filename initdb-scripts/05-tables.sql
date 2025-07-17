@@ -120,11 +120,15 @@ CREATE TABLE IF NOT EXISTS app.users (
 CREATE INDEX IF NOT EXISTS idx_users_organisation_id
   ON app.users(organisation_id);
 
-  -- 2. Seed a sys_admin user (replace the hash & org ID as appropriate)
-INSERT INTO app.users (email, password_hash, role_id, organisation_id)
-VALUES (
-  'user@dev.com',
-  '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG',  -- bcrypt hash of your chosen password
-  0,  -- sys_admin role_id
-  0   -- root organisation ID
-);
+-- 3. Seed a sys_admin user (replace the hash & org ID as appropriate)
+INSERT INTO app.users (
+  first_name, last_name, email, password_hash, role_id, organisation_id
+) VALUES (
+  'System',
+  'Administrator',
+  'dev@user.com',
+  '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG',
+  0,   -- sys_admin
+  0    -- root organisation
+)
+ON CONFLICT (email) DO NOTHING;
