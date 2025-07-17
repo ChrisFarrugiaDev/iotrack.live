@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "floating-vue": "^5.2.2",
     "pinia": "^3.0.3",
     "sass": "^1.89.2",
     "sass-loader": "^16.0.5",
