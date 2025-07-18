@@ -54,7 +54,7 @@ class App {
 
     // initializeRoutes - initialize and attach routers
     initializeRoutes() {
-        this.expressApp.use('/teltonika-parser', router);
+        this.expressApp.use('/api', router);
     }
     // -----------------------------------------------------------------
 
@@ -66,7 +66,6 @@ class App {
         } catch (err) {
             logError("! App.init !", err)
         }
-
     }
 
     // -----------------------------------------------------------------

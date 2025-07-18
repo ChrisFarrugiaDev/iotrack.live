@@ -54,7 +54,7 @@ export function logError(message:string, error: unknown = null) {
     console.error(`${dateTime} ${getLogDetails()} : ${message}\n`, error);
 }
 
-export function logOutput(message: string, col: string='reset') {
+export function logInfo(message: string, col: string='reset') {
     console.log(`${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
     
 }

@@ -1,6 +1,9 @@
 import { uuidv7 } from 'uuidv7';
 import { PrismaClient, codec12_commands } from '../../generated/prisma';
 import * as types from "../types/index"
+
+
+
 const prisma = new PrismaClient();
 
 export class TeltonikaCodec12Commands {
@@ -9,8 +12,8 @@ export class TeltonikaCodec12Commands {
 
     // Create a new command
     static async createCommand(payload: Omit<codec12_commands, 'id' | 'uuid' | 'created_at' | 'updated_at' | 'sent_at' | 'responded_at' | 'response' | 'retries'>
-    ):Promise<types.TeltonikaCodec12Command> {
-        const record = await prisma. codec12_commands.create({
+    ): Promise<types.TeltonikaCodec12Command> {
+        const record = await prisma.codec12_commands.create({
             data: {
                 ...payload,
                 uuid: uuidv7(),
@@ -38,7 +41,7 @@ export class TeltonikaCodec12Commands {
         const uuids = recordsWithUUID.map(r => r.uuid);
 
         await prisma.codec12_commands.createMany({
-            data:recordsWithUUID,
+            data: recordsWithUUID,
             skipDuplicates: false
         })
 
@@ -50,7 +53,7 @@ export class TeltonikaCodec12Commands {
     static async findManyByUUID(uuids: string[]): Promise<types.TeltonikaCodec12Command[]> {
         const records = await prisma.codec12_commands.findMany({
             where: {
-                uuid: {in: uuids}
+                uuid: { in: uuids }
             }
         });
 
@@ -67,11 +70,12 @@ export class TeltonikaCodec12Commands {
     // -----------------------------------------------------------------
 
     // Find by id
-    static async findById(id: bigint) {
-        return prisma.codec12_commands.findUnique({
-            where: { id }
-        });
-    }
+static async findById(id: bigint): Promise<types.TeltonikaCodec12Command | null> {
+    const command = await prisma.codec12_commands.findUnique({
+        where: { id }
+    });
+    return command ? { ...command, id: command.id.toString() } : null;
+}
 
     // Get all
     static async getAll() {

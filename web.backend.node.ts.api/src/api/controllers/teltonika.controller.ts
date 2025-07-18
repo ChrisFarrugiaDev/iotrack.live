@@ -5,9 +5,9 @@ import * as types from "../../types";
 import { uuidv7 } from 'uuidv7';
 import { TeltonikaCodec12Commands } from "../../models/teltonika-codec12-commands.model";
 
-class TeltonikaCodec12Controller {
+class TeltonikaController {
     // Handles API call to add Codec 12 command(s) for a device
-    static async addCommand(req: Request, res: Response, next: NextFunction): Promise<void> {
+    static async addCodec12Command(req: Request, res: Response, next: NextFunction): Promise<void> {
         const imei = req.params.imei;
         let { commands } = req.body;
 
@@ -98,4 +98,4 @@ class TeltonikaCodec12Controller {
     }
 }
 
-export default TeltonikaCodec12Controller;
+export default TeltonikaController;
