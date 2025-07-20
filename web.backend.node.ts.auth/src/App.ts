@@ -4,7 +4,7 @@ import { Server as ServerHttps } from "node:https";
 import express, { Express } from "express";
 import cors from "cors";
 import router from "./api/routers";
-import { logError, logInfo } from "./utils/logger-utils";
+import { logError, logInfo } from "./utils/logger.utils";
 
 
 

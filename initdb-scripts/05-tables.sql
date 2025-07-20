@@ -6,10 +6,10 @@ CREATE TABLE IF NOT EXISTS app.roles (
 
 -- Seed with the four core roles
 INSERT INTO app.roles (role_id, name) VALUES
-  (0, 'sys_admin'),
-  (1, 'admin'),
-  (2, 'user'),
-  (3, 'viewer')
+  (1, 'sys_admin'),
+  (2, 'admin'),
+  (3, 'user'),
+  (4, 'viewer')
 ON CONFLICT (role_id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -60,10 +60,10 @@ CREATE TABLE IF NOT EXISTS app.role_permissions (
 --    viewer   (3) gets view-only perms.
 
 INSERT INTO app.role_permissions (role_id, perm_id)
-SELECT 0, perm_id FROM app.permissions  -- sys_admin: all perms
+SELECT 1, perm_id FROM app.permissions  -- sys_admin: all perms
 UNION ALL
 -- admin defaults
-SELECT 1, perm_id FROM app.permissions
+SELECT 2, perm_id FROM app.permissions
  WHERE key IN (
    'create_user','update_user','delete_user',
    'create_org','update_org','delete_org','update_org_settings','view_audit_logs',
@@ -72,14 +72,14 @@ SELECT 1, perm_id FROM app.permissions
  )
 UNION ALL
 -- user defaults
-SELECT 2, perm_id FROM app.permissions
+SELECT 3, perm_id FROM app.permissions
  WHERE key IN (
    'view_asset','create_asset','update_asset',
    'view_device','assign_device'
  )
 UNION ALL
 -- viewer defaults
-SELECT 3, perm_id FROM app.permissions
+SELECT 4, perm_id FROM app.permissions
  WHERE key IN (
    'view_asset','view_device'
  )
@@ -128,7 +128,101 @@ INSERT INTO app.users (
   'Administrator',
   'dev@user.com',
   '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG',
-  0,   -- sys_admin
-  0    -- root organisation
+  1,   -- sys_admin
+  1    -- root organisation
 )
 ON CONFLICT (email) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS app.user_organisation_access (
+  user_id           BIGINT     NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
+  organisation_uuid UUID       NOT NULL REFERENCES app.organisations(uuid) ON DELETE CASCADE,
+  is_allowed        BOOLEAN    NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (user_id, organisation_uuid)
+);
+
+
+CREATE OR REPLACE VIEW app.user_organisation_access_view AS
+SELECT
+    uoa.user_id,
+    u.email              AS user_email,
+    u.first_name,
+    u.last_name,
+    uoa.organisation_uuid,
+    o.id                 AS organisation_id,
+    o.name               AS organisation_name,
+    uoa.is_allowed
+FROM
+    app.user_organisation_access uoa
+    JOIN app.users u
+      ON u.id = uoa.user_id
+    JOIN app.organisations o
+      ON o.uuid = uoa.organisation_uuid
+ORDER BY
+    u.email,
+    o.name;
+
+
+-- ---------------------------------------------------------------------
+
+
+CREATE TABLE IF NOT EXISTS app.user_asset_access (
+  user_id    BIGINT     NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
+  asset_id   BIGINT     NOT NULL REFERENCES app.assets(id) ON DELETE CASCADE,
+  is_allowed BOOLEAN    NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (user_id, asset_id)
+);
+
+
+CREATE OR REPLACE VIEW app.user_asset_access_view AS
+SELECT
+    uaa.user_id,
+    u.email             AS user_email,
+    u.first_name,
+    u.last_name,
+    uaa.asset_id,
+    a.name              AS asset_name,
+    uaa.is_allowed
+FROM
+    app.user_asset_access uaa
+    JOIN app.users u
+      ON u.id = uaa.user_id
+    JOIN app.assets a
+      ON a.id = uaa.asset_id
+ORDER BY
+    u.email, a.name;
+
+
+-- ---------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS app.user_device_access (
+  user_id    BIGINT     NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
+  device_id  BIGINT     NOT NULL REFERENCES app.devices(id) ON DELETE CASCADE,
+  is_allowed BOOLEAN    NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (user_id, device_id)
+);
+
+CREATE OR REPLACE VIEW app.user_device_access_view AS
+SELECT
+    uda.user_id,
+    u.email               AS user_email,
+    u.first_name,
+    u.last_name,
+    uda.device_id,
+    d.external_id         AS device_external_id,
+    d.vendor,
+    d.model,
+    d.status,
+    d.description,
+    uda.is_allowed
+FROM
+    app.user_device_access uda
+    JOIN app.users u
+      ON u.id = uda.user_id
+    JOIN app.devices d
+      ON d.id = uda.device_id
+ORDER BY
+    u.email, d.external_id;
+
+-- ---------------------------------------------------------------------

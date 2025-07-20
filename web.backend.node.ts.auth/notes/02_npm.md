@@ -54,3 +54,28 @@ npm install -D dotenv-cli
 
 https://express-validator.github.io/docs/
 https://www.npmjs.com/package/express-validator
+
+<!-- --------------------------------------------------------------- -->
+
+### jsonwebtoken
+
+https://github.com/auth0/node-jsonwebtoken#readme
+https://www.npmjs.com/package/jsonwebtoken
+https://www.npmjs.com/package/@types/jsonwebtoken
+
+https://jwt.io/
+
+npm i jsonwebtoken
+npm install --save @types/jsonwebtoken
+
+
+<!-- --------------------------------------------------------------- -->
+
+### bcryptjs
+
+https://www.npmjs.com/package/bcryptjs
+
+$ npm install bcryptjs    
+
+
+<!-- --------------------------------------------------------------- -->

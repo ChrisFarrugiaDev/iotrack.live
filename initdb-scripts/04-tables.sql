@@ -24,7 +24,7 @@ EXECUTE FUNCTION update_timestamp();
 
 CREATE TABLE app.organisations (
     id              BIGSERIAL PRIMARY KEY,                  -- Dev/admin-friendly, internal PK
-    uuid            UUID UNIQUE DEFAULT gen_random_uuid(),  -- Globally unique, use in APIs/relations
+    uuid            UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),  -- Globally unique, use in APIs/relations
 
     name            VARCHAR(128) NOT NULL,
     description     TEXT,
@@ -45,14 +45,19 @@ FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
 
--- Root org (if not already present)
+-- Root organisation (id=1, parent NULL)
 INSERT INTO app.organisations (id, uuid, name, parent_org_id)
-VALUES (0, '00000000-0000-0000-0000-000000000000', 'Root Org', 0)
-ON CONFLICT (uuid) DO NOTHING;
+VALUES
+  (1, '11111111-1111-1111-1111-111111111111', 'Root Org', NULL)
+ON CONFLICT (id) DO NOTHING;
 
+-- Archive org (id=2, child of root)
 INSERT INTO app.organisations (id, uuid, name, parent_org_id)
-VALUES (1, '11111111-1111-1111-1111-111111111111', 'Archive Org', 0)
-ON CONFLICT (uuid) DO NOTHING;
+VALUES
+  (2, '22222222-2222-2222-2222-222222222222', 'Archive Org', 1)
+ON CONFLICT (id) DO NOTHING;
+
+
 
 -- ---------------------------------------------------------------------------------------------------------------------
 
@@ -60,7 +65,7 @@ ON CONFLICT (uuid) DO NOTHING;
 CREATE TABLE app.assets (
     id                BIGSERIAL PRIMARY KEY,
     uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
-    organisation_id   BIGINT NOT NULL DEFAULT 1 REFERENCES app.organisations(id) ON DELETE SET DEFAULT,   
+    organisation_id   BIGINT NOT NULL DEFAULT 2 REFERENCES app.organisations(id) ON DELETE SET DEFAULT,   
     name              VARCHAR(128) NOT NULL,
     asset_type        VARCHAR(32),
     description       TEXT,
@@ -87,7 +92,7 @@ CREATE TABLE app.devices (
     id                BIGSERIAL PRIMARY KEY,
     uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
 
-    organisation_id   BIGINT NOT NULL DEFAULT  1 REFERENCES app.organisations(id)  ON DELETE SET DEFAULT, 
+    organisation_id   BIGINT NOT NULL DEFAULT  2 REFERENCES app.organisations(id)  ON DELETE SET DEFAULT, 
 
     asset_id          BIGINT REFERENCES app.assets(id) ON DELETE SET NULL,
     
@@ -106,9 +111,6 @@ CREATE TABLE app.devices (
 CREATE UNIQUE INDEX idx_devices_idtype_org ON app.devices (external_id, external_id_type);
 CREATE UNIQUE INDEX idx_devices_uuid ON app.devices (uuid);
 CREATE INDEX idx_devices_status ON app.devices (status);
-
-
-
 
 
 

@@ -4,11 +4,27 @@ export type ApiSuccessResponse<T = undefined> = {
     data?: T;
 }
 
+// ---------------------------------------------------------------------
+
 export type ApiErrorResponse = {
     success: false;
     error: string;
     details?: string;
 }
+
+
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data?: T;
+  error?: {
+    code: string;
+    details?: Record<string, any>;
+  };
+}
+
+// ---------------------------------------------------------------------
 
 export type TeltonikaCodec12Command = {
     id: string;

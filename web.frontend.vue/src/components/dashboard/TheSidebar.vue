@@ -122,7 +122,7 @@
         </div>
 
 
-
+        <div class="sidebar__space"></div>
 
 
     </section>
@@ -173,7 +173,7 @@ function goToView(view: string) {
     // justify-content: center; // Center items vertically
     background-color: $col-zinc-800;
 
-    @include respondMinHeight(700) {
+    @include respondMinHeight(760) {
         background-color: transparent;
     }
 
@@ -216,7 +216,7 @@ function goToView(view: string) {
         transition: all .1s ease;
 
 
-        @include respondMinHeight(700) {
+        @include respondMinHeight(760) {
 
             &--first {
                 border-top-right-radius: $border-radius;
@@ -248,8 +248,12 @@ function goToView(view: string) {
         flex: 1;
         max-height: 0.0rem;
 
-        @include respondMinHeight(700) {
-            max-height: 0.5rem;
+        @include respondMinHeight(760) {
+            max-height: 3.7rem;
+        }
+
+        &--2 {
+            flex: 2;
         }
     }
 
