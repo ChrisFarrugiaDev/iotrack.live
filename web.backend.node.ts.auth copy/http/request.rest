@@ -1,0 +1,9 @@
+
+###
+POST http://57.129.22.122:4001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "dev@user.com",
+  "password": "DevPass123!"
+}

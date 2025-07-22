@@ -2,30 +2,26 @@
     "compilerOptions": {
         // Set the JavaScript language version for output code
         "target": "es2022",
-
         // Enable compatibility for importing CommonJS modules with `import`
         "esModuleInterop": true,
-
         // Skip type checking of all declaration files (*.d.ts) for faster builds
         "skipLibCheck": true,
-
         // Specify module code generation for Node.js projects (supports ES Modules + CommonJS interop)
         "module": "NodeNext",
-
         // Where to output compiled JavaScript files
         "outDir": "dist",
-
         // Where to find your TypeScript source files (the 'src' directory)
         "rootDir": "src",
-
         // Specify library files to include (ES2022 features + DOM types)
         "lib": [
             "es2022",
             "DOM"
         ],
-
         // Enable all strict type-checking options (highly recommended)
-        "strict": true
+        "strict": true,
+        
+        "baseUrl": ".",
+        "paths": { "@root/*": [ "./*" ] }
     },
     // Optionally, include only the 'src' directory for compilation
     "include": [

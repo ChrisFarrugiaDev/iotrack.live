@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 
 import { User } from "../../models/user.model";
-import { Organisation } from "../../models/organisation.model";
-import { UserOrganisationAccess } from "../../models/user-organisation-access";
+import { Organisation, OrganisationType } from "../../models/organisation.model";
+import { UserOrganisationAccess } from "../../models/user-organisation-access.model";
 
 import { users, organisations, roles } from '../../../generated/prisma'
 import { ApiResponse } from "../../types";
@@ -18,9 +18,8 @@ function getJwtSecret(): string {
 }
 
 class AuthController {
-    /**
-     * Generate a JWT token for the authenticated user.
-     */
+    
+    // Generate a JWT token for the authenticated user.
     static generateToken(user: users, role: roles, org: organisations): string {
         const payload: UserJWT = {
             sub: user.uuid,
@@ -31,10 +30,10 @@ class AuthController {
         return jwt.sign(payload, getJwtSecret(), { expiresIn: '1h' });
     }
 
-    /**
-     * Fetch and merge user's organization scopes (default + overrides).
-     */
-    static async fetchOrganisationScope(user: users): Promise<string[]> {
+    // -------------------------------------------------------------------------
+
+    // Fetch and merge user's organization scopes (default + overrides).
+    static async fetchOrganisationScope(user: users): Promise<Record<string, Partial<OrganisationType>>> {
         const defaultScope = await Organisation.getOrgScope(user.organisation_id);
         const overrides = await UserOrganisationAccess.getUserOrgOverrides(user.id);
 
@@ -45,14 +44,32 @@ class AuthController {
             (override.is_allowed ? allow : deny).push(override.organisation_uuid);
         }
 
-        return Organisation.mergeScopeWithOverrides(defaultScope, allow, deny);
+        const mergedOrganisations = await Organisation.mergeScopeWithOverrides(defaultScope, allow, deny);
+
+        const organisationOject: Record<string, Partial<OrganisationType> > = {}
+
+        for (let org of mergedOrganisations) {
+            organisationOject[org.id] = {
+                id: org.id,
+                uuid: org.uuid,
+                name: org.name,
+                parent_org_id: org.parent_org_id,
+                description: org.description,
+                created_at: org.created_at
+            }
+        }
+
+        return organisationOject
     }
 
-    // -----------------------------------------------------------------
 
-    /**
-     * Login endpoint. Validates user credentials and returns JWT + user profile.
-     */
+    static async fetchUserAsset(user: users) {
+
+    }
+
+    // -------------------------------------------------------------------------
+
+    // Login endpoint. Validates user credentials and returns JWT + user profile.
     static async login(req: Request, res: Response<ApiResponse>, next: NextFunction) {
         try {
             const { email, password } = req.body;
@@ -91,6 +108,7 @@ class AuthController {
                     name: user.roles.name,
                 },
                 organisation: {
+                    id: user.organisations.id,
                     uuid: user.organisations.uuid,
                     name: user.organisations.name,
                 },
@@ -115,11 +133,9 @@ class AuthController {
         }
     }
 
-    // -----------------------------------------------------------------   
+    // ------------------------------------------------------------------------- 
 
-    /**
-     * Logout endpoint (implement as needed: e.g., blacklist token, clear cookie, etc)
-     */
+    // Logout endpoint (implement as needed: e.g., blacklist token, clear cookie, etc)
     static async logout(req: Request, res: Response<ApiResponse>, next: NextFunction) {
         // Typically just instruct frontend to delete JWT from storage
         return res.json({

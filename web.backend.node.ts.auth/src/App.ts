@@ -5,6 +5,9 @@ import express, { Express } from "express";
 import cors from "cors";
 import router from "./api/routers";
 import { logError, logInfo } from "./utils/logger.utils";
+import { cacheAllOrganisationsToRedis } from "./services/organisation-cache.service";
+import redis from "./config/redis.config";
+import prisma from "./config/prisma.config";
 
 
 
@@ -35,7 +38,8 @@ class App {
     // -----------------------------------------------------------------
 
     // Central method to organize all initialization functions
-    initializeSingleton() {
+    async initializeSingleton() {
+        await this.runStartupTasks()
         // this.setupAppDependencies();
         // this.initializeDatabaseConnections();
         this.initializeMiddleware();
@@ -54,7 +58,7 @@ class App {
 
     // -----------------------------------------------------------------
 
-    
+
     // initializeRoutes - initialize and attach routers
     initializeRoutes() {
         this.expressApp.use('/api', router);
@@ -62,7 +66,7 @@ class App {
 
     // -----------------------------------------------------------------
 
-        public init(httpPort = 80) {
+    public init(httpPort = 80) {
         try {
             this.httpServer = this.expressApp.listen(httpPort, () => {
                 logInfo(`HTTP server listening on port ${httpPort}`)
@@ -74,13 +78,40 @@ class App {
 
     // -----------------------------------------------------------------
 
+    async runStartupTasks(): Promise<void> {
+        await cacheAllOrganisationsToRedis();
+    }
+
+    startIntervalTasks(): void { }
+
+    registerCronJobs(): void { }
+
+    // -----------------------------------------------------------------
+
     public async gracefulShutdown() {
         logInfo("Graceful shutdown initiated...");
 
         try {
-            this.httpServer!.close(() => {
-                logInfo("HTTP server closed.")
+            // Close HTTP server
+            this.httpServer?.close(() => {
+                logInfo("HTTP server closed.");
             });
+
+            // Clean up Redis
+            try {
+                await redis.quit();
+                logInfo("Redis connection closed.");
+            } catch (err) {
+                logError("Error closing Redis", err);
+            }
+
+            // Clean up Prisma (optional)
+            try {
+                await prisma.$disconnect();
+                logInfo("Prisma disconnected.");
+            } catch (err) {
+                logError("Error disconnecting Prisma", err);
+            }
             process.exit(0);
 
         } catch (err: unknown) {

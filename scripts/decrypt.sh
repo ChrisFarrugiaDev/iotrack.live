@@ -21,12 +21,14 @@ files_to_decrypt=(
   docker-compose.yml.gpg
   .env.gpg
   .env.development.gpg  
-  web.backend.node.ts/.env.gpg
-  web.backend.node.ts/.env.development.gpg  
+  web.backend.node.ts.auth/.env.gpg
+  web.backend.node.ts.auth/.env.development.gpg  
+  web.backend.node.ts.api/.env.gpg
+  web.backend.node.ts.api/.env.development.gpg  
   teltonika.parser.go/.env.gpg
   teltonika.parser.go/.env.development.gpg  
-  telemetry.db.writer.node.ts/.env.gpg
-  telemetry.db.writer.node.ts/.env.development.gpg  
+  telemetry.db.writer.node.ts.api/.env.gpg
+  telemetry.db.writer.node.ts.api/.env.development.gpg  
 )
 
 # Find and decrypt the files
