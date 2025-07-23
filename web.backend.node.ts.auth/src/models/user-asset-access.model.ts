@@ -1,7 +1,7 @@
-import { PrismaClient, user_asset_access } from '@root/generated/prisma'
+import { user_asset_access } from '../../generated/prisma';
 import { bigIntToString } from '../utils/utils';
 
-const prisma = new PrismaClient();
+import prisma from '../config/prisma.config';
 
 export class UserAssetAccess {
 

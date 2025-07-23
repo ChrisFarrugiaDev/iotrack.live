@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "dev": "nodemon --ignore files dist/server.js nodemon-watch",
+    "dev": "ts-node src/server.ts",
     "prisma-pull": "npx prisma db pull --schema=prisma/schema.prisma",
     "prisma-generate": "npx prisma generate --schema=prisma/schema.prisma"
   },
@@ -22,7 +22,7 @@
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "ioredis": "^5.6.1",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.2",    
     "uuidv7": "^1.0.2"
   },
   "devDependencies": {
@@ -30,6 +30,7 @@
     "@types/express": "^5.0.3",
     "dotenv-cli": "^8.0.0",
     "prisma": "^6.10.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "ts-node": "^10.9.2"
   }
 }

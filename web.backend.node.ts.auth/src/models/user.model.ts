@@ -1,7 +1,7 @@
-import { PrismaClient, users, organisations } from '../../generated/prisma'
+import { users } from '../../generated/prisma'
+import prisma from '../config/prisma.config';
 import { bigIntToString } from '../utils/utils';
 
-const prisma = new PrismaClient();
 
 // Supported user relations for eager loading in Prisma queries
 type UserRelation = 'organisations' | 'roles';

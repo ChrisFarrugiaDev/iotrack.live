@@ -1,7 +1,7 @@
-import { PrismaClient, user_organisation_access } from '../../generated/prisma'
+import { user_organisation_access } from '../../generated/prisma'
+import prisma from '../config/prisma.config';
 import { bigIntToString } from '../utils/utils';
 
-const prisma = new PrismaClient();
 
 export class UserOrganisationAccess {
 

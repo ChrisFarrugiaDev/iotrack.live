@@ -63,12 +63,11 @@ export class Organisation {
                 INNER JOIN org_scope os ON o.parent_org_id = os.id
             )
             SELECT * FROM org_scope;
-        `, id);
+        `, id) as {id: bigint}[];
 
-        return result.map((org: { id: bigint }) => ({
-            ...org,
-            id: org.id.toString(),
-        }));
+        return result.map((org: { id: bigint }) => {
+            return org.id.toString()
+        });
     }
 
     // -----------------------------------------------------------------

@@ -20,8 +20,8 @@
         // Enable all strict type-checking options (highly recommended)
         "strict": true,
         
-        "baseUrl": ".",
-        "paths": { "@root/*": [ "./*" ] }
+        // "baseUrl": ".",
+        // "paths": { "@root/*": [ "./*" ] }
     },
     // Optionally, include only the 'src' directory for compilation
     "include": [

@@ -5,6 +5,7 @@ export type ApiResponse<T = unknown> = {
   error?: {
     code: string;
     details?: Record<string, any>;
+    error?: any
   };
 }
 
