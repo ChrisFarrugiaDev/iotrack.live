@@ -1,20 +1,31 @@
-# Use official Node.js LTS image (change version if needed)
-FROM node:22-bullseye-slim
+# Use official Node.js LTS image
+FROM node:22-slim
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first for caching
+# Install OpenSSL (required by Prisma)
+RUN apt-get update \
+    && apt-get install -y openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files first (for cache efficiency)
 COPY package*.json ./
 
-# Install dependencies (no dev dependencies for prod; use npm ci if using lock file)
+# Install dependencies (production-only)
 RUN npm install --omit=dev
 
-# Copy the rest of your app
+# Copy source files
 COPY . .
 
-# Expose the port your app listens on (example: 4001)
+# Build TypeScript inside container (assumes you have "build": "tsc" in package.json)
+RUN npm run build
+
+# Expose the app port
 EXPOSE 4001
 
-# Start the app (change if your main file is not server.js)
+# Start the app
 CMD ["node", "dist/server.js"]
+
+
+# sudo docker compose down web-backend-auth; sudo docker compose build web-backend-auth; sudo docker compose up web-backend-auth
