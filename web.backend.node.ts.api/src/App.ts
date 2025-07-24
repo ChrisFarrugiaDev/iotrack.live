@@ -4,7 +4,7 @@ import { Server as ServerHttps } from "node:https";
 import express, { Express } from "express";
 import cors from "cors";
 import router from "./api/routes";
-import { logError } from "./utils/logger-utils";
+import { logError, logInfo } from "./utils/logger-utils";
 
 
 class App {
@@ -17,7 +17,7 @@ class App {
     private constructor() {
         this.expressApp = express();
         this.initializeSingleton();
-        console.log("App instance created")
+        logInfo("App instance created")
     }
 
     // -----------------------------------------------------------------
@@ -61,7 +61,7 @@ class App {
     public init(httpPort = 80) {
         try {
             this.httpServer = this.expressApp.listen(httpPort, () => {
-                console.log(`HTTP server listening on port ${httpPort}`)
+                logInfo(`HTTP server listening on port ${httpPort}`)
             });
         } catch (err) {
             logError("! App.init !", err)
@@ -71,20 +71,20 @@ class App {
     // -----------------------------------------------------------------
 
     public async gracefulShutdown() {
-        console.log("Graceful shutdown initiated...");
+        logInfo("Graceful shutdown initiated...");
 
         try {
             this.httpServer!.close(() => {
-                console.log("HTTP server closed.")
+                logInfo("HTTP server closed.")
             });
             process.exit(0);
 
         } catch (err: unknown) {
 
             if (err instanceof Error) {
-                console.error("Error during shutdown:", err.message)
+                logError("Error during shutdown:", err.message)
             } else {
-                console.error("Non-Error thrown during shutdown:", err);
+                logError("Non-Error thrown during shutdown:", err);
             }
 
             process.exit(1);

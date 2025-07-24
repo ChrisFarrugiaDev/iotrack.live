@@ -115,7 +115,14 @@ class AuthController {
 
         // NOTE:  ( allow-list logic can be implemented in the future if needed)
 
-        return accessibleAssets;
+        const assetMap: Record<string, AssetType> = {}
+
+        for (let asset of accessibleAssets) {
+            assetMap[asset.id] = asset;
+        }
+
+
+        return assetMap;
     }
 
     /**
@@ -140,8 +147,12 @@ class AuthController {
         const accessibleDevices = devices.filter((device: DeviceType) => !deny.includes(device.id));
 
         // NOTE: (allow-list logic can be implemented in the future if needed)
+        const deviceMap: Record<string, DeviceType> = {}
 
-        return accessibleDevices;
+        for (let device of accessibleDevices) {
+            deviceMap[device.id] = device;
+        }
+        return  deviceMap;
     }
 
     // -------------------------------------------------------------------------
@@ -186,8 +197,7 @@ class AuthController {
 
             const assets = await AuthController.getAccessibleAssetsForUser(user.id, accessibleOrgIds);
             const devices = await AuthController.getAccessibleDevicesForUser(user.id, accessibleOrgIds);
-
-            console.dir(devices)
+    
 
             // 5. Prepare profile payload
             const profile = {
@@ -231,8 +241,6 @@ class AuthController {
             } as ApiResponse);
         }
     }
-
-
 
     // ------------------------------------------------------------------------- 
 

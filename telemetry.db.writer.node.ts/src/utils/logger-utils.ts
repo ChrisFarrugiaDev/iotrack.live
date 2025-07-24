@@ -10,8 +10,13 @@ const colors: Record<string, string> = {
     reset: "\x1b[0m"  // This resets the color to default
 }
 
-const isDevelopment: boolean = Boolean(Number(process.env.DEV_LOGGER_ON));
+const isDevelopment: boolean = process.env.NODE_ENV != 'production';
+const serviceName = process.env.MICROSERVICE_NAME || "unknown-service";
 
+// Use this wherever you build your log string:
+function getServicePrefix() {
+    return `[${serviceName}]`;
+}
 
 function getLogDetails() {
     const stack = new Error().stack;
@@ -48,16 +53,16 @@ function formatDate(date: Date) {
 
 export function logError(message:string, error: unknown = null) {
     const dateTime = formatDate(new Date()); // Get the current date and time
-    console.error(`${dateTime} ${getLogDetails()} : ${message}\n`, error);
+    console.error(`${getServicePrefix()} ${dateTime} ${getLogDetails()} : ${message}\n`, error);
 }
 
 export function logInfo(message: string, col: string='reset') {
-    console.log(`${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
+    console.log(`${getServicePrefix()} ${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
     
 }
 
 export function logDev(message: string, col: string='blue') {
     if (isDevelopment) {
-        console.log(`${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
+        console.log(`${getServicePrefix()} ${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
     }
 }
