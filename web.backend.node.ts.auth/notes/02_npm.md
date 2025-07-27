@@ -79,3 +79,23 @@ $ npm install bcryptjs
 
 
 <!-- --------------------------------------------------------------- -->
+
+
+ubuntu@d2-2-de1:~/iotrack.live$ pwd
+/home/ubuntu/iotrack.live
+ubuntu@d2-2-de1:~/iotrack.live$ cd web.backend.node.ts.auth
+ubuntu@d2-2-de1:~/iotrack.live/web.backend.node.ts.auth$ tsc
+ubuntu@d2-2-de1:~/iotrack.live/web.backend.node.ts.auth$ npm run prisma-pull
+
+✔ Introspected 12 models and wrote them into prisma/schema.prisma in 452ms
+    ... 
+
+ubuntu@d2-2-de1:~/iotrack.live/web.backend.node.ts.auth$ npm run prisma-generate
+    ...
+
+✔ Generated Prisma Client (v6.12.0) to ./generated/prisma in 497ms
+
+   ...
+
+ubuntu@d2-2-de1:~/iotrack.live/web.backend.node.ts.auth$ cd ..
+ubuntu@d2-2-de1:~/iotrack.live$ sudo docker compose down web-backend-auth; sudo docker compose build --no-cache web-backend-auth; sudo docker compose up web-backend-auth

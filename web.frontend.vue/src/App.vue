@@ -1,10 +1,6 @@
 <template>
 	<main class="dashboard">
 
-		<section class="modal" v-if="getIsUserMenuOpen && showSideBar">
-			<TheUserMenu></TheUserMenu>
-		</section>
-
 		<section class="sidebar" v-if="showSideBar">
 			<TheSidebar></TheSidebar>
 		</section>
@@ -67,22 +63,7 @@ const showSideBar = computed(() => {
 
 // - Methods -----------------------------------------------------------
 
-// Close the user menu when clicks outside the user menu and top bar image
-function closeUserMenuOnClickOutside() {
-	document.querySelector('body')?.addEventListener('click', (e: MouseEvent)=>{
-		const  target = e.target as HTMLElement;
-		const userMenuOrBtn =target.closest('#the-user-menu') ||target.closest('#menu-btn');
-		if (!userMenuOrBtn) {
-            dashboardStore.updateUserMenuState(false);
-        }
-	})
-}
 
-// - Hooks -------------------------------------------------------------
-
-onMounted(() => {
-	closeUserMenuOnClickOutside();
-});
 
 </script>
 

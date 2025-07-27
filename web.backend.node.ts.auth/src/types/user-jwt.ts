@@ -3,4 +3,5 @@ export type UserJWT = {
   "email": string,
   "role": string,
   "org_uuid": string,
+  "token_version": number,
 }

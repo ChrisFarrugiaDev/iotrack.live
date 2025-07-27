@@ -30,6 +30,8 @@ CREATE TABLE app.organisations (
     description     TEXT,
 
     parent_org_id   BIGINT REFERENCES app.organisations(id),
+    path            TEXT,
+
     maps_api_key    VARCHAR(255),
     can_inherit_key BOOLEAN DEFAULT TRUE,
 
@@ -56,6 +58,37 @@ INSERT INTO app.organisations (id, uuid, name, parent_org_id)
 VALUES
   (2, '22222222-2222-2222-2222-222222222222', 'Archive Org', 1)
 ON CONFLICT (id) DO NOTHING;
+
+
+DROP TRIGGER IF EXISTS trg_set_org_path ON app.organisations;
+
+CREATE TRIGGER trg_set_org_path
+BEFORE INSERT OR UPDATE ON app.organisations
+FOR EACH ROW
+EXECUTE FUNCTION app.set_organisation_path();
+
+-- ALTER TABLE app.organisations
+-- ADD COLUMN path TEXT;
+
+-- WITH RECURSIVE org_paths AS (
+--     SELECT 
+--         id, 
+--         parent_org_id, 
+--         id::TEXT AS path
+--     FROM app.organisations
+--     WHERE parent_org_id IS NULL
+--     UNION ALL
+--     SELECT 
+--         o.id, 
+--         o.parent_org_id, 
+--         op.path || ',' || o.id::TEXT AS path
+--     FROM app.organisations o
+--     INNER JOIN org_paths op ON o.parent_org_id = op.id
+-- )
+-- UPDATE app.organisations o
+-- SET path = op.path
+-- FROM org_paths op
+-- WHERE o.id = op.id;
 
 
 

@@ -1,7 +1,77 @@
-import redis, {redisKeyPrefix} from "../../config/redis.config";
+import redis, { redisKeyPrefix } from "../../config/redis.config";
 import { logDev, logError } from "../logger.utils";
 
 
+// ---------------------------------------------------------------------
+
+// Save a key-value pair to Redis with optional expiry and prefix
+export async function saveToCache(
+    key: string,
+    value: any,
+    expireInSeconds: number | null = null,
+    prefix: string | null = null
+): Promise<void> {
+    if (expireInSeconds) expireInSeconds = Math.round(expireInSeconds);
+
+    try {
+        const dataToSave = typeof value === 'string' ? value : JSON.stringify(value);
+        const usedPrefix = prefix ?? redisKeyPrefix ?? "";
+        const fullKey = `${usedPrefix}${key}`;
+
+        await redis.set(fullKey, dataToSave);
+
+        if (expireInSeconds) {
+            await redis.expire(fullKey, expireInSeconds);
+        }
+
+        logDev(`Successfully saved key: ${fullKey}`);
+    } catch (err) {
+        logError("! redisUtils saveToRedis !", err);
+        throw err;
+    }
+}
+
+// ---------------------------------------------------------------------
+
+// Checks if a key exists in Redis
+export async function keyExists(key: string, prefix: string | null = null): Promise<boolean> {
+    try {
+        const usedPrefix = prefix ?? redisKeyPrefix ?? "";
+        const fullKey = `${usedPrefix}${key}`;
+        const exist = await redis.exists(fullKey);
+        return exist === 1;
+    } catch (err) {
+        logError("! redisUtils keyExists !", err);
+        throw err;
+    }
+}
+
+// ---------------------------------------------------------------------
+
+// Deletes a Redis key from the cache
+export async function deleteKeyFromCache(key: string, prefix: string | null = null): Promise<boolean> {
+    try {
+        const usedPrefix = prefix ?? redisKeyPrefix ?? "";
+        const fullKey = `${usedPrefix}${key}`;
+
+        const exist = await redis.exists(fullKey);
+        if (!exist) {
+            logDev(`Key ${fullKey} does not exist.`, 'yellow');
+            return false;
+        }
+
+        await redis.del(fullKey);
+        logDev(`Successfully deleted the key: ${fullKey}`, 'green');
+        return true;
+    } catch (err) {
+        logError("! redisUtils deleteKeyFromCache !", err);
+        throw err;
+    }
+}
+
+
+
+// ---------------------------------------------------------------------
 
 export async function saveHashToRedis(
     key: string,
@@ -28,6 +98,8 @@ export async function saveHashToRedis(
         throw err;
     }
 }
+
+// ---------------------------------------------------------------------
 
 export async function replaceHashWithLua(
     key: string,
@@ -64,6 +136,7 @@ export async function replaceHashWithLua(
     }
 }
 
+// ---------------------------------------------------------------------
 
 export async function getHashField(
     key: string,

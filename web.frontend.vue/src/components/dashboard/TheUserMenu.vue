@@ -48,6 +48,7 @@
     width: 14rem;
 
 
+
     &__link {
         cursor: pointer;
         display: flex;

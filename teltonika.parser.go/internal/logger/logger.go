@@ -14,12 +14,16 @@ var Log *zap.Logger
 func InitLogger() *zap.Logger {
 	var logger *zap.Logger
 	mode := os.Getenv("LOG_MODE")
+	serviceName := os.Getenv("MICROSERVICE_NAME")
+	if serviceName == "" {
+		serviceName = "unknown-service"
+	}
 
 	switch mode {
 	case "file":
 		// Lumberjack config for file rotation
 		lumberjackLogger := &lumberjack.Logger{
-			Filename:   "teltonika-parser-go.log",
+			Filename:   os.Getenv("LOG_FILE_PATH"),
 			MaxSize:    100,  // megabytes
 			MaxBackups: 3,    // number of old files to keep
 			MaxAge:     28,   // days

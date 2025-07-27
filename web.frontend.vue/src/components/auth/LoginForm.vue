@@ -1,10 +1,10 @@
 <template>
     <form class="ssign__form" @submit.prevent="submitForm">
         <div>
-            <div class="ssign__title mt-4 mb-6" v-html="loginPageTitle" ></div>
+            <div class="ssign__title mt-4 mb-6" v-html="loginPageTitle"></div>
 
-            <div class="ssign__flash-message mb-4 h-5 text-red-600">
-                {{ flashMessage }}
+            <div class="ssign__flash-message mb-4 h-7 text-red-600" v-html="flashMessage">
+             
             </div>
 
             <div class="ssign__group" @click="resetFlashMassage()">
@@ -36,38 +36,87 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
+import validator from 'validator';
+import axios from '@/axios';
+import { useAuthStore } from '@/stores/authStore';
+import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAppStore } from '@/stores/appStore';
 
 // - Store -------------------------------------------------------------
 
-// const { getRemeberMe } = storeToRefs(authStore);
-const getRemeberMe = ref(false);
+const appStore = useAppStore();
+const authStore = useAuthStore();
+const { getRemeberMe } = storeToRefs(authStore);
+
 
 // - Data --------------------------------------------------------------
 const router = useRouter();
 
-const email = ref("user@dev.com");
+const email = ref("alice@acme.com");
 const password = ref("DevPass");
 
 // const loginPageTitle = ref(GO_LOGIN_PAGE_TITLE);
 const loginPageTitle = ref("Welcome to <b style='font-weight:600'>IoTrack</b> Live");
 
-const flashMessage = ref<string | null>("")
+const flashMessage = ref<string | null>("&nbsp;")
 
 // -- methods ----------------------------------------------------------
 
 function goToView(view: string) {
-    router.push({name: view});
+    router.push({ name: view });
 }
 
 function resetFlashMassage() {
-    flashMessage.value = null;
+    flashMessage.value = "&nbsp;";
 }
 
-async function submitForm() {}
+async function submitForm() {
+    try {
+        if (validator.isEmpty(email.value) && validator.isEmpty(password.value)) {
+            flashMessage.value = "Please enter your email and password.";
+            return
+        } else if (validator.isEmpty(email.value)) {
+            flashMessage.value = "Please enter your email.";
+            return
+        } else if (validator.isEmpty(password.value)) {
+            flashMessage.value = "Please enter your password.";
+            return
+        } else if (!validator.isEmail(email.value)) {
+            flashMessage.value = "Please enter a valid email address.";
+            return
+        }
 
-function toggleRememberMe() {}
+        const url = `${appStore.getAppUrl}:${appStore.getAuthPort}/api/auth/login`
+
+        const response = await axios.post(url, {
+            email: email.value,
+            password: password.value
+        });
+
+        console.log(response)
+
+        if (response.status = 200) {
+            email.value = 'alice@acme.com';
+            password.value = 'DevPass';
+
+            authStore.setJwt(response.data.data.token);
+            
+        }
+
+
+    } catch (err: any) {
+        const errorMessage = err.response?.data.message || 'Unable to log in. Please check your email and password.';
+        flashMessage.value = errorMessage;
+        console.error("! login form !\n", err);
+    }
+}
+
+function toggleRememberMe() {
+    authStore.toggleRememberMe();
+}
+
 
 
 </script>

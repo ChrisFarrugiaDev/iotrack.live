@@ -1,3 +1,8 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+// ---------------------------------------------------------------------
+
 const colors: Record<string, string> = {
     black: "\x1b[30m",
     red: "\x1b[31m",
@@ -10,8 +15,29 @@ const colors: Record<string, string> = {
     reset: "\x1b[0m"  // This resets the color to default
 }
 
+// ---------------------------------------------------------------------
+
 const isDevelopment: boolean = process.env.NODE_ENV != 'production';
 const serviceName = process.env.MICROSERVICE_NAME || "unknown-service";
+
+const logMode = process.env.LOG_MODE || "default";
+const logFilePath = process.env.LOG_FILE_PATH || './logs/app.log';
+
+if (logMode == 'file') {
+    // Ensure log directory exists
+    fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+}
+// ---------------------------------------------------------------------
+
+function writeLogToFile(logLine: string) {
+
+    fs.appendFile(logFilePath, logLine + '\n', err => {
+        if (err) {
+            // If file writing fails, log to stderr (but avoid infinite loop)
+            console.error(`[LOGGER][FILE-ERROR] Failed to write log:`, err);
+        }
+    });
+}
 
 // Use this wherever you build your log string:
 function getServicePrefix() {
@@ -51,18 +77,32 @@ function formatDate(date: Date) {
 
 // ---------------------------------------------------------------------
 
-export function logError(message:string, error: unknown = null) {
+export function logError(message: string, error: unknown = null) {
     const dateTime = formatDate(new Date()); // Get the current date and time
-    console.error(`${getServicePrefix()} ${dateTime} ${getLogDetails()} : ${message}\n`, error);
+    const logLine = `${getServicePrefix()} ${dateTime} ${getLogDetails()} : ${message}${error ? '\n' + String(error) : ''}`;
+    if (logMode == 'file') {
+        writeLogToFile(logLine);
+    } else if (logMode == 'default') {
+        console.error(logLine);
+    }
 }
 
-export function logInfo(message: string, col: string='reset') {
-    console.log(`${getServicePrefix()} ${colors[col]}${getLogDetails()} ${colors['reset']}:`, message);
-    
+export function logInfo(message: string, col: string = 'reset') {
+    const logLine = `${getServicePrefix()} ${getLogDetails()}: ${message}`;
+    if (logMode == 'file') {
+        writeLogToFile(logLine);
+    } else if (logMode == 'default') {
+        console.log(`${colors[col]}${logLine}${colors['reset']}`);
+    }
 }
 
-export function logDev(message: string, col: string='blue') {
+export function logDev(message: string, col: string = 'blue') {
     if (isDevelopment) {
-        console.log(`${getServicePrefix()} ${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
+        const logLine = `${getServicePrefix()} DEV ${getLogDetails()} > ${message}`;
+        if (logMode == 'file') {
+            writeLogToFile(logLine);
+        } else if (logMode == 'default') {
+            console.log(`${colors[col]}${logLine}${colors['reset']}`);
+        }
     }
 }

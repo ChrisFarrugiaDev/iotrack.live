@@ -80,9 +80,15 @@ class App {
 
     async runStartupTasks(): Promise<void> {
         await cacheAllOrganisationsToRedis();
+
+        this.startIntervalTasks();
     }
 
-    startIntervalTasks(): void { }
+    startIntervalTasks(): void {
+        setInterval( async()=>{
+            await cacheAllOrganisationsToRedis();
+        }, 10000)
+    }
 
     registerCronJobs(): void { }
 

@@ -113,7 +113,8 @@ CREATE TABLE IF NOT EXISTS app.users (
     active           BOOLEAN      NOT NULL DEFAULT TRUE,
     last_login_at    TIMESTAMPTZ,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    updated_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    updated_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    token_version    INTEGER      NOT NULL DEFAULT 1                     -- used for JWT/session invalidation
 );
 
 -- 2. Index for fast lookups by organisation

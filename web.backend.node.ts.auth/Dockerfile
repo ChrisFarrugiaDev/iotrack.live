@@ -12,14 +12,13 @@ RUN apt-get update \
 # Copy package files first (for cache efficiency)
 COPY package*.json ./
 
-# Install dependencies (production-only)
+# Install dependencies (omit dev-deps for production)
 RUN npm install --omit=dev
 
-# Copy source files
-COPY . .
-
-# Build TypeScript inside container (assumes you have "build": "tsc" in package.json)
-RUN npm run build
+# Copy production build artifacts and Prisma client
+COPY dist ./dist
+COPY prisma ./prisma
+COPY generated ./generated
 
 # Expose the app port
 EXPOSE 4001

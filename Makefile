@@ -45,3 +45,17 @@ post-codec12:
 		-H "Content-Type: application/json" \
 		-d '{"commands": ["getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps"]}'
 
+auth-build:
+	cd web.backend.node.ts.auth && \
+	npm install && \
+	npm run prisma-pull && \
+	npm run prisma-generate && \
+	npm run build
+
+auth-docker-build:
+	cd web.backend.node.ts.auth && \
+	docker build --no-cache -t iotrack-auth .
+
+auth-docker-up:
+	$(call require_password)
+	docker compose up -d web-backend-auth
