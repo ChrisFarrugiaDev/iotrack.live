@@ -23,8 +23,7 @@ import { computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 // -- store ------------------------------------------------------------
-const authStore = useAuthStore();
-const { isAuthenticated, getRedirectTo } = storeToRefs(authStore);
+
 
 // -- router -----------------------------------------------------------
 const route = useRoute();
@@ -48,18 +47,7 @@ const currentFormComponent = computed(() => {
 });
 
 
-watch(isAuthenticated, (newVal) => {
-    if (['forgotPasswordView', 'resetPasswordView'].includes(route.name as string)) {
-        return
-    }
-    else if (newVal) {
-        router.push({ name: getRedirectTo.value });
-    } else {
-        router.push({ name: "loginView" });
-    } 
-}, {
-    immediate: true,
-});
+
 
 </script>
 

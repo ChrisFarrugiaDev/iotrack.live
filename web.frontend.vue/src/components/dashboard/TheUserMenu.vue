@@ -21,20 +21,27 @@
             </svg>
         </div>
 
-        <div class="menu__link">
+        <div class="menu__link" @click="logout">
             <div class="menu__text">Logout</div>
             <svg class="menu__icon">
                 <use xlink:href="@/assets/svg/sprite.svg#icon-logout"></use>
             </svg>
         </div>
-        
+
     </div>
 </template>
 
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
+import { useRoute, useRouter } from 'vue-router';
 
+
+const router = useRouter();
+
+function logout() {
+    router.push({ name: "logoutView" });
+}
 
 </script>
 
@@ -56,7 +63,7 @@
         font-family: $font-display;
         gap: 1rem;
 
-        
+
 
         width: 100%;
         padding: .5rem .8rem;

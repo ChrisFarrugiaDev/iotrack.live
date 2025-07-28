@@ -157,7 +157,6 @@ const { getIsUserMenuOpen } = storeToRefs(dashboardStore);
 
 
 function toggleUserMenu() {
-    console.log(1)
     dashboardStore.toggleUserMenuState();
 }
 

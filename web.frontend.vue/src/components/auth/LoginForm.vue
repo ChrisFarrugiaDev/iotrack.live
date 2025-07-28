@@ -95,13 +95,20 @@ async function submitForm() {
             password: password.value
         });
 
-        console.log(response)
+        
 
-        if (response.status = 200) {
+        if (response.status == 200) {
             email.value = 'alice@acme.com';
+
             password.value = 'DevPass';
 
-            authStore.setJwt(response.data.data.token);
+            authStore.setJwt(null);
+
+            setTimeout(()=>{
+                authStore.setJwt(response.data.data.token);
+            }, 100)
+
+            goToView('loginView');  
             
         }
 

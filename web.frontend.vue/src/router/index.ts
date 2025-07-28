@@ -6,6 +6,7 @@ import OrganisationView from '@/views/OrganisationView.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMessageStore } from '@/stores/messageStore'
 import { storeToRefs } from 'pinia'
+import LogoutView from '@/views/LogoutView.vue'
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,6 +14,7 @@ const router = createRouter({
 		{ path: '/', name: 'mapView', component: MapView, },
 
 		{ path: '/login', name: 'loginView', component: AuthView, },
+		{ path: '/logout', name: 'logoutView', component: LogoutView, },
 		{ path: '/forgot-password', name: 'forgotPasswordView', component: AuthView, },
 		{ path: '/reset-password', name: 'resetPasswordView', component: AuthView, },
 
@@ -45,10 +47,11 @@ router.beforeEach(async (
 		messageStore.clearFlashMessage();
 
 	// Redirect to login if not authenticated
+
 	if (!isAuthenticated.value && !['loginView', 'forgotPasswordView', 'resetPasswordView'].includes(to.name as string)) {
 		authStore.setRedirectTo(to);
 		return next({ name: 'loginView' });
-	}
+	} 
 
 	// Continue with the navigation
 	next();

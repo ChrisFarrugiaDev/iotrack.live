@@ -6,7 +6,16 @@
 		</section>
 
 		<section class="page">
-            <router-view></router-view>
+            <router-view v-slot="{ Component }">
+                <template v-if="useKeepAlive">
+                    <KeepAlive>
+                        <component :is="Component" />
+                    </KeepAlive>
+                </template>
+                <template v-else>
+                    <component :is="Component" />
+                </template>
+            </router-view>
 		</section>
 
 	</main>
@@ -16,21 +25,26 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import TheUserMenu from './components/dashboard/TheUserMenu.vue';
 import TheSidebar from './components/dashboard/TheSidebar.vue';
 import { useDashboardStore } from './stores/dashboardStore';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useAuthStore } from './stores/authStore';
 
 // - Store -------------------------------------------------------------
 
 const dashboardStore = useDashboardStore();
 const { getIsUserMenuOpen } = storeToRefs(dashboardStore);
 
+const authStore = useAuthStore();
+const { isAuthenticated, getRedirectTo } = storeToRefs(authStore);
+
 // - Routes ------------------------------------------------------------
 
 const route = useRoute();
+const router = useRouter();
 
 
 // - Page scrolling ----------------------------------------------------
@@ -46,14 +60,14 @@ const route = useRoute();
 
 const useKeepAlive = ref(true);  // Initially use KeepAlive
 
-// function handleLogout() {
-//   useKeepAlive.value = false;  // Turn off KeepAlive on logout
-//   setTimeout(() => { useKeepAlive.value = true; }, 100); // Reactivate KeepAlive after a brief pause
-// }
+function handleLogout() {
+  useKeepAlive.value = false;  // Turn off KeepAlive on logout
+  setTimeout(() => { useKeepAlive.value = true; }, 100); // Reactivate KeepAlive after a brief pause
+}
 
-// watch(()=>authStore.getLogCounter, ()=>{
-//     handleLogout();
-// })
+watch(()=>authStore.getLogCounter, ()=>{
+    handleLogout();
+})
 
 // - Computed ----------------------------------------------------------
 
@@ -61,9 +75,26 @@ const showSideBar = computed(() => {
     return !['loginView', 'forgotPasswordView', 'resetPasswordView'].includes(route.name as string)
 });
 
+// - Wachers -----------------------------------------------------------
+
+watch(isAuthenticated, (newVal) => {
+
+    // If not authenticated, and already on an auth-related view, do nothing
+    if (!newVal && ['loginView', 'forgotPasswordView', 'resetPasswordView'].includes(route.name as string)) {
+        return
+    }
+	// If authenticated Redirect to the saved "redirectTo" route
+    if (newVal) {
+        router.push({ name: getRedirectTo.value });
+		return;
+    } 
+    // If not authenticated and not on an auth view, redirect to login
+	router.push({ name: "loginView" });
+}, {
+    immediate: true,
+});
+
 // - Methods -----------------------------------------------------------
-
-
 
 </script>
 
