@@ -5,7 +5,10 @@
 </template>
 
 <script setup lang="ts">
+import { useAssetStore } from '@/stores/assetStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useDeviceStore } from '@/stores/deviceStore';
+import { useOrganisationStore } from '@/stores/organisationStore';
 import { onActivated } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -18,6 +21,11 @@ onActivated(async() => {
     } catch (err: any) {
 
     } finally {
+
+        useOrganisationStore().clear();
+        useDeviceStore().clear();
+        useAssetStore().clear();
+        
 
         // Clear keepalive when logged out
         authStore.updateLogCounter();

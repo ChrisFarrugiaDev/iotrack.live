@@ -48,7 +48,6 @@ export const useAuthStore = defineStore('authStore', () => {
     // ---- Actions ----------------------------------------------------
 
     function setJwt(token: string | null) {
-        console.log(rememberMe.value)
         jwt.value = token;
     }
 

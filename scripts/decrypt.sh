@@ -20,7 +20,8 @@ decrypt_file() {
 files_to_decrypt=(
   docker-compose.yml.gpg
   .env.gpg
-  .env.development.gpg  
+  # .env.development.gpg  
+  web.frontend.vue/.env.gpg
   web.backend.node.ts.auth/.env.gpg
   web.backend.node.ts.auth/.env.development.gpg  
   web.backend.node.ts.api/.env.gpg

@@ -43,12 +43,20 @@ import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/appStore';
+import { useDeviceStore } from '@/stores/deviceStore';
+import { useAssetStore } from '@/stores/assetStore';
+import { useOrganisationStore } from '@/stores/organisationStore';
 
 // - Store -------------------------------------------------------------
 
 const appStore = useAppStore();
+
 const authStore = useAuthStore();
 const { getRemeberMe } = storeToRefs(authStore);
+
+const deviceStore = useDeviceStore();
+const assetStore = useAssetStore();
+const organisationStore = useOrganisationStore();
 
 
 // - Data --------------------------------------------------------------
@@ -95,9 +103,17 @@ async function submitForm() {
             password: password.value
         });
 
-        
 
         if (response.status == 200) {
+
+            const token = response.data.data.token;
+            const accessProfile = response.data.data.access_profile;
+
+            deviceStore.setDevices(accessProfile.devices);
+            assetStore.setAssets(accessProfile.assets);
+            organisationStore.setOrganisation(accessProfile.organisation);
+            organisationStore.setOrganisationScope(accessProfile.organisation_scope);
+
             email.value = 'alice@acme.com';
 
             password.value = 'DevPass';
@@ -105,11 +121,10 @@ async function submitForm() {
             authStore.setJwt(null);
 
             setTimeout(()=>{
-                authStore.setJwt(response.data.data.token);
+                authStore.setJwt(token);
             }, 100)
 
-            goToView('loginView');  
-            
+            goToView('loginView');              
         }
 
 

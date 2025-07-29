@@ -5,10 +5,12 @@
   ],
   "queues": [
     { "name": "telemetry", "durable": true },
-    { "name": "tat240", "durable": true }
+    { "name": "telemetry_last", "durable": true },
+    { "name": "tat240", "durable": true } 
   ],
   "routing_keys": [
     { "name": "teltonika_telemetry", "exchange": "teltonika", "queue": "telemetry" },
-    { "name": "teltonika_tat240", "exchange": "teltonika", "queue": "tat240" }
+    { "name": "teltonika_telemetry_last", "exchange": "teltonika", "queue": "telemetry_last" },
+    { "name": "teltonika_tat240", "exchange": "teltonika", "queue": "tat240" } 
   ]
 }

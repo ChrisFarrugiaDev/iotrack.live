@@ -20,6 +20,7 @@ files_to_encrypt=(
   docker-compose.yml
   .env
   # .env.development  
+  web.frontend.vue/.env
   web.backend.node.ts.auth/.env
   web.backend.node.ts.auth/.env.development  
   web.backend.node.ts.api/.env
