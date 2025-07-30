@@ -28,16 +28,17 @@ model codec12_commands {
 }
 
 model assets {
-  id              BigInt        @id @default(autoincrement())
-  uuid            String?       @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organisation_id BigInt        @default(1)
-  name            String        @db.VarChar(128)
-  asset_type      String?       @db.VarChar(32)
-  description     String?
-  created_at      DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
-  organisations   organisations @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
-  devices         devices[]
+  id                BigInt              @id @default(autoincrement())
+  uuid              String?             @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organisation_id   BigInt              @default(2)
+  name              String              @db.VarChar(128)
+  asset_type        String?             @db.VarChar(32)
+  description       String?
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  organisations     organisations       @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
+  devices           devices[]
+  user_asset_access user_asset_access[]
 
   @@index([name], map: "idx_assets_name")
   @@index([organisation_id], map: "idx_assets_organisation_id")
@@ -45,21 +46,22 @@ model assets {
 }
 
 model devices {
-  id               BigInt        @id @default(autoincrement())
-  uuid             String?       @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organisation_id  BigInt        @default(1)
-  asset_id         BigInt?
-  external_id      String        @db.VarChar(64)
-  external_id_type String        @db.VarChar(16)
-  protocol         String?       @db.VarChar(32)
-  vendor           String?       @db.VarChar(64)
-  model            String?       @db.VarChar(64)
-  status           String        @default("new") @db.VarChar
-  description      String?
-  registered_at    DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime      @default(now()) @db.Timestamptz(6)
-  assets           assets?       @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
-  organisations    organisations @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
+  id                 BigInt               @id @default(autoincrement())
+  uuid               String?              @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organisation_id    BigInt               @default(2)
+  asset_id           BigInt?
+  external_id        String               @db.VarChar(64)
+  external_id_type   String               @db.VarChar(16)
+  protocol           String?              @db.VarChar(32)
+  vendor             String?              @db.VarChar(64)
+  model              String?              @db.VarChar(64)
+  status             String               @default("new") @db.VarChar
+  description        String?
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  assets             assets?              @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+  organisations      organisations        @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
+  user_device_access user_device_access[]
 
   @@unique([external_id, external_id_type], map: "idx_devices_idtype_org")
   @@index([status], map: "idx_devices_status")
@@ -67,20 +69,22 @@ model devices {
 }
 
 model organisations {
-  id                  BigInt          @id @default(autoincrement())
-  uuid                String?         @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                String          @db.VarChar(128)
-  description         String?
-  parent_org_id       BigInt?
-  maps_api_key        String?         @db.VarChar(255)
-  can_inherit_key     Boolean?        @default(true)
-  created_at          DateTime        @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime        @default(now()) @db.Timestamptz(6)
-  assets              assets[]
-  devices             devices[]
-  organisations       organisations?  @relation("organisationsToorganisations", fields: [parent_org_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  other_organisations organisations[] @relation("organisationsToorganisations")
-  users               users[]
+  id                       BigInt                     @id @default(autoincrement())
+  uuid                     String                     @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                     String                     @db.VarChar(128)
+  description              String?
+  parent_org_id            BigInt?
+  maps_api_key             String?                    @db.VarChar(255)
+  can_inherit_key          Boolean?                   @default(true)
+  created_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  path                     String?
+  assets                   assets[]
+  devices                  devices[]
+  organisations            organisations?             @relation("organisationsToorganisations", fields: [parent_org_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_organisations      organisations[]            @relation("organisationsToorganisations")
+  user_organisation_access user_organisation_access[]
+  users                    users[]
 
   @@index([name], map: "idx_organisations_name")
   @@schema("app")
@@ -135,21 +139,58 @@ model telemetry {
 }
 
 model users {
-  id              BigInt        @id @default(autoincrement())
-  uuid            String        @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  first_name      String
-  last_name       String
-  email           String        @unique
-  password_hash   String
-  role_id         Int           @db.SmallInt
-  organisation_id BigInt
-  active          Boolean       @default(true)
-  last_login_at   DateTime?     @db.Timestamptz(6)
-  created_at      DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
-  organisations   organisations @relation(fields: [organisation_id], references: [id], onUpdate: NoAction)
-  roles           roles         @relation(fields: [role_id], references: [role_id], onUpdate: NoAction)
+  id                       BigInt                     @id @default(autoincrement())
+  uuid                     String                     @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name               String
+  last_name                String
+  email                    String                     @unique
+  password_hash            String
+  role_id                  Int                        @db.SmallInt
+  organisation_id          BigInt
+  active                   Boolean                    @default(true)
+  last_login_at            DateTime?                  @db.Timestamptz(6)
+  created_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  token_version            Int                        @default(1)
+  user_asset_access        user_asset_access[]
+  user_device_access       user_device_access[]
+  user_organisation_access user_organisation_access[]
+  organisations            organisations              @relation(fields: [organisation_id], references: [id], onUpdate: NoAction)
+  roles                    roles                      @relation(fields: [role_id], references: [role_id], onUpdate: NoAction)
 
   @@index([organisation_id], map: "idx_users_organisation_id")
+  @@schema("app")
+}
+
+model user_asset_access {
+  user_id    BigInt
+  asset_id   BigInt
+  is_allowed Boolean @default(true)
+  assets     assets  @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, asset_id])
+  @@schema("app")
+}
+
+model user_device_access {
+  user_id    BigInt
+  device_id  BigInt
+  is_allowed Boolean @default(true)
+  devices    devices @relation(fields: [device_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, device_id])
+  @@schema("app")
+}
+
+model user_organisation_access {
+  user_id           BigInt
+  organisation_uuid String        @db.Uuid
+  is_allowed        Boolean       @default(true)
+  organisations     organisations @relation(fields: [organisation_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction)
+  users             users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, organisation_uuid])
   @@schema("app")
 }

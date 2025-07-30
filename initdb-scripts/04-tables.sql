@@ -27,13 +27,14 @@ CREATE TABLE app.organisations (
     uuid            UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),  -- Globally unique, use in APIs/relations
 
     name            VARCHAR(128) NOT NULL,
-    description     TEXT,
 
     parent_org_id   BIGINT REFERENCES app.organisations(id),
     path            TEXT,
 
     maps_api_key    VARCHAR(255),
     can_inherit_key BOOLEAN DEFAULT TRUE,
+
+    attributes      JSONB NOT NULL DEFAULT '{}',
 
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -101,7 +102,7 @@ CREATE TABLE app.assets (
     organisation_id   BIGINT NOT NULL DEFAULT 2 REFERENCES app.organisations(id) ON DELETE SET DEFAULT,   
     name              VARCHAR(128) NOT NULL,
     asset_type        VARCHAR(32),
-    description       TEXT,
+    attributes        JSONB NOT NULL DEFAULT '{}',
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -125,18 +126,22 @@ CREATE TABLE app.devices (
     id                BIGSERIAL PRIMARY KEY,
     uuid              UUID UNIQUE DEFAULT gen_random_uuid(),
 
-    organisation_id   BIGINT NOT NULL DEFAULT  2 REFERENCES app.organisations(id)  ON DELETE SET DEFAULT, 
-
+    organisation_id   BIGINT NOT NULL DEFAULT 2 REFERENCES app.organisations(id) ON DELETE SET DEFAULT,
     asset_id          BIGINT REFERENCES app.assets(id) ON DELETE SET NULL,
-    
+
     external_id       VARCHAR(64) NOT NULL,
     external_id_type  VARCHAR(16) NOT NULL,
     protocol          VARCHAR(32),
     vendor            VARCHAR(64),
     model             VARCHAR(64),
-    status VARCHAR CHECK (status IN ('new', 'active', 'disabled', 'retired')) NOT NULL DEFAULT 'new',
-    description       TEXT,
-    registered_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status            VARCHAR CHECK (status IN ('new', 'active', 'disabled', 'retired')) NOT NULL DEFAULT 'new',
+
+    attributes        JSONB NOT NULL DEFAULT '{}',
+
+    last_telemetry    JSONB NOT NULL DEFAULT '{}',
+    last_telemetry_ts BIGINT NOT NULL DEFAULT 0,
+
+    create_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

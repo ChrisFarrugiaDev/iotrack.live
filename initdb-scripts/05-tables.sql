@@ -215,7 +215,6 @@ SELECT
     d.vendor,
     d.model,
     d.status,
-    d.description,
     uda.is_allowed
 FROM
     app.user_device_access uda

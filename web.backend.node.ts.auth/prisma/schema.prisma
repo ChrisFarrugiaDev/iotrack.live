@@ -16,7 +16,7 @@ model assets {
   organisation_id   BigInt              @default(2)
   name              String              @db.VarChar(128)
   asset_type        String?             @db.VarChar(32)
-  description       String?
+  attributes        Json                @default("{}")
   created_at        DateTime            @default(now()) @db.Timestamptz(6)
   updated_at        DateTime            @default(now()) @db.Timestamptz(6)
   organisations     organisations       @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
@@ -40,8 +40,10 @@ model devices {
   vendor             String?              @db.VarChar(64)
   model              String?              @db.VarChar(64)
   status             String               @default("new") @db.VarChar
-  description        String?
-  registered_at      DateTime             @default(now()) @db.Timestamptz(6)
+  attributes         Json                 @default("{}")
+  last_telemetry     Json                 @default("{}")
+  last_telemetry_ts  BigInt               @default(0)
+  create_at          DateTime             @default(now()) @db.Timestamptz(6)
   updated_at         DateTime             @default(now()) @db.Timestamptz(6)
   assets             assets?              @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
   organisations      organisations        @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
@@ -56,13 +58,13 @@ model organisations {
   id                       BigInt                     @id @default(autoincrement())
   uuid                     String                     @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                     String                     @db.VarChar(128)
-  description              String?
   parent_org_id            BigInt?
+  path                     String?
   maps_api_key             String?                    @db.VarChar(255)
   can_inherit_key          Boolean?                   @default(true)
+  attributes               Json                       @default("{}")
   created_at               DateTime                   @default(now()) @db.Timestamptz(6)
   updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
-  path                     String?
   assets                   assets[]
   devices                  devices[]
   organisations            organisations?             @relation("organisationsToorganisations", fields: [parent_org_id], references: [id], onDelete: NoAction, onUpdate: NoAction)

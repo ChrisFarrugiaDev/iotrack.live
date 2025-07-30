@@ -59,7 +59,7 @@ func initializeCache() {
 	port, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
 	logger.Info("Successfully connected to Redis", zap.Int("Port", port))
 
-	app.Cache = cache.NewCache(redisPool, os.Getenv("REDIS_PREFIX"))
+	app.Cache = cache.NewCache(redisPool, "parser.teltonika:")
 }
 
 // ---------------------------------------------------------------------

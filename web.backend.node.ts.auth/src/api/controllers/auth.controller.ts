@@ -77,7 +77,7 @@ class AuthController {
                     name: org.name,
                     parent_org_id: org.parent_org_id,
                     path: org.path,
-                    description: org.description,
+                    attributes: org.attributes,
                     created_at: org.created_at
                 };
             }

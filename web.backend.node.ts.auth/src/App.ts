@@ -87,7 +87,7 @@ class App {
     startIntervalTasks(): void {
         setInterval( async()=>{
             await cacheAllOrganisationsToRedis();
-        }, 10000)
+        }, 1000 * 60 * 10)
     }
 
     registerCronJobs(): void { }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -109,11 +110,16 @@ func main() {
 	}
 
 	// Ensure logs are flushed on exit
-	if err := logger.Log.Sync(); err != nil {
-		// Print to stderr as last resort
+	if err := logger.Log.Sync(); err != nil && !isInvalidSyncError(err) {
 		fmt.Fprintf(os.Stderr, "Logger sync failed: %v\n", err)
 	}
 
+}
+
+// isInvalidSyncError returns true if the error is the harmless
+// "invalid argument" sync error for /dev/stderr (common in dev)
+func isInvalidSyncError(err error) bool {
+	return strings.Contains(err.Error(), "invalid argument") && strings.Contains(err.Error(), "/dev/stderr")
 }
 
 // startDeviceSyncRoutines runs initial device syncs and launches periodic sync goroutine
@@ -140,7 +146,7 @@ func startDeviceSyncRoutines(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Debug("DB→Redis device sync goroutine exiting")
+				logger.Info("DB→Redis device sync goroutine exiting")
 				return
 			case <-ticker.C:
 				if err := ds.SyncDevicesFromDBToRedis(); err != nil {
@@ -160,7 +166,7 @@ func startDeviceSyncRoutines(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Debug("Redis→Var device sync goroutine exiting")
+				logger.Info("Redis→Var device sync goroutine exiting")
 				return
 			case <-ticker.C:
 				if err := ds.SyncDevicesFromRedisToVar(); err != nil {

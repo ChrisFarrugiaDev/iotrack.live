@@ -5,7 +5,9 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "dev": "nodemon --ignore files dist/server.js nodemon-watch",
+    "dev": "ts-node src/server.ts",
+    "prisma-pull": "npx prisma db pull --schema=prisma/schema.prisma",
+    "prisma-generate": "npx prisma generate --schema=prisma/schema.prisma",
     "concurrently": "concurrently \"npm run cluster:1\" \"npm run cluster:2\"",
     "cluster:1": "CONSUMER_NAME=worker1 nodemon dist/server.js",
     "cluster:2": "CONSUMER_NAME=worker2 nodemon dist/server.js",
@@ -25,6 +27,7 @@
     "concurrently": "^9.2.0",
     "dotenv-cli": "^8.0.0",
     "prisma": "^6.11.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "ts-node": "^10.9.2"
   }
 }

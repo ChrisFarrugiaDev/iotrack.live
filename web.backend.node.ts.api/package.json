@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "dev": "nodemon --ignore files dist/server.js nodemon-watch"
+    "dev": "nodemon --ignore files dist/server.js nodemon-watch",
+    "prisma-pull": "npx prisma db pull --schema=prisma/schema.prisma",
+    "prisma-generate": "npx prisma generate --schema=prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
