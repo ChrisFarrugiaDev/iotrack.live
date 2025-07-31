@@ -28,6 +28,7 @@ func NewCache(c *redis.Pool, p string) *RedisCache {
 }
 
 func CreateRedisPool() (*redis.Pool, error) {
+	
 
 	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 

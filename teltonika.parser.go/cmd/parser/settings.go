@@ -22,6 +22,7 @@ func loadEnv() error {
 
 	os.Setenv("TZ", "UTC")
 
+
 	// Check for DOCKERIZED (set as env in Docker Compose)
 	if os.Getenv("DOCKERIZED") == "true" {
 		// In Docker, assume envs are passed by Docker and skip loading .env files.

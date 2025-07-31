@@ -11,11 +11,15 @@ import (
 )
 
 type App struct {
-	Cache      *cache.RedisCache
-	MQProducer *rabbitmq.RabbitMQProducer
-	DB         *pgxpool.Pool
-	Models     models.Models
-	Devices    map[string]*models.Device
-	MU         sync.Mutex
-	UUID       *uuid7.Generator
+	Cache       *cache.RedisCache
+	MQProducer  *rabbitmq.RabbitMQProducer
+	DB          *pgxpool.Pool
+	Models      models.Models
+	Devices     map[string]*models.Device
+	DevicesLock sync.RWMutex
+	UUID        *uuid7.Generator
+
+	LastTelemetryMap map[string]map[string]interface{}
+	UpdatedDevices   map[string]struct{}
+	TelemetryLock    sync.Mutex
 }

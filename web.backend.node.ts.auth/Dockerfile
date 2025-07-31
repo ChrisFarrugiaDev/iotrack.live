@@ -17,7 +17,6 @@ RUN npm install --omit=dev
 
 # Copy production build artifacts and Prisma client
 COPY dist ./dist
-COPY prisma ./prisma
 COPY generated ./generated
 
 # Expose the app port

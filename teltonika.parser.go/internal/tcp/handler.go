@@ -38,7 +38,9 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			return
 		}
 
+		s.App.DevicesLock.RLock()
 		currentDevice, ok := s.App.Devices[imei]
+		s.App.DevicesLock.RUnlock()
 
 		// -- If device not found in cache, create it in DB and cache
 		if !ok {
@@ -67,7 +69,9 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				return
 			}
 
+			s.App.DevicesLock.Lock()
 			s.App.Devices[imei] = newDevice
+			s.App.DevicesLock.Unlock()
 
 			currentDevice = newDevice
 		}
@@ -227,7 +231,9 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	if dataPacket.GetCodecType() == "AVL_Data" {
 
 		codec8Record := dataPacket.(*apptypes.Codec8AvlRecord)
+		s.App.DevicesLock.RLock()
 		currentDevice := s.App.Devices[deviceMeta.IMEI]
+		s.App.DevicesLock.RUnlock()
 
 		for _, avl := range codec8Record.Content.AVL_Datas {
 

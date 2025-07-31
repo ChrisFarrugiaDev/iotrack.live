@@ -73,7 +73,9 @@ func (s *DeviceService) SyncDevicesFromRedisToVar() error {
 		devices[deviceID] = &d
 	}
 
+	s.App.DevicesLock.Lock()
 	s.App.Devices = devices
+	s.App.DevicesLock.Unlock()
 
 	logger.Debug("Devices cache loaded from Redis",
 		zap.Int("total_devices", len(items)),
