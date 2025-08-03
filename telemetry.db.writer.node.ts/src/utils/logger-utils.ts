@@ -10,7 +10,7 @@ const colors: Record<string, string> = {
     reset: "\x1b[0m"  // This resets the color to default
 }
 
-const isDevelopment: boolean = process.env.NODE_ENV != 'production';
+const isDebug: boolean = process.env.DEBUG != 'true';
 const serviceName = process.env.MICROSERVICE_NAME || "unknown-service";
 
 // Use this wherever you build your log string:
@@ -26,7 +26,7 @@ function getLogDetails() {
     // Extract file path and line number
     const match = relevantLine.match(/\((.*?):(\d+):(\d+)\)/);
     if (!match) {
-        return isDevelopment ? "- unknown location -" : `${formatDate(new Date())} - unknown location -`;
+        return isDebug ? "- unknown location -" : `${formatDate(new Date())} - unknown location -`;
     }
 
     let filePath = match[1];
@@ -41,7 +41,7 @@ function getLogDetails() {
     }
 
     // Include the date in the log details only if it's not in development
-    const datePrefix = isDevelopment ? "" : `${formatDate(new Date())} `;
+    const datePrefix = isDebug ? "" : `${formatDate(new Date())} `;
     return `${datePrefix}[${filePath}:${lineNumber}]`;
 }
 
@@ -61,8 +61,8 @@ export function logInfo(message: string, col: string='reset') {
     
 }
 
-export function logDev(message: string, col: string='blue') {
-    if (isDevelopment) {
-        console.log(`${getServicePrefix()} ${colors[col]}DEV ${getLogDetails()} >${colors['reset']}`, message);        
+export function logDebug(message: string, col: string='blue') {
+    if (isDebug) {
+        console.log(`${getServicePrefix()} ${colors[col]}DEBUG ${getLogDetails()} >${colors['reset']}`, message);        
     }
 }

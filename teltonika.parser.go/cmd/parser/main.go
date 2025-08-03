@@ -6,13 +6,16 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/GoWebProd/uuid7"
+	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
 	"iotrack.live/internal/appcore"
+	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/rabbitmq"
 	"iotrack.live/internal/services"
@@ -21,14 +24,23 @@ import (
 
 var app appcore.App
 
+func initializeAppCore(app *appcore.App) {
+	app.UUID = uuid7.New()
+	app.LastTelemetryMap = make(map[string]apptypes.FlatAvlRecord)
+	app.UpdatedDevicesSetA = make(map[string]struct{})
+	app.UpdatedDevicesSetB = make(map[string]struct{})
+	app.ActiveList = "A"
+	app.LatestTelemetryLock = sync.Mutex{}
+	app.Cron = cron.New(cron.WithSeconds())
+}
+
 func main() {
 
 	// -----------------------------------------------------------------
-	app.UUID = uuid7.New()
+	initializeAppCore(&app)
+
 	loadEnv()
-
 	logger.InitLogger()
-
 	initializeCache()
 
 	// -----------------------------------------------------------------
@@ -59,13 +71,22 @@ func main() {
 	serverClosed := make(chan struct{})
 
 	// -----------------------------------------------------------------
+	// Initialize Service with a pointer to your main app struct.
+	appService := services.NewService(&app)
+
+	// -----------------------------------------------------------------
 	// Start device sync service routines
-	startDeviceSyncRoutines(ctx)
+	startDeviceSyncRoutines(ctx, appService)
+
+	// -----------------------------------------------------------------
+	// Setup all scheduled cron jobs
+	setupCrons(&app, appService)
+
 	// -----------------------------------------------------------------
 
 	// Start the TCP server in a new goroutine so main can keep control.
 	go func() {
-		tcpServer := tcp.NewTCPServer(&app)
+		tcpServer := tcp.NewTCPServer(&app, appService)
 		tcpServer.Start(ctx)
 		close(serverClosed) // Signal that the server has shut down.
 	}()
@@ -109,6 +130,13 @@ func main() {
 		logger.Log.Info("Database connection pool closed gracefully.")
 	}
 
+	// Stop cron scheduler and wait for running jobs to finish
+	if app.Cron != nil {
+		ctx := app.Cron.Stop()
+		<-ctx.Done()
+		logger.Log.Info("Cron jobs stopped gracefully.")
+	}
+
 	// Ensure logs are flushed on exit
 	if err := logger.Log.Sync(); err != nil && !isInvalidSyncError(err) {
 		fmt.Fprintf(os.Stderr, "Logger sync failed: %v\n", err)
@@ -123,23 +151,20 @@ func isInvalidSyncError(err error) bool {
 }
 
 // startDeviceSyncRoutines runs initial device syncs and launches periodic sync goroutine
-func startDeviceSyncRoutines(ctx context.Context) {
-
-	// Initialize the DeviceService with a pointer to your main app struct.
-	deviceService := services.DeviceService{App: &app}
+func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) {
 
 	// Initial sync at startup: DB -> Redis
-	if err := deviceService.SyncDevicesFromDBToRedis(); err != nil {
+	if err := appService.SyncDevicesFromDBToRedis(); err != nil {
 		logger.Error("Initial device sync from DB to Redis failed", zap.Error(err))
 	}
 
 	// Initial sync at startup: Redis -> in-memory map
-	if err := deviceService.SyncDevicesFromRedisToVar(); err != nil {
+	if err := appService.SyncDevicesFromRedisToVar(); err != nil {
 		logger.Error("Initial device sync from Redis to in-memory variable failed", zap.Error(err))
 	}
 
 	// Periodically sync devices from DB to Redis every 5 minutes.
-	go func(ctx context.Context, ds *services.DeviceService) {
+	go func(ctx context.Context, ds *services.Service) {
 		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
 
@@ -156,10 +181,10 @@ func startDeviceSyncRoutines(ctx context.Context) {
 				}
 			}
 		}
-	}(ctx, &deviceService)
+	}(ctx, appService)
 
 	// Periodically sync devices from Redis to in-memory map every 20 seconds.
-	go func(ctx context.Context, ds *services.DeviceService) {
+	go func(ctx context.Context, ds *services.Service) {
 		ticker := time.NewTicker(20 * time.Second)
 		defer ticker.Stop()
 
@@ -176,6 +201,6 @@ func startDeviceSyncRoutines(ctx context.Context) {
 				}
 			}
 		}
-	}(ctx, &deviceService)
+	}(ctx, appService)
 
 }

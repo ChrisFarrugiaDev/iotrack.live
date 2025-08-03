@@ -1,5 +1,5 @@
 import redis, {redisKeyPrefix} from "../config/redis.config";
-import { logDev, logError } from "./logger-utils";
+import { logDebug, logError } from "./logger-utils";
 
 
 
@@ -26,7 +26,7 @@ export async function saveToRedis(
             await redis.expire(fullKey, expireInSeconds);
         }
 
-        logDev(`Successfully saved key: ${fullKey}`);
+        logDebug(`Successfully saved key: ${fullKey}`);
     } catch (err) {
         logError("! redisUtils saveToRedis !", err);
         throw err;
@@ -58,12 +58,12 @@ export async function deleteKeyFromCache(key: string, prefix: string | null = nu
 
         const exist = await redis.exists(fullKey);
         if (!exist) {
-            logDev(`Key ${fullKey} does not exist.`, 'yellow');
+            logDebug(`Key ${fullKey} does not exist.`, 'yellow');
             return false;
         }
 
         await redis.del(fullKey);
-        logDev(`Successfully deleted the key: ${fullKey}`, 'green');
+        logDebug(`Successfully deleted the key: ${fullKey}`, 'green');
         return true;
     } catch (err) {
         logError("! redisUtils deleteKeyFromCache !", err);
@@ -81,7 +81,7 @@ export async function addItemToList(key: string, item: any, prefix: string | nul
         const fullKey = `${usedPrefix}${key}`;
         await redis.rpush(fullKey, itemToAdd);
 
-        logDev(`Successfully added item to Redis list: ${fullKey}`);
+        logDebug(`Successfully added item to Redis list: ${fullKey}`);
     } catch (err) {
         logError('! addItemToList !', err);
         throw err;
@@ -113,7 +113,7 @@ export async function saveArrayToList(
 
         await redis.rpush(fullKey, ...array);
 
-        logDev(`Successfully saved array to Redis list: ${fullKey}`);
+        logDebug(`Successfully saved array to Redis list: ${fullKey}`);
     } catch (err) {
         logError('! redisUtils saveArrayToList !', err);
         throw err;

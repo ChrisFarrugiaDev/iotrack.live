@@ -96,7 +96,7 @@ export function logInfo(message: string, col: string = 'reset') {
     }
 }
 
-export function logDev(message: string, col: string = 'blue') {
+export function logDebug(message: string, col: string = 'blue') {
     if (isDevelopment) {
         const logLine = `${getServicePrefix()} DEV ${getLogDetails()} > ${message}`;
         if (logMode == 'file') {

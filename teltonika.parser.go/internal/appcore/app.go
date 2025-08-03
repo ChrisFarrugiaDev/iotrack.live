@@ -5,6 +5,9 @@ import (
 
 	"github.com/GoWebProd/uuid7"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/robfig/cron/v3"
+
+	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/cache"
 	"iotrack.live/internal/models"
 	"iotrack.live/internal/rabbitmq"
@@ -12,6 +15,7 @@ import (
 
 type App struct {
 	Cache       *cache.RedisCache
+	Cron        *cron.Cron
 	MQProducer  *rabbitmq.RabbitMQProducer
 	DB          *pgxpool.Pool
 	Models      models.Models
@@ -19,7 +23,9 @@ type App struct {
 	DevicesLock sync.RWMutex
 	UUID        *uuid7.Generator
 
-	LastTelemetryMap map[string]map[string]interface{}
-	UpdatedDevices   map[string]struct{}
-	TelemetryLock    sync.Mutex
+	LastTelemetryMap    map[string]apptypes.FlatAvlRecord
+	UpdatedDevicesSetA  map[string]struct{}
+	UpdatedDevicesSetB  map[string]struct{}
+	ActiveList          string //  A/B double-buffering
+	LatestTelemetryLock sync.Mutex
 }

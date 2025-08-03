@@ -1,7 +1,11 @@
 {
   "reconnect_delay_seconds": 10,
   "exchanges": [
-    { "name": "teltonika", "type": "direct", "durable": true }
+    {
+      "name": "teltonika",
+      "type": "direct",
+      "durable": true
+    }
   ],
   "queues": [
     {
@@ -11,9 +15,26 @@
         "max_size": 500,
         "max_wait_seconds": 5
       }
+    },
+    {
+      "name": "telemetry_last",
+      "durable": true,
+      "batch": {
+        "max_size": 500,
+        "max_wait_seconds": 5
+      }
     }
   ],
   "routing_keys": [
-    { "name": "teltonika_telemetry", "exchange": "teltonika", "queue": "telemetry" }
+    {
+      "name": "teltonika_telemetry",
+      "exchange": "teltonika",
+      "queue": "telemetry"
+    },
+    {
+      "name": "teltonika_telemetry_last",
+      "exchange": "teltonika",
+      "queue": "telemetry_last"
+    }
   ]
 }

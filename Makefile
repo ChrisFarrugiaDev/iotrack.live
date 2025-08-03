@@ -39,7 +39,7 @@ docker-down:
 sync:
 	# rsync -az --delete --exclude=node_modules --exclude='prisma' --exclude='generated' -e "ssh -i ~/.ssh_iot/id_ecdsa" ~/c/Chris/projects/iotrack.live-main/ ubuntu@57.129.22.122:/home/ubuntu/projects/iotrack.live
 
-	rsync -az --delete --exclude=node_modules --exclude='prisma' --exclude='generated' --exclude='parser' -e "ssh -i ~/.ssh/ssh_iot/id_ecdsa"  /home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live/ ubuntu@57.129.22.122:/home/ubuntu/projects/iotrack.live
+	rsync -az --delete --exclude=node_modules  -e "ssh -i ~/.ssh/ssh_iot/id_ecdsa"  /home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live ubuntu@57.129.22.122:/home/ubuntu/projects
 
 post-codec12:
 	curl -X POST http://57.129.22.122:3000/teltonika-parser/codec12/commands/864636060448814 \
@@ -53,7 +53,7 @@ auth-build:
 	npm run prisma-generate && \
 	npm run build
 
-teltonika-parser-docker-build:
+teltonika-parser-build:
 	cd teltonika.parser.go && \
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o teltonika-parser ./cmd/parser
 
@@ -61,11 +61,7 @@ auth-docker-build:
 	cd web.backend.node.ts.auth && \
 	docker build --no-cache -t iotrack-auth .
 
-docker-up:	
-	sudo docker compose up -d 
 
-docker-down:	
-	sudo docker compose down
 
 
 

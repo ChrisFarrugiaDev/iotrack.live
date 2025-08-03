@@ -13,14 +13,16 @@ import (
 	"iotrack.live/internal/appcore"
 	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
+	"iotrack.live/internal/services"
 )
 
 type TCPServer struct {
-	App *appcore.App
+	App     *appcore.App
+	Service *services.Service
 }
 
-func NewTCPServer(app *appcore.App) *TCPServer {
-	return &TCPServer{App: app}
+func NewTCPServer(app *appcore.App, service *services.Service) *TCPServer {
+	return &TCPServer{App: app, Service: service}
 }
 
 func (s *TCPServer) Start(ctx context.Context) {

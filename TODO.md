@@ -11,3 +11,7 @@ OK 3. In asset table: add attributes field, remove description
 OK 6. Dockerize the teltonika.parser.go service
 
 7. Impliment latest telemetry on the devices
+
+8. In go teltonika parser update the :
+    'LastTelemetryMap    map[string]apptypes.FlatAvlRecord'
+    from redis at start up

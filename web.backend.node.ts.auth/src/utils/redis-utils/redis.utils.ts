@@ -1,5 +1,5 @@
 import redis, { redisKeyPrefix } from "../../config/redis.config";
-import { logDev, logError } from "../logger.utils";
+import { logDebug, logError } from "../logger.utils";
 
 
 // ---------------------------------------------------------------------
@@ -24,7 +24,7 @@ export async function saveToCache(
             await redis.expire(fullKey, expireInSeconds);
         }
 
-        logDev(`Successfully saved key: ${fullKey}`);
+        logDebug(`Successfully saved key: ${fullKey}`);
     } catch (err) {
         logError("! redisUtils saveToRedis !", err);
         throw err;
@@ -56,12 +56,12 @@ export async function deleteKeyFromCache(key: string, prefix: string | null = nu
 
         const exist = await redis.exists(fullKey);
         if (!exist) {
-            logDev(`Key ${fullKey} does not exist.`, 'yellow');
+            logDebug(`Key ${fullKey} does not exist.`, 'yellow');
             return false;
         }
 
         await redis.del(fullKey);
-        logDev(`Successfully deleted the key: ${fullKey}`, 'green');
+        logDebug(`Successfully deleted the key: ${fullKey}`, 'green');
         return true;
     } catch (err) {
         logError("! redisUtils deleteKeyFromCache !", err);
@@ -92,7 +92,7 @@ export async function saveHashToRedis(
 
         await redis.hset(fullKey, hashData);
 
-        logDev(`Successfully saved hash to Redis: ${fullKey}`);
+        logDebug(`Successfully saved hash to Redis: ${fullKey}`);
     } catch (err) {
         logError("! redisUtils saveHashToRedis !", err);
         throw err;
@@ -129,7 +129,7 @@ export async function replaceHashWithLua(
 
         await redis.eval(luaScript, 1, fullKey, ...argv);
 
-        logDev(`Successfully replaced hash with key: ${fullKey}`);
+        logDebug(`Successfully replaced hash with key: ${fullKey}`);
     } catch (err) {
         logError("! redisUtils replaceHashWithLua !", err);
         throw err;

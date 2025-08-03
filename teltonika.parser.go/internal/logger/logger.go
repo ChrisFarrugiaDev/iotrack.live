@@ -14,9 +14,10 @@ var Log *zap.Logger
 func InitLogger() *zap.Logger {
 	var logger *zap.Logger
 	mode := os.Getenv("LOG_MODE")
-	serviceName := os.Getenv("MICROSERVICE_NAME")
-	if serviceName == "" {
-		serviceName = "unknown-service"
+
+	zapLevel := zap.InfoLevel
+	if os.Getenv("DEBUG") == "true" {
+		zapLevel = zap.DebugLevel
 	}
 
 	switch mode {
@@ -36,7 +37,7 @@ func InitLogger() *zap.Logger {
 		core := zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConfig),
 			zapcore.AddSync(lumberjackLogger),
-			zap.InfoLevel,
+			zapLevel,
 		)
 		logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel), zap.AddCallerSkip(1))
 
@@ -45,6 +46,7 @@ func InitLogger() *zap.Logger {
 
 	default:
 		config := zap.NewDevelopmentConfig()
+		config.Level = zap.NewAtomicLevelAt(zapLevel)
 		l, err := config.Build(zap.AddCallerSkip(1))
 		if err != nil {
 			fmt.Printf("Error initializing logger: %v\n", err)

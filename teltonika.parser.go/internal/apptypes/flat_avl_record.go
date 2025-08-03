@@ -9,5 +9,5 @@ type FlatAvlRecord struct {
 	Angle      uint16         `json:"angle"`
 	Satellites uint8          `json:"satellites"`
 	Speed      uint16         `json:"speed"`
-	IOelement  map[string]any `json:"elements"`
+	Elements   map[string]any `json:"elements"`
 }

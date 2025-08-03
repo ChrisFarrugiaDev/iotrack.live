@@ -10,6 +10,7 @@ import (
 	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/models"
+
 	"iotrack.live/internal/teltonika"
 	// "iotrack.live/internal/util"
 )
@@ -85,6 +86,18 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	}
 
 	// --- 2. Data Packet: Codec 8/8ex (telemetry) or Codec 12 (commands) ---
+
+	// Retrieve the current device
+	s.App.DevicesLock.RLock()
+	currentDevice := s.App.Devices[deviceMeta.IMEI]
+	s.App.DevicesLock.RUnlock()
+
+	// If no device is found, log an error, send a negative ACK, and exit early
+	if currentDevice == nil {
+		logger.Error("Missing device (IMEI handshake likely skipped)", zap.String("imei", deviceMeta.IMEI))
+		conn.Write([]byte{0x00})
+		return
+	}
 
 	// Get Codec ID (always at byte 8)
 	codecID := int(packet[8])
@@ -231,38 +244,44 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	if dataPacket.GetCodecType() == "AVL_Data" {
 
 		codec8Record := dataPacket.(*apptypes.Codec8AvlRecord)
-		s.App.DevicesLock.RLock()
-		currentDevice := s.App.Devices[deviceMeta.IMEI]
-		s.App.DevicesLock.RUnlock()
 
-		for _, avl := range codec8Record.Content.AVL_Datas {
+		for i, avl := range codec8Record.Content.AVL_Datas {
 
-			record := map[string]any{}
-			record["device_id"] = currentDevice.ID
-			record["asset_id"] = currentDevice.AssetID
-			record["organisation_id"] = currentDevice.OrganisationID
-			record["timestamp"] = avl.Timestamp
-			record["protocol"] = currentDevice.Protocol
-			record["vendor"] = currentDevice.Vendor
-			record["telemetry"] = map[string]any{
-				"timestamp":  avl.Timestamp,
-				"priority":   avl.Priority,
-				"longitude":  avl.GPSelement.Longitude,
-				"latitude":   avl.GPSelement.Latitude,
-				"altitude":   avl.GPSelement.Altitude,
-				"angle":      avl.GPSelement.Angle,
-				"satellites": avl.GPSelement.Satellites,
-				"speed":      avl.GPSelement.Speed,
-				"elements":   avl.IOelement.Elements,
+			telemetry := apptypes.FlatAvlRecord{
+				Timestamp:  avl.Timestamp,
+				Priority:   avl.Priority,
+				Longitude:  avl.GPSelement.Longitude,
+				Latitude:   avl.GPSelement.Latitude,
+				Altitude:   avl.GPSelement.Altitude,
+				Angle:      avl.GPSelement.Angle,
+				Satellites: avl.GPSelement.Satellites,
+				Speed:      avl.GPSelement.Speed,
+				Elements:   avl.IOelement.Elements,
 			}
+
+			record := map[string]any{
+				"device_id":       currentDevice.ID,
+				"asset_id":        currentDevice.AssetID,
+				"organisation_id": currentDevice.OrganisationID,
+				"timestamp":       avl.Timestamp,
+				"protocol":        currentDevice.Protocol,
+				"vendor":          currentDevice.Vendor,
+				"telemetry":       telemetry, // <- Assign struct, NOT string
+			}
+
 			msg, _ := json.Marshal(record)
 			s.App.MQProducer.SendDirectMessage("teltonika_telemetry", "teltonika", string(msg))
 
 			// TODO:  remove only for testing
-
 			if deviceMeta.IMEI == "867747078708748" {
 				s.App.MQProducer.SendDirectMessage("teltonika_tat240", "teltonika", string(msg))
 			}
+
+			if i == 0 {
+				deviceID := fmt.Sprintf("%d", currentDevice.ID)
+				s.Service.UpdateLastTelemetry(deviceID, telemetry)
+			}
+
 		}
 	}
 	// -- end ------------------------------------------------------

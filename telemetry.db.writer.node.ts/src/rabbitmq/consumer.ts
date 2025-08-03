@@ -151,12 +151,22 @@ export class RabbitBatchConsumer {
                 await Telemetry.createBulk(data);
             }
 
+            if (queueName == "telemetry_last") {
+                const data = messages.map((msg) => JSON.parse(msg.content.toString()));
+                console.log(data);
+            }
+
+
             // Log batch processing for monitoring/debugging
             logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
 
             // Ack all messages in this batch (up to and including the last) in RabbitMQ
-            const lastMsg = messages[messages.length - 1];
-            if (lastMsg) this.channel.ack(lastMsg, true);
+            // const lastMsg = messages[messages.length - 1];
+            // if (lastMsg) this.channel.ack(lastMsg, true);
+
+            for (const msg of messages) {
+                this.channel.ack(msg, false);
+            }
 
             // If there are still messages buffered, schedule another flush right away
             if (this.batches[queueName].length > 0) {

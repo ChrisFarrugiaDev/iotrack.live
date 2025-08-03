@@ -5,22 +5,12 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
-	"iotrack.live/internal/appcore"
+
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/models"
 )
 
-type DeviceService struct {
-	App *appcore.App
-}
-
-func NewDeviceService(app *appcore.App) *DeviceService {
-	return &DeviceService{
-		App: app,
-	}
-}
-
-func (s *DeviceService) SyncDevicesFromDBToRedis() error {
+func (s *Service) SyncDevicesFromDBToRedis() error {
 	// Fetch all devices from the database
 	devices, err := s.App.Models.Device.GetAllDevices()
 	if err != nil {
@@ -53,7 +43,7 @@ func (s *DeviceService) SyncDevicesFromDBToRedis() error {
 
 // ---------------------------------------------------------------------
 
-func (s *DeviceService) SyncDevicesFromRedisToVar() error {
+func (s *Service) SyncDevicesFromRedisToVar() error {
 	items, err := s.App.Cache.HGetAll("devices")
 	if err != nil {
 		logger.Error("failed to fetch devices from Redis", zap.Error(err))
@@ -85,3 +75,5 @@ func (s *DeviceService) SyncDevicesFromRedisToVar() error {
 
 	return nil
 }
+
+// ---------------------------------------------------------------------

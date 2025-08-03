@@ -13,6 +13,32 @@ type Codec8AvlRecord struct {
 	CRC        uint32  `json:"crc"`
 }
 
+type Content struct {
+	AVL_Datas []AvlData `json:"avl_datas"`
+}
+
+type AvlData struct {
+	Timestamp  string     `json:"timestamp"` // ISO 8601 format (e.g. 2025-06-04T09:51:58.010Z)
+	Priority   uint8      `json:"priority"`
+	GPSelement GPSelement `json:"gps_element"`
+	IOelement  IOelement  `json:"io_element"`
+}
+
+type GPSelement struct {
+	Longitude  float64 `json:"longitude"`
+	Latitude   float64 `json:"latitude"`
+	Altitude   int16   `json:"altitude"`
+	Angle      uint16  `json:"angle"`
+	Satellites uint8   `json:"satellites"`
+	Speed      uint16  `json:"speed"`
+}
+
+type IOelement struct {
+	EventID      int            `json:"event_id"`
+	ElementCount int            `json:"element_count"`
+	Elements     map[string]any `json:"elements"` // use any for flexibility (could be int or string)
+}
+
 func (m *Codec8AvlRecord) GetCodecID() uint8 {
 	return m.CodecID
 }
@@ -23,36 +49,4 @@ func (m *Codec8AvlRecord) GetQuantity1() uint8 {
 
 func (m *Codec8AvlRecord) GetCodecType() string {
 	return m.CodecType
-}
-
-// ---------------------------------------------------------------------
-
-// Content wraps the records (for output parity)
-type Content struct {
-	AVL_Datas []AvlData `json:"avl_datas"`
-}
-
-// AvlData represents a single AVL data record
-type AvlData struct {
-	Timestamp  string     `json:"timestamp"` // ISO 8601 format (e.g. 2025-06-04T09:51:58.010Z)
-	Priority   uint8      `json:"priority"`
-	GPSelement GPSelement `json:"gps_element"`
-	IOelement  IOelement  `json:"io_element"`
-}
-
-// GPSelement groups all GPS data in one record
-type GPSelement struct {
-	Longitude  float64 `json:"longitude"`
-	Latitude   float64 `json:"latitude"`
-	Altitude   int16   `json:"altitude"`
-	Angle      uint16  `json:"angle"`
-	Satellites uint8   `json:"satellites"`
-	Speed      uint16  `json:"speed"`
-}
-
-// IOelement holds IO data for each record
-type IOelement struct {
-	EventID      int            `json:"event_id"`
-	ElementCount int            `json:"element_count"`
-	Elements     map[string]any `json:"elements"` // use any for flexibility (could be int or string)
 }
