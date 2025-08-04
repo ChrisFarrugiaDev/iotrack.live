@@ -22,7 +22,6 @@ func loadEnv() error {
 
 	os.Setenv("TZ", "UTC")
 
-
 	// Check for DOCKERIZED (set as env in Docker Compose)
 	if os.Getenv("DOCKERIZED") == "true" {
 		// In Docker, assume envs are passed by Docker and skip loading .env files.
@@ -60,7 +59,7 @@ func initializeCache() {
 	port, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
 	logger.Info("Successfully connected to Redis", zap.Int("Port", port))
 
-	app.Cache = cache.NewCache(redisPool, "parser.teltonika:")
+	app.Cache = cache.NewCache(redisPool, "teltonika.parser.go:")
 }
 
 // ---------------------------------------------------------------------

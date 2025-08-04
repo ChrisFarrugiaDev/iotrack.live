@@ -27,7 +27,7 @@ type Device struct {
 	Status          string                 `db:"status" json:"status"` // ENUM: 'new', 'active', etc.
 	Attributes      map[string]interface{} `db:"attributes,omitempty" json:"attributes,omitempty"`
 	LastTelemetry   map[string]interface{} `db:"last_telemetry,omitempty" json:"last_telemetry,omitempty"`
-	LastTelemetryTs int64                  `db:"last_telemetry_ts,omitempty" json:"last_telemetry_ts,omitempty"`
+	LastTelemetryTs time.Time              `db:"last_telemetry_ts,omitempty" json:"last_telemetry_ts,omitempty"`
 	Created_at      time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt       time.Time              `db:"updated_at" json:"updated_at"`
 }

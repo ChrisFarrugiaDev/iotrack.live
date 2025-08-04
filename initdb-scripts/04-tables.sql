@@ -139,9 +139,9 @@ CREATE TABLE app.devices (
     attributes        JSONB NOT NULL DEFAULT '{}',
 
     last_telemetry    JSONB NOT NULL DEFAULT '{}',
-    last_telemetry_ts BIGINT NOT NULL DEFAULT 0,
+    last_telemetry_ts TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 00:00:00+00',
 
-    create_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

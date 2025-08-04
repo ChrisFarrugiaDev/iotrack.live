@@ -151,12 +151,6 @@ export class RabbitBatchConsumer {
                 await Telemetry.createBulk(data);
             }
 
-            if (queueName == "telemetry_last") {
-                const data = messages.map((msg) => JSON.parse(msg.content.toString()));
-                console.log(data);
-            }
-
-
             // Log batch processing for monitoring/debugging
             logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
 

@@ -58,10 +58,10 @@ class TeltonikaController {
 
        
             // Save all commands to Redis list for this device
-            await redisUtils.saveArrayToList(redisKey, insertedCmd, "teltonika.parser:");
+            await redisUtils.saveArrayToList(redisKey, insertedCmd, "teltonika.parser.go:");
 
             // Get total number of pending Codec 12 commands in Redis for this IMEI
-            const pendingCode12CommandsNo = await redisUtils.listLength(redisKey, "teltonika.parser:");
+            const pendingCode12CommandsNo = await redisUtils.listLength(redisKey, "teltonika.parser.go:");
 
             // Respond with success and command details
             const response: types.ApiSuccessResponse<types.TeltonikaCodec12Command[]> = {

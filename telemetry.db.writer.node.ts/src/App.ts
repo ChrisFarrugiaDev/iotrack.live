@@ -2,6 +2,7 @@ import _env from "./config/env.config";
 import fs from 'fs/promises';
 import { ConsumerConfig, RabbitBatchConsumer } from './rabbitmq/consumer';
 import { logError, logInfo } from './utils/logger-utils';
+import redis from "./config/redis.config";
 
 
 class App {
@@ -31,10 +32,10 @@ class App {
         try {
             const configData = await fs.readFile('./rabbitmq_config.json', 'utf8');
             const config: ConsumerConfig = JSON.parse(configData);
-            
-            
+
+
             config.url = `amqp://${_env.RABBITMQ_USER}:${_env.RABBITMQ_PASSWORD}@${_env.RABBITMQ_HOST}:${_env.RABBITMQ_PORT}/`;
-     
+
             this.consumer = new RabbitBatchConsumer(config);
             await this.consumer.start();
 
@@ -48,14 +49,21 @@ class App {
     public async gracefulShutdown() {
 
         logInfo("Graceful shutdown initiated...");
-        
+
         try {
             // Close the RabbitMQ consumer/channel/connection if present
             if (this.consumer && typeof this.consumer.close === 'function') {
                 await this.consumer.close();
                 logInfo("RabbitMQ consumer closed.");
             }
-            // Add shutdown of any other resources (db, redis, etc) here
+
+            // Clean up Redis
+            try {
+                await redis.quit();
+                logInfo("Redis connection closed.");
+            } catch (err) {
+                logError("Error closing Redis", err);
+            }
 
             process.exit(0);
 

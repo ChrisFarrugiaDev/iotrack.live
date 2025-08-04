@@ -16,6 +16,6 @@ const redis = new Redis({
 });
 
 
-export const redisKeyPrefix = "web-backed-api:";
+export const redisKeyPrefix = "web.backend.node.ts.api:";
 
 export default redis;

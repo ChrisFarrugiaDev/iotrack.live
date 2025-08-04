@@ -165,7 +165,7 @@ func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) 
 
 	// Periodically sync devices from DB to Redis every 5 minutes.
 	go func(ctx context.Context, ds *services.Service) {
-		ticker := time.NewTicker(5 * time.Minute)
+		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 
 		for {

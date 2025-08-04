@@ -1,6 +1,7 @@
 
-import { PrismaClient, Prisma } from '../../generated/prisma';
-const prisma = new PrismaClient();
+import { Prisma } from '../../generated/prisma';
+import prisma from '../config/prisma.config';
+
 
 export class Telemetry {
 

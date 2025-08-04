@@ -16,6 +16,6 @@ const redis = new Redis({
 });
 
 
-export const redisKeyPrefix = "web.backend.node.ts.auth:";
+export const redisKeyPrefix = "telemetry.db.writer.node.ts:";
 
 export default redis;

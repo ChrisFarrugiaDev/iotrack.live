@@ -1,7 +1,9 @@
 package services
 
 import (
+	"go.uber.org/zap"
 	"iotrack.live/internal/apptypes"
+	"iotrack.live/internal/logger"
 )
 
 // UpdateLastTelemetry merges non-zero fields and elements from telemetry into the device's record, creating it if missing.
@@ -69,11 +71,12 @@ func (s *Service) UpdateLastTelemetry(deviceID string, telemetry apptypes.FlatAv
 }
 
 // ---------------------------------------------------------------------
+// FlushLastTelemetry stores the latest telemetry for updated devices in Redis.
+// Uses double-buffered A/B sets for concurrency safety.
 func (s *Service) FlushLastTelemetry() {
-
+	// Lock and swap the active set
 	s.App.LatestTelemetryLock.Lock()
 	var processSet map[string]struct{}
-
 	if s.App.ActiveList == "A" {
 		s.App.ActiveList = "B"
 		processSet = s.App.UpdatedDevicesSetA
@@ -85,17 +88,25 @@ func (s *Service) FlushLastTelemetry() {
 	}
 	s.App.LatestTelemetryLock.Unlock()
 
+	// Prepare a slice to track updated device IDs
+	deviceIDs := make([]string, 0, len(processSet))
 	for deviceID := range processSet {
-
 		lt := s.App.LastTelemetryMap[deviceID]
 
-		// msgBytes, err := json.Marshal(lt)
-		// if err != nil {
-		// 	logger.Debug("Failed to marshal telemetry message", zap.Error(err))
-		// 	return
-		// }
+		// Save latest telemetry to Redis with no expiration (-1 means persist)
+		err := s.App.Cache.Set("device-latest-telemetry:"+deviceID, lt, -1)
+		if err != nil {
+			logger.Error("Failed to cache latest telemetry for device", zap.String("device_id", deviceID), zap.Error(err))
+		}
 
-		s.App.Cache.Set("device-latest-telemetry:"+deviceID, lt, -1)
+		deviceIDs = append(deviceIDs, deviceID)
 	}
 
+	// Update the Redis set of all known device IDs (for lookups/enumeration)
+	if len(deviceIDs) > 0 {
+		err := s.App.Cache.SAdd("device-latest-telemetry:id", deviceIDs...)
+		if err != nil {
+			logger.Error("Failed to update Redis set of device IDs", zap.Error(err))
+		}
+	}
 }
