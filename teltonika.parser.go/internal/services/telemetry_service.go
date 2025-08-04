@@ -104,7 +104,7 @@ func (s *Service) FlushLastTelemetry() {
 
 	// Update the Redis set of all known device IDs (for lookups/enumeration)
 	if len(deviceIDs) > 0 {
-		err := s.App.Cache.SAdd("device-latest-telemetry:id", deviceIDs...)
+		err := s.App.Cache.SAddLua("device-latest-telemetry:id", deviceIDs...)
 		if err != nil {
 			logger.Error("Failed to update Redis set of device IDs", zap.Error(err))
 		}

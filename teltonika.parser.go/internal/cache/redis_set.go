@@ -30,6 +30,8 @@ func (rc *RedisCache) SAdd(setKey string, values ...string) error {
 	return nil
 }
 
+// ---------------------------------------------------------------------
+
 // SMembers retrieves all members of a Redis set.
 func (rc *RedisCache) SMembers(setKey string) ([]string, error) {
 
@@ -44,6 +46,8 @@ func (rc *RedisCache) SMembers(setKey string) ([]string, error) {
 	}
 	return members, nil
 }
+
+// ---------------------------------------------------------------------
 
 // SAddLua atomically adds one or more values to a Redis set using Lua.
 // It prevents race conditions by running as a single operation in Redis.
