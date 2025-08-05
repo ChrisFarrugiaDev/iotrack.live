@@ -12,7 +12,7 @@ class App {
 
     private static _instance: App;
     private consumer?: RabbitBatchConsumer;
-    private cronTasks: { [key: string]: ScheduledTask} = {};
+    private cronTasks: { [key: string]: ScheduledTask } = {};
 
     // -----------------------------------------------------------------
 
@@ -43,7 +43,7 @@ class App {
         // start up fun placholder 
 
 
-        
+
 
         this.startIntervalTasks();
         this.registerCronJobs();
@@ -52,8 +52,8 @@ class App {
     startIntervalTasks(): void { }
 
     registerCronJobs(): void {
-        this.cronTasks.helloWorld = cron.schedule('10,30,50 * * * * *', async() => {
-            console.log('>>>')
+        // Cron: Every 20 seconds (at 10, 30, and 50 seconds past each minute)
+        this.cronTasks.syncDeviceTelemetryFromRedis = cron.schedule('10,30,50 * * * * *', async () => {
             await updateAllDevicesLastTelemetryFromRedisService();
         });
     }
