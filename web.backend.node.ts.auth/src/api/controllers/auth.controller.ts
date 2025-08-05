@@ -9,7 +9,7 @@ import { UserOrganisationAccess } from "../../models/user-organisation-access.mo
 import { users, organisations, roles } from '../../../generated/prisma'
 import { ApiResponse } from "../../types";
 import { UserJWT } from "../../types/user-jwt";
-import * as redisUtils from "../../utils/redis-utils/redis.utils";
+import * as redisUtils from "../../utils/redis.utils";
 import { logError } from "../../utils/logger.utils";
 
 import { UserAssetAccess } from "../../models/user-asset-access.model";
@@ -68,7 +68,7 @@ class AuthController {
     static async buildOrganisationInfoMap(orgIds: string[]): Promise<Record<string, Partial<OrganisationType>>> {
         const organisationMap: Record<string, Partial<OrganisationType>> = {};
 
-        const orgs = await Promise.all(orgIds.map(id => redisUtils.getHashField('organisations', id)));
+        const orgs = await Promise.all(orgIds.map(id => redisUtils.hget('organisations', id)));
         orgs.forEach(org => {
             if (org) {
                 organisationMap[org.id] = {
@@ -198,7 +198,7 @@ class AuthController {
 
             // 3. Bump and store token version for invalidating old tokens
             user.token_version = await User.bumpTokenVersion(user.id);
-            await redisUtils.saveToCache(`user:token_version:${user.id}`, user.token_version);
+            await redisUtils.set(`user:token_version:${user.id}`, user.token_version);
 
             // 4. Build the JWT payload and sign a new token
             const tokenPayload: UserJWT = {

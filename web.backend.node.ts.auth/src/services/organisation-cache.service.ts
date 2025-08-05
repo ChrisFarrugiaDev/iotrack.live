@@ -1,5 +1,5 @@
 import { Organisation } from "../models/organisation.model";
-import { replaceHashWithLua } from "../utils/redis-utils/redis.utils";
+import * as redisUtils from "../utils/redis.utils";
 
 
 export async function cacheAllOrganisationsToRedis(): Promise<void> {
@@ -10,5 +10,5 @@ export async function cacheAllOrganisationsToRedis(): Promise<void> {
         return acc;
     }, {} as Record<string, any>);
 
-    await replaceHashWithLua('organisations', orgMap);
+    await redisUtils.replaceHsetWithLua('organisations', orgMap);
 }

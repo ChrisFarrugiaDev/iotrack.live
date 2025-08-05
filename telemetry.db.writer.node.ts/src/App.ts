@@ -1,18 +1,23 @@
 import _env from "./config/env.config";
 import fs from 'fs/promises';
 import { ConsumerConfig, RabbitBatchConsumer } from './rabbitmq/consumer';
-import { logError, logInfo } from './utils/logger-utils';
+import { logError, logInfo } from './utils/logger.utils';
 import redis from "./config/redis.config";
+import cron, { ScheduledTask } from 'node-cron';
+import { updateAllDevicesLastTelemetryFromRedisService } from "./services/update-all-devices-last-telemetry-from-redis.service";
+
 
 
 class App {
 
     private static _instance: App;
     private consumer?: RabbitBatchConsumer;
+    private cronTasks: { [key: string]: ScheduledTask} = {};
 
     // -----------------------------------------------------------------
 
     private constructor() {
+        this.initializeSingleton();
         logInfo("App instance created");
     }
 
@@ -23,6 +28,34 @@ class App {
             App._instance = new App();
         }
         return App._instance;
+    }
+
+    // -----------------------------------------------------------------
+
+    // Central method to organize all initialization functions
+    async initializeSingleton() {
+        await this.runStartupTasks()
+    }
+
+    // -----------------------------------------------------------------
+
+    async runStartupTasks(): Promise<void> {
+        // start up fun placholder 
+
+
+        
+
+        this.startIntervalTasks();
+        this.registerCronJobs();
+    }
+
+    startIntervalTasks(): void { }
+
+    registerCronJobs(): void {
+        this.cronTasks.helloWorld = cron.schedule('10,30,50 * * * * *', async() => {
+            console.log('>>>')
+            await updateAllDevicesLastTelemetryFromRedisService();
+        });
     }
 
     // -----------------------------------------------------------------
@@ -64,6 +97,10 @@ class App {
             } catch (err) {
                 logError("Error closing Redis", err);
             }
+
+            // Optional: stop all cron jobs
+            Object.values(this.cronTasks).forEach(task => task.stop());
+            logInfo("Cron jobs stopped.");
 
             process.exit(0);
 

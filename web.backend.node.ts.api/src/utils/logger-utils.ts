@@ -10,7 +10,7 @@ const colors: Record<string, string> = {
     reset: "\x1b[0m"  // This resets the color to default
 }
 
-const isDebug: boolean = process.env.DEBUG != 'true';
+const isDebug: boolean = process.env.DEBUG == 'true';
 const serviceName = process.env.MICROSERVICE_NAME || "unknown-service";
 
 // Use this wherever you build your log string:
@@ -23,8 +23,8 @@ function getLogDetails() {
     const stackLines = stack?.split("\n")!;
     let relevantLine = stackLines[3] || stackLines[2] || stackLines[1];  // Adjust based on where the relevant call usually appears
 
-    // Extract file path and line number
-    const match = relevantLine.match(/\((.*?):(\d+):(\d+)\)/);
+    // Matches: "at functionName (filePath:line:col)" or "at filePath:line:col"
+    const match = relevantLine.match(/\(?(.+?):(\d+):(\d+)\)?/);  
     if (!match) {
         return isDebug ? "- unknown location -" : `${formatDate(new Date())} - unknown location -`;
     }

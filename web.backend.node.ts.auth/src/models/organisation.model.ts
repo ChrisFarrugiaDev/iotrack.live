@@ -1,6 +1,6 @@
 import { organisations } from '../../generated/prisma'
 import prisma from '../config/prisma.config';
-import * as redisUtils from '../utils/redis-utils/redis.utils';
+import * as redisUtils from '../utils/redis.utils';
 import { bigIntToString } from '../utils/utils';
 
 
@@ -112,7 +112,7 @@ export class Organisation {
     }
 
     static async getMapsApiKeyFromCache(orgId: string): Promise<string | null> {
-        let currentOrg = await redisUtils.getHashField('organisations', orgId)        
+        let currentOrg = await redisUtils.hget('organisations', orgId)        
 
         while (currentOrg) {
 
@@ -128,7 +128,7 @@ export class Organisation {
             if (!currentOrg.parent_org_id) return null;
 
             
-            const parentOrg = await  redisUtils.getHashField('organisations', currentOrg.parent_org_id)
+            const parentOrg = await  redisUtils.hget('organisations', currentOrg.parent_org_id)
 
             // Stop if parent doesn't exist 
             if (!parentOrg) return null;

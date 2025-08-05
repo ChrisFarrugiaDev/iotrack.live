@@ -53,3 +53,16 @@ This module allows you to schedule task in node.js using full crontab syntax.
 https://www.npmjs.com/package/node-cron
 
     $ npm install --save node-cron
+    $ npm install --save @types/node-cron
+
+<!-- --------------------------------------------------------------- -->
+
+
+### ioredis
+
+https://www.npmjs.com/package/ioredis
+
+    $ npm install ioredis
+    $
+
+<!-- --------------------------------------------------------------- -->

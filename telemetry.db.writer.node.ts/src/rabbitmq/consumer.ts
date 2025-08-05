@@ -1,6 +1,6 @@
 import amqp, { ChannelModel, Channel, ConsumeMessage } from "amqplib";
-import { logError, logInfo } from "../utils/logger-utils";
-import { Telemetry } from "../models/telemetry";
+import { logDebug, logError, logInfo } from "../utils/logger.utils";
+import { Telemetry } from "../models/telemetry.model";
 
 // ---------------------------------------------------------------------
 
@@ -45,6 +45,9 @@ export class RabbitBatchConsumer {
     // This flag ensures that only one flushBatch runs at a time per queue
     private flushing: Record<string, boolean> = {};
 
+    private shuttingDown = false;
+    private pendingFlushes: Promise<any>[] = [];
+
     // -----------------------------------------------------------------
 
     constructor(config: ConsumerConfig) {
@@ -58,6 +61,8 @@ export class RabbitBatchConsumer {
     private async connect() {
         this.connection = await amqp.connect(this.config.url)
         this.channel = await this.connection.createChannel();
+
+        logInfo(`RabbitMQ connected successfully on port ${process.env.RABBITMQ_PORT}`);
 
         this.connection.on('close', async () => {
             logInfo("RabbitMQ connection closed. Reconnecting...");
@@ -89,28 +94,37 @@ export class RabbitBatchConsumer {
 
     // -----------------------------------------------------------------
 
+    /**
+     * Starts consuming messages from a queue and batches them for processing.
+     * When the batch size is reached or a timer expires, the batch is flushed.
+     */
     private consumeBatch(q: QueueConfig) {
         const { name, batch } = q;
+
+        // Start consuming messages from the given queue
         this.channel.consume(
             name,
             (msg) => {
-                if (!msg) return;
+                if (!msg) return; // Ignore empty/null messages
+
+                // Add the message to the buffer for this queue
                 this.batches[name].push(msg);
 
                 if (this.batches[name].length >= batch.max_size) {
-                    // If batch full, process immediately
+                    // If batch buffer is full, flush (process) immediately
                     this.flushBatch(name, batch);
 
                 } else if (this.batches[name].length === 1) {
-                    // Start the timer for the first message in the batch
+                    // If this is the first message in the batch, start the batch timer
                     this.timers[name] = setTimeout(() => {
                         this.flushBatch(name, batch);
                     }, batch.max_wait_seconds * 1000);
                 }
             },
-            { noAck: false }
+            { noAck: false } // Require manual ack for reliable message processing
         );
     }
+
 
     // -----------------------------------------------------------------
 
@@ -119,73 +133,97 @@ export class RabbitBatchConsumer {
      * then acknowledges them in RabbitMQ. Called when batch is full or timer fires.
      */
     private async flushBatch(queueName: string, batch: BatchSettings) {
-        // Prevent multiple concurrent flushes for the same queue
+        // If shutting down, skip further batch processing
+        if (this.shuttingDown) return;
+
+        // Prevent more than one flush running at a time for the same queue
         if (this.flushing?.[queueName]) {
             logInfo(`[${queueName}] flushBatch: Already flushing, skipping.`);
             return;
         }
-        this.flushing[queueName] = true;
+        this.flushing[queueName] = true; // Mark this queue as being flushed
 
-        try {
-            // Get (and work with) the message buffer for this queue
-            const batchArray = this.batches[queueName] || [];
-            if (batchArray.length === 0) {
-                // Nothing to process, release the lock and exit
+        // Create an async flush operation and track it for graceful shutdown
+        const flushPromise = (async () => {
+
+            let messages: ConsumeMessage[] = [];
+
+            try {
+                // Get the batch array for this queue
+                const batchArray = this.batches[queueName] || [];
+                if (batchArray.length === 0) {
+                    // No messages to process; release the lock and exit
+                    this.flushing[queueName] = false;
+                    return;
+                }
+
+                // Cancel and remove any running flush timer for this queue
+                clearTimeout(this.timers[queueName]);
+                delete this.timers[queueName];
+
+                // Take up to max_size messages for processing in this batch
+                messages = batchArray.splice(0, batch.max_size);
+
+                // Put any leftover messages back in the buffer
+                this.batches[queueName] = batchArray;
+
+                // ----- BUSINESS LOGIC: Write to database -----                
+                if (queueName == "telemetry") {
+                    // Parse message data and bulk insert into DB
+                    // TODO:  move it to a handler
+                    const data = messages.map((msg) => JSON.parse(msg.content.toString()));
+                    await Telemetry.createBulk(data);
+                }
+
+                // Log that a batch was processed (for observability)
+                logDebug(`[${queueName}] Processing batch of ${messages.length} messages`);
+
+                // Acknowledge (ACK) each message in RabbitMQ as successfully processed
+                for (const msg of messages) {
+                    this.channel.ack(msg, false);
+                }
+
+                // If there are still messages waiting, immediately schedule the next flush
+                if (this.batches[queueName].length > 0) {
+                    setImmediate(() => this.flushBatch(queueName, batch));
+                }
+
+            } catch (err) {
+
+                // If batch processing fails, NACK only the current batch to requeue them
+                if (messages && messages.length > 0) {
+                    messages.forEach((msg) => this.channel.nack(msg, false, true));
+                }
+                // Log the error for debugging
+                logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
+
+            } finally {
+                // Release the flushing lock even if there was an error
                 this.flushing[queueName] = false;
-                return;
             }
+        })();
 
-            // Cancel and remove the flush timer for this queue
-            clearTimeout(this.timers[queueName]);
-            delete this.timers[queueName];
+        // Track this flush promise so shutdown can wait for all in-progress batches
+        this.pendingFlushes.push(flushPromise);
 
-            // Remove up to max_size messages from the buffer for this batch
-            const messages = batchArray.splice(0, batch.max_size);
-
-            // Put any remaining messages back in the buffer for later
-            this.batches[queueName] = batchArray;
-
-            // Business logic: parse messages and write to database
-            if (queueName == "telemetry") {
-                const data = messages.map((msg) => JSON.parse(msg.content.toString()));
-                await Telemetry.createBulk(data);
-            }
-
-            // Log batch processing for monitoring/debugging
-            logInfo(`[${queueName}] Processing batch of ${messages.length} messages`);
-
-            // Ack all messages in this batch (up to and including the last) in RabbitMQ
-            // const lastMsg = messages[messages.length - 1];
-            // if (lastMsg) this.channel.ack(lastMsg, true);
-
-            for (const msg of messages) {
-                this.channel.ack(msg, false);
-            }
-
-            // If there are still messages buffered, schedule another flush right away
-            if (this.batches[queueName].length > 0) {
-                setImmediate(() => this.flushBatch(queueName, batch));
-            }
-
-        } catch (err) {
-            // If DB/processing failed, NACK only the current batch so they are requeued
-            const messages = this.batches[queueName];
-            if (messages && messages.length > 0) {
-                messages.forEach((msg) => this.channel.nack(msg, false, true));
-            }
-            // Log the error
-            logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
-
-        } finally {
-            // Always release the "flushing" lock, even if error occurs
-            this.flushing[queueName] = false;
-        }
+        // Remove the promise from the list once finished (success or error)
+        flushPromise.finally(() => {
+            this.pendingFlushes = this.pendingFlushes.filter(p => p !== flushPromise);
+        });
+        
     }
+
 
 
     // -----------------------------------------------------------------
 
     async close() {
+        this.shuttingDown = true;
+
+        // Wait for all flushes to finish
+        await Promise.all(this.pendingFlushes);
+
+        // Now close channel/connection
         if (this.channel) await this.channel.close();
         if (this.connection) await this.connection.close();
     }
