@@ -63,6 +63,7 @@ class App {
     public async init() {
 
         try {
+            
             const configData = await fs.readFile('./rabbitmq_config.json', 'utf8');
             const config: ConsumerConfig = JSON.parse(configData);
 
@@ -71,6 +72,7 @@ class App {
 
             this.consumer = new RabbitBatchConsumer(config);
             await this.consumer.start();
+            
 
         } catch (err) {
             logError("! App.init !", err)

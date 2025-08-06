@@ -263,7 +263,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				"device_id":       currentDevice.ID,
 				"asset_id":        currentDevice.AssetID,
 				"organisation_id": currentDevice.OrganisationID,
-				"timestamp":       avl.Timestamp,
+				"happened_at":     avl.Timestamp,
 				"protocol":        currentDevice.Protocol,
 				"vendor":          currentDevice.Vendor,
 				"telemetry":       telemetry, // <- Assign struct, NOT string

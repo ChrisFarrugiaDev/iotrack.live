@@ -39,7 +39,7 @@ docker-down:
 sync:
 	# rsync -az --delete --exclude=node_modules --exclude='prisma' --exclude='generated' -e "ssh -i ~/.ssh_iot/id_ecdsa" ~/c/Chris/projects/iotrack.live-main/ ubuntu@57.129.22.122:/home/ubuntu/projects/iotrack.live
 
-	rsync -az --delete --exclude=node_modules  -e "ssh -i ~/.ssh/ssh_iot/id_ecdsa"  /home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live ubuntu@57.129.22.122:/home/ubuntu/projects
+	rsync -az --delete --exclude=node_modules --exclude='prisma' --exclude='generated'  -e "ssh -i ~/.ssh/ssh_iot/id_ecdsa"  /home/foxcodenine/foxfiles/git/chrisfarrugia.dev/iotrack.live ubuntu@57.129.22.122:/home/ubuntu/projects
 
 post-codec12:
 	curl -X POST http://57.129.22.122:3000/teltonika-parser/codec12/commands/864636060448814 \
@@ -48,6 +48,13 @@ post-codec12:
 
 auth-build:
 	cd web.backend.node.ts.auth && \
+	npm install && \
+	npm run prisma-pull && \
+	npm run prisma-generate && \
+	npm run build
+
+db-writer-build:
+	cd telemetry.db.writer.node.ts && \
 	npm install && \
 	npm run prisma-pull && \
 	npm run prisma-generate && \
