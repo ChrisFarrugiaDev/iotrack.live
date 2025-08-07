@@ -22,8 +22,8 @@ files_to_decrypt=(
   .env.gpg
   # .env.development.gpg  
   web.frontend.vue/.env.gpg
-  web.backend.node.ts.auth/.env.gpg
-  web.backend.node.ts.auth/.env.development.gpg  
+  web.backend.node.ts/.env.gpg
+  web.backend.node.ts/.env.development.gpg  
   web.backend.node.ts.api/.env.gpg
   web.backend.node.ts.api/.env.development.gpg  
   teltonika.parser.go/.env.gpg

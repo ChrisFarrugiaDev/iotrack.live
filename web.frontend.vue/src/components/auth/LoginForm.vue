@@ -46,6 +46,7 @@ import { useAppStore } from '@/stores/appStore';
 import { useDeviceStore } from '@/stores/deviceStore';
 import { useAssetStore } from '@/stores/assetStore';
 import { useOrganisationStore } from '@/stores/organisationStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 // - Store -------------------------------------------------------------
 
@@ -57,6 +58,7 @@ const { getRemeberMe } = storeToRefs(authStore);
 const deviceStore = useDeviceStore();
 const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
+const settingsStore = useSettingsStore();
 
 
 // - Data --------------------------------------------------------------
@@ -96,7 +98,7 @@ async function submitForm() {
             return
         }
 
-        const url = `${appStore.getAppUrl}:${appStore.getAuthPort}/api/auth/login`
+        const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/auth/login`
 
         const response = await axios.post(url, {
             email: email.value,
@@ -109,13 +111,15 @@ async function submitForm() {
             const token = response.data.data.token;
             const accessProfile = response.data.data.access_profile;
 
+            console.log(accessProfile)
+
             deviceStore.setDevices(accessProfile.devices);
             assetStore.setAssets(accessProfile.assets);
             organisationStore.setOrganisation(accessProfile.organisation);
             organisationStore.setOrganisationScope(accessProfile.organisation_scope);
+            settingsStore.setMapsApiKey(accessProfile.settings?.maps_api_key);
 
             email.value = 'alice@acme.com';
-
             password.value = 'DevPass';
 
             authStore.setJwt(null);

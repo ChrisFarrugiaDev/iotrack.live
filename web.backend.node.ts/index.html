@@ -1,0 +1,245 @@
+<!-- HTML: Form to Set Capacity Thresholds -->
+<form #setThresholdsForm="ngForm" [formGroup]="thresholdFormGroup" (ngSubmit)="save()" fxLayout="column" fxFlexFill
+    style="max-width: 100%; padding: 16px;">
+    <mat-toolbar fxLayout="row" style="background-color: #9e9e9e; color: white;">
+        <h2>Set Capacity Thresholds</h2>
+        <span fxFlex></span>
+        <button mat-icon-button (click)="cancel()" type="button" style="color: white;">
+            <mat-icon class="material-icons">close</mat-icon>
+        </button>
+    </mat-toolbar>
+    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async"></mat-progress-bar>
+    <div style="height: 4px;" *ngIf="!(isLoading$ | async)">
+    </div>
+    <div mat-dialog-content>
+        <div class="mat-padding" fxLayout="column">
+            <div fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="8px">
+                <h3 class="mat-headline-5">Absolute
+                    Level Alert</h3>
+            </div>
+            <!-- Input field for Over Threshold -->
+            <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="8px">
+
+                <!-- Input field for Under Threshold -->
+                <mat-form-field appearance="fill" class="mat-block">
+                    <mat-label>Percentage Under
+                        Threshold</mat-label>
+                    <input matInput type="number" min="0" formControlName="percentageUnderThreshold">
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageUnderThreshold').hasError('required')">
+                        This field is required.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageUnderThreshold').hasError('min')">
+                        Value cannot be negative.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageUnderThreshold').hasError('max')">
+                        Value cannot be over 100.
+                    </mat-error>
+                </mat-form-field>
+
+
+
+                <mat-form-field appearance="fill" class="mat-block">
+                    <mat-label>Percentage
+                        Over
+                        Threshold</mat-label>
+                    <input matInput type="number" min="0" formControlName="percentageOverThreshold">
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageOverThreshold').hasError('required')">
+                        This field is required.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageOverThreshold').hasError('min')">
+                        Value cannot be negative.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageOverThreshold').hasError('max')">
+                        Value cannot be over 100.
+                    </mat-error>
+                </mat-form-field>
+
+
+
+                <!-- Input field for Delay in Min -->
+                <mat-form-field appearance="fill" class="mat-block">
+                    <mat-label>Delay (Min)</mat-label>
+                    <input matInput type="number" min="0" formControlName="delayInMin">
+                    <mat-error *ngIf="thresholdFormGroup.get('delayInMin').hasError('required')">
+                        This field is required.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('delayInMin').hasError('min')">
+                        Delay cannot be negative.
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+
+
+
+
+            <div fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="8px">
+                <h3 class="mat-headline-5">Relative
+                    Level Alert</h3>
+            </div>
+
+
+            <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="8px">
+                <mat-form-field fxFlex="100" class="mat-block">
+                    <mat-label>Days of Week</mat-label>
+                    <mat-select multiple formControlName="daysOfWeek">
+                        <mat-option *ngFor="let day of days" [value]="day.value">{{ day.label }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+
+                <mat-form-field fxFlex="100" class="mat-block">
+                    <mat-label>Timezone</mat-label>
+                    <input matInput formControlName="timezone" readonly>
+                </mat-form-field>
+            </div>
+
+
+
+            <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="8px" fxLayoutAlign="center center"
+                style="padding: 10px;">
+                <!--Start/End on 1-->
+                <div>
+                    <!-- Clock Picker Input -->
+                    <div class="input-group clockpicker" style="width: 100%;">
+                        <input type="text" id="startsOn" class="form-control" placeholder="Active from"
+                            formControlName="startsOn" readonly>
+                        <!--            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-time"></i>
+            </span>-->
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Clock Picker Input -->
+                    <div class="input-group clockpicker" style="width: 100%;">
+                        <input type="text" id="endsOn" class="form-control" placeholder="Active till"
+                            formControlName="endsOn" readonly>
+                        <!--            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-time"></i>
+            </span>-->
+                    </div>
+                </div>
+
+                <button mat-raised-button type="button" style="background-color: #448bff;
+                   color: white;
+                   padding: 8px 16px;
+                   min-width: 160px;
+                   height: 40px;
+                   line-height: normal;
+                   white-space: nowrap;" (click)="vm.restoreDefaultTime()">
+                    Restore default time
+                </button>
+            </div>
+
+            <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="8px" fxLayoutAlign="center center"
+                style="padding: 10px;">
+                <!--Start/End on 2 Optional with no validations required-->
+                <div>
+                    <!-- Clock Picker Input -->
+                    <div class="input-group clockpicker" style="width: 100%;">
+                        <input type="text" id="startsOn1" class="form-control" placeholder="Active from (Optional)"
+                            formControlName="startsOn1" readonly>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Clock Picker Input -->
+                    <div class="input-group clockpicker" style="width: 100%;">
+                        <input type="text" id="endsOn1" class="form-control" placeholder="Active till (Optional)"
+                            formControlName="endsOn1" readonly>
+                    </div>
+                </div>
+
+                <button mat-raised-button type="button" style="background-color: #448bff;
+                   color: white;
+                   padding: 8px 16px;
+                   min-width: 160px;
+                   height: 40px;
+                   line-height: normal;
+                   white-space: nowrap;" (click)="vm.restoreDefaultTime1()">
+                    Restore default time
+                </button>
+            </div>
+
+            <div fxLayout="row" fxLayout.lt-md="column" fxLayoutGap="8px">
+
+
+                <!-- Input field for Percentage Change - -->
+                <mat-form-field appearance="fill" class="mat-block">
+                    <mat-label>Percentage Change
+                        Decrease</mat-label>
+                    <input matInput type="number" min="0" formControlName="percentageChangeNeg">
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageChangeNeg').hasError('required')">
+                        This field is required.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageChangeNeg').hasError('min')">
+                        Value cannot be negative.
+                    </mat-error>
+                </mat-form-field>
+
+
+                <!-- Input field for Percentage Change + -->
+                <mat-form-field appearance="fill" class="mat-block">
+                    <mat-label>Percentage Change
+                        Increase</mat-label>
+                    <input matInput type="number" min="0" formControlName="percentageChangePlus">
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageChangePlus').hasError('required')">
+                        This field is required.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('percentageChangePlus').hasError('min')">
+                        Value cannot be negative.
+                    </mat-error>
+                </mat-form-field>
+
+
+                <!-- Input field for Delay in Min for percentage change-->
+                <mat-form-field appearance="fill" class="mat-block">
+                    <mat-label>Delay (Min)</mat-label>
+                    <input matInput type="number" min="0" formControlName="delayInMinChg">
+                    <mat-error *ngIf="thresholdFormGroup.get('delayInMinChg').hasError('required')">
+                        This field is required.
+                    </mat-error>
+                    <mat-error *ngIf="thresholdFormGroup.get('delayInMinChg').hasError('min')">
+                        Delay cannot be negative.
+                    </mat-error>
+                </mat-form-field>
+            </div>
+        </div>
+
+
+        <div fxLayout="column" fxLayoutGap="8px">
+            <!-- Toggle for Receiving Emails -->
+            <mat-slide-toggle formControlName="receiveEmail">Receive
+                Emails</mat-slide-toggle>
+            <!-- Toggle for Receiving SMS -->
+            <mat-slide-toggle formControlName="receiveSms">Receive
+                SMS</mat-slide-toggle>
+            <!-- Toggle for Receiving Voice -->
+            <mat-slide-toggle formControlName="receiveVoice">Receive
+                Voice
+                Calls
+            </mat-slide-toggle>
+        </div>
+    </div>
+    <div mat-dialog-actions fxLayout="row">
+        <span fxFlex></span>
+
+        <!-- Cancel Button -->
+        <button mat-button style="background-color: #9e9e9e; color: white;" type="button"
+            [disabled]="isLoading$ | async" (click)="cancel()" cdkFocusInitial>
+            Cancel
+        </button>
+
+        <!-- Save Button -->
+        <button mat-button mat-raised-button
+            [style.background-color]="(isLoading$ | async) || thresholdFormGroup.invalid || !thresholdFormGroup.dirty ? '#9e9e9e' : '#448bff'"
+            [style.color]="(isLoading$ | async) || thresholdFormGroup.invalid || !thresholdFormGroup.dirty ? 'white' : '#fff'"
+            [style.border-color]="(isLoading$ | async) || thresholdFormGroup.invalid || !thresholdFormGroup.dirty ? '#9e9e9e' : '#448bff'"
+            style="margin-right: 20px;" type="submit"
+            [disabled]="(isLoading$ | async) || thresholdFormGroup.invalid || !thresholdFormGroup.dirty">
+            Save
+        </button>
+    </div>
+
+</form>

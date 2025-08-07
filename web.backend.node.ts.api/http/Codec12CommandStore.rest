@@ -1,8 +1,0 @@
-### Send Codec12 commands to a Teltonika device
-
-POST http://57.129.22.122:4000/api/teltonika/codec12/commands/864275075869761
-Content-Type: application/json
-
-{
-  "commands": [ "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps", "getgps"]
-}

@@ -6,7 +6,7 @@ declare global {
     interface Window {
         GO_DOCKERIZED: boolean | undefined;
         GO_APP_URL: string;
-        GO_AUTH_PORT: string;
+        GO_API_PORT: string;
     }
 }
 
@@ -20,20 +20,20 @@ export const useAppStore = defineStore('appStore', () => {
         : import.meta.env.VITE_APP_URL
     );
 
-    const authPort = ref( window.GO_DOCKERIZED === true
-        ? window.GO_AUTH_PORT 
-        : import.meta.env.VITE_APP_AUTH_PORT
+    const apiPort = ref( window.GO_DOCKERIZED === true
+        ? window.GO_API_PORT 
+        : import.meta.env.VITE_API_PORT
     );
 
 
 // ---- Getters ----------------------------------------------------
 const getAppUrl = computed(() => appUrl.value);
-const getAuthPort = computed(() => authPort.value);
+const getApiPort = computed(() => apiPort.value);
 
 
 // ---- Actions ----------------------------------------------------
 
 
 // - Expose --------------------------------------------------------
-return { getAppUrl, getAuthPort };
+return { getAppUrl, getApiPort };
 });

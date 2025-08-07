@@ -10,24 +10,26 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------------------
 
-INSERT INTO app.user_organisation_access (user_id, organisation_uuid, is_allowed)
-VALUES (1, '33333333-3333-3333-3333-333333333333', TRUE);
 
-INSERT INTO app.user_organisation_access (user_id, organisation_uuid, is_allowed)
-VALUES (1, '55555555-5555-5555-5555-555555555555', FALSE);
-
--- ---------------------------------------------------------------------
 
 INSERT INTO app.users (
   first_name, last_name, email, password_hash, role_id, organisation_id
 ) VALUES
-  ('Alice',   'Manager',      'alice@acme.com',   '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG', 2, 3),
-  ('Bob',     'Employee',     'bob@acme.com',     '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG', 3, 4),
+  ('Alice',   'Manager',      'alice@acme.com',   '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG', 2, 4),
+  ('Bob',     'Employee',     'bob@acme.com',     '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG', 3, 3),
   ('Carol',   'Viewer',       'carol@acme.com',   '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG', 4, 5),
   ('Dave',    'ReadOnly',     'dave@acme.com',    '$2a$10$FCfWLFz9QYxNDyTAeX0Ju.O2gaYJngI8Rmryggr1rpUOPViRqVYQG', 4, 6)
 ON CONFLICT (email) DO NOTHING;
 
 
+INSERT INTO app.user_organisation_access (user_id, organisation_id, is_allowed)
+VALUES (2, 5, FALSE);
+
+
+
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 INSERT INTO app.devices (
     uuid, organisation_id, external_id, external_id_type, protocol, vendor, model, status

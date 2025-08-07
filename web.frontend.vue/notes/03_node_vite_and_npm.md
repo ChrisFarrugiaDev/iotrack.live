@@ -46,6 +46,15 @@ https://www.npmjs.com/package/dotenv
     npm install dotenv
 
 <!-- --------------------------------------------------------------- -->
+
+## vue3-google-map
+
+https://vue3-google-map.com/
+https://www.npmjs.com/package/vue3-google-map
+
+    npm install vue3-google-map
+
+<!-- --------------------------------------------------------------- -->
 ___
 <!-- --------------------------------------------------------------- -->
 
