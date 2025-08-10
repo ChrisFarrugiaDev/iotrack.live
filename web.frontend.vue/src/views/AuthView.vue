@@ -34,13 +34,13 @@ const router = useRouter();
 
 // Determine the correct component based on the route name
 const currentFormComponent = computed(() => {
-    if (route.name === 'loginView') {
+    if (route.name === 'login.view') {
         return LoginForm;
         
-    } else if (route.name === 'forgotPasswordView') {
+    } else if (route.name === 'forgot.password.view') {
         return ForgotPasswordForm;
     
-    } else if (route.name === 'resetPasswordView') {
+    } else if (route.name === 'reset.password.view') {
         return ResetPasswordForm;
     }
     return null; // Or a default component if necessary

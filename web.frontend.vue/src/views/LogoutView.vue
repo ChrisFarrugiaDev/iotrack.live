@@ -37,10 +37,11 @@ onActivated(async() => {
         sessionStorage.clear();
 
         // Navigate to the login view regardless of the outcome of the above operations
-        router.push({ name: 'loginView' });
+        router.push({ name: 'login.view' });
     }
 })
 
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+</style>

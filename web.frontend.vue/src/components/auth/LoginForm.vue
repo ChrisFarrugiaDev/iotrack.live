@@ -25,7 +25,7 @@
                     <svg class="ssign__icon ssign__icon--empty" v-else></svg>
                     Remeber me
                 </div>
-                <div class="ssign__forgot" @click="goToView('forgotPasswordView')">Forgot your password?</div>
+                <div class="ssign__forgot" @click="goToView('forgot.password.view')">Forgot your password?</div>
             </div>
         </div>
 
@@ -43,10 +43,7 @@ import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/appStore';
-import { useDeviceStore } from '@/stores/deviceStore';
-import { useAssetStore } from '@/stores/assetStore';
-import { useOrganisationStore } from '@/stores/organisationStore';
-import { useSettingsStore } from '@/stores/settingsStore';
+
 
 // - Store -------------------------------------------------------------
 
@@ -55,10 +52,7 @@ const appStore = useAppStore();
 const authStore = useAuthStore();
 const { getRemeberMe } = storeToRefs(authStore);
 
-const deviceStore = useDeviceStore();
-const assetStore = useAssetStore();
-const organisationStore = useOrganisationStore();
-const settingsStore = useSettingsStore();
+
 
 
 // - Data --------------------------------------------------------------
@@ -109,15 +103,6 @@ async function submitForm() {
         if (response.status == 200) {
 
             const token = response.data.data.token;
-            const accessProfile = response.data.data.access_profile;
-
-            console.log(accessProfile)
-
-            deviceStore.setDevices(accessProfile.devices);
-            assetStore.setAssets(accessProfile.assets);
-            organisationStore.setOrganisation(accessProfile.organisation);
-            organisationStore.setOrganisationScope(accessProfile.organisation_scope);
-            settingsStore.setMapsApiKey(accessProfile.settings?.maps_api_key);
 
             email.value = 'alice@acme.com';
             password.value = 'DevPass';
@@ -128,7 +113,7 @@ async function submitForm() {
                 authStore.setJwt(token);
             }, 100)
 
-            goToView('loginView');              
+            goToView('login.view');              
         }
 
 

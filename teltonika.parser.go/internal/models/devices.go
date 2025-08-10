@@ -28,12 +28,12 @@ type Device struct {
 	Attributes      map[string]interface{} `db:"attributes,omitempty" json:"attributes,omitempty"`
 	LastTelemetry   map[string]interface{} `db:"last_telemetry,omitempty" json:"last_telemetry,omitempty"`
 	LastTelemetryTs time.Time              `db:"last_telemetry_ts,omitempty" json:"last_telemetry_ts,omitempty"`
-	Created_at      time.Time              `db:"created_at" json:"created_at"`
+	CreatedAt       time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt       time.Time              `db:"updated_at" json:"updated_at"`
 }
 
 // TableName returns the full table name for the Device model.
-func (Device) TableName() string {
+func (m *Device) TableName() string {
 	return "app.devices"
 }
 
@@ -54,7 +54,7 @@ func (m *Device) Create(newDevice *Device) (*Device, error) {
 
 	now := time.Now().UTC()
 
-	newDevice.Created_at = now
+	newDevice.CreatedAt = now
 	newDevice.UpdatedAt = now
 
 	err := collection.InsertReturning(newDevice)

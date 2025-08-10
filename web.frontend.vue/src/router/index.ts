@@ -7,18 +7,37 @@ import { useAuthStore } from '@/stores/authStore'
 import { useMessageStore } from '@/stores/messageStore'
 import { storeToRefs } from 'pinia'
 import LogoutView from '@/views/LogoutView.vue'
+import DeviceView from '@/views/devices/DeviceView.vue'
+import DeviceListView from '@/views/devices/DeviceListView.vue'
+import DeviceCreateView from '@/views/devices/DeviceCreateView.vue'
+import DeviceDetailView from '@/views/devices/DeviceDetailView.vue'
+import DeviceEditView from '@/views/devices/DeviceEditView.vue'
+
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [
-		{ path: '/', name: 'mapView', component: MapView, },
+		{ path: '/', name: 'mapView', component: MapView },
 
-		{ path: '/login', name: 'loginView', component: AuthView, },
-		{ path: '/logout', name: 'logoutView', component: LogoutView, },
-		{ path: '/forgot-password', name: 'forgotPasswordView', component: AuthView, },
-		{ path: '/reset-password', name: 'resetPasswordView', component: AuthView, },
+		{ path: '/login', name: 'login.view', component: AuthView, meta: { requiresAuth: false } },
+		{ path: '/logout', name: 'logout.view', component: LogoutView, meta: { requiresAuth: true } },
+		{ path: '/forgot-password', name: 'forgot.password.view', component: AuthView, meta: { requiresAuth: false } },
+		{ path: '/reset-password', name: 'reset.password.view', component: AuthView, meta: { requiresAuth: false } },
 
-		{ path: '/organisations', name: 'organisationsView', component: OrganisationView, },
+		{ path: '/organisations', name: 'organisationsView', component: OrganisationView, meta: { requiresAuth: true } },
+
+		{
+			path: '/devices',
+			name: 'devices.view',
+			component: DeviceView,
+			meta: { requiresAuth: true },
+			children: [
+				{ path: '', name: 'devices.list', component: DeviceListView},
+				{ path: 'new', name: 'devices.create', component: DeviceCreateView },
+				{ path: ':id', name: 'devices.detail', component: DeviceDetailView, props: true },
+				{ path: ':id/edit', name: 'devices.edit', component: DeviceEditView, props: true },
+			],
+		},
 
 		{ path: '/helpers/svg', name: 'viewHelpersSvg', component: SvgSpriteView },
 	],
@@ -41,19 +60,20 @@ router.beforeEach(async (
 	// const { checkJwtExpiration } = useJwtComposable();
 
 
-	// Clear flash message
+	// flash message handling
 	messageStore.getPersistFlashMessage ?
 		messageStore.decreasePersistFlashMessage() :
 		messageStore.clearFlashMessage();
 
-	// Redirect to login if not authenticated
+	// // auth gate (default to protected if meta not specified)
+	// const requiresAuth = to.meta.requiresAuth !== false;
 
-	if (!isAuthenticated.value && !['loginView', 'forgotPasswordView', 'resetPasswordView'].includes(to.name as string)) {
-		authStore.setRedirectTo(to);
-		return next({ name: 'loginView' });
-	} 
+	// if (requiresAuth && !isAuthenticated.value) {
+	// 	authStore.setRedirectTo(to);
+	// 	return next({ name: 'login.view' });
+	// }
 
-	// Continue with the navigation
+	// continue with the navigation
 	next();
 });
 

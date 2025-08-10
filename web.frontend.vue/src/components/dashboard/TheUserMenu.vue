@@ -40,7 +40,7 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 
 function logout() {
-    router.push({ name: "logoutView" });
+    router.push({ name: "logout.view" });
 }
 
 </script>

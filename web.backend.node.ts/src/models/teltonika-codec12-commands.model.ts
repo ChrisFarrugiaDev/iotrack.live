@@ -1,6 +1,6 @@
 import { uuidv7 } from 'uuidv7';
 import { PrismaClient, codec12_commands } from '../../generated/prisma';
-import * as types from "../types/index"
+import * as types from "../types/teltonika-codec-12-comand.type"
 
 
 

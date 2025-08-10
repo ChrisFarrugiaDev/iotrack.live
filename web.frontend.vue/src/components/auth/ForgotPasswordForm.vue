@@ -18,7 +18,7 @@
 
             <div class="ssign__row mt-3">
                 <div class="ssign__placeholder"></div>
-                <div class="ssign__forgot" @click="goToView('loginView')">Back to Login</div>
+                <div class="ssign__forgot" @click="goToView('login.view')">Back to Login</div>
             </div>
         </div>
 

@@ -36,6 +36,29 @@ export class User {
         return null;
     }
 
+
+
+    static async getByID(id: string, relations?: UserRelation[]) {
+                // Convert array of relation names to Prisma's expected include object
+        const includeObj = relations
+            ? Object.fromEntries(relations.map(relation => [relation, true]))
+            : undefined;
+
+        // Query user by email, with optional relations included
+        const user = await prisma.users.findUnique({
+            where: { id: BigInt(id) },
+            include: includeObj, // e.g., include: { organisations: true }
+        });
+
+        // If found, convert all BigInt fields to strings (recursively)
+        if (user) {
+            return bigIntToString(user);
+        }
+
+        // Return null if not found
+        return null;
+    }
+
     // -----------------------------------------------------------------
 
     // Increments the user's token_version by 1. 

@@ -1,3 +1,5 @@
+/// <reference path="./types/express/index.d.ts" />
+
 import _env from "./config/env.config";
 import app from "./App";
 

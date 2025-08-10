@@ -55,6 +55,14 @@ https://www.npmjs.com/package/vue3-google-map
     npm install vue3-google-map
 
 <!-- --------------------------------------------------------------- -->
+
+## vue-loading-overlay
+
+https://www.npmjs.com/package/vue-loading-overlay
+
+    $ npm install vue-loading-overlay
+
+<!-- --------------------------------------------------------------- -->
 ___
 <!-- --------------------------------------------------------------- -->
 

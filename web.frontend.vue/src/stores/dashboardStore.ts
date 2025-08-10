@@ -6,12 +6,15 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 	// ---- State ------------------------------------------------------
 
 	const isUserMenuOpen = ref(false);
+	const isLoading = ref(false);
 
 	// ---- Getters ----------------------------------------------------
 
 	const getIsUserMenuOpen = computed(()=>{
 		return isUserMenuOpen.value;
 	});
+
+	const getIsLoading = computed(() => isLoading.value )
 
 	// ---- Actions ----------------------------------------------------
 
@@ -24,6 +27,16 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 		isUserMenuOpen.value = val;
 	}
 
+	function setIsLoading(val: boolean) {
+		isLoading.value = val;
+	}
+
 	// - Expose --------------------------------------------------------
-	return { getIsUserMenuOpen, toggleUserMenuState, updateUserMenuState};
+	return {
+		getIsUserMenuOpen,
+		toggleUserMenuState,
+		updateUserMenuState,
+		getIsLoading,
+		setIsLoading
+	};
 })

@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import * as redisUtils from "../../utils/redis.utils";
 import { logError } from "../../utils/logger.utils";
-import * as types from "../../types";
+import * as types from "../../types/teltonika-codec-12-comand.type";
 import { TeltonikaCodec12Commands } from "../../models/teltonika-codec12-commands.model";
+import { ApiResponse } from "../../types/api-response.type";
 
 class TeltonikaController {
     // Handles API call to add Codec 12 command(s) for a device
@@ -63,7 +64,7 @@ class TeltonikaController {
             const pendingCode12CommandsNo = await redisUtils.listLength(redisKey, "teltonika.parser.go:");
 
             // Respond with success and command details
-            const response: types.ApiResponse<types.TeltonikaCodec12Command[]> = {
+            const response: ApiResponse<types.TeltonikaCodec12Command[]> = {
                 success: true,
                 message: `${pendingCode12CommandsNo} command(s) queued for device ${imei}`,
                 data: insertedCmd
@@ -82,7 +83,7 @@ class TeltonikaController {
                 ? err.message
                 : undefined;
 
-            const response: types.ApiResponse = {
+            const response: ApiResponse = {
                 success: false,
                 message: "Internal server error",
                 error: {
