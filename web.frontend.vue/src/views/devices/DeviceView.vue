@@ -13,7 +13,11 @@
                 @click="clearMessage"
             ></TheTabs>
 
-            <RouterView />
+<RouterView v-slot="{ Component, route }">
+  <KeepAlive>
+    <component :is="Component" :key="route.fullPath" />
+  </KeepAlive>
+</RouterView>
 
         </section>
     </main>
@@ -22,13 +26,15 @@
 <!-- --------------------------------------------------------------- -->
  
 <script setup lang="ts">
-import { reactive, type Component } from 'vue';
+import { reactive, watch, type Component } from 'vue';
 import TheTabs from '@/components/commen/TheTabs.vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 
 // - Route -------------------------------------------------------------
 
 const router = useRouter();
+const route = useRoute();
 
 // - Data --------------------------------------------------------------
 
@@ -42,6 +48,8 @@ const tabsObjectData_1 = reactive({
         'devices.create': 'Register new Device',    
     },
 });
+
+
 
 // - Methods -----------------------------------------------------------
 

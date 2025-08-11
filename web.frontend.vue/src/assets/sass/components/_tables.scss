@@ -32,6 +32,14 @@
         font-family: $font-primary;
         text-wrap: nowrap;
         overflow: visible;
+
+        a {
+            text-decoration: none;
+            color: $col-blue-700;
+            &:hover {
+                color: $col-red-500;
+            }
+        }
     }
 
     th {
@@ -147,18 +155,20 @@
 }
 
 .t-sort-arrow {
-    width: .45rem;
-    height: .45rem;
+    width: .55rem;
+    height: .55rem;
     margin: 0 0 .1rem -.1rem;
     fill: currentColor;
     opacity: 0;
+    transform: translateY(.1rem);
+    margin-left: .2rem;
 
     &--active {
         opacity: 1;
     }
 
     &--desc {
-        transform: rotate(180deg);
+        transform: translateY(.1rem)rotate(180deg);
     }
 }
 

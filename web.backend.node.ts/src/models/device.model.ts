@@ -35,6 +35,7 @@ export class Device {
                 organisation_id: { in: ids }
             }
         });
-        return bigIntToString(result);
+
+         return bigIntToString(result);
     }
 }

@@ -76,7 +76,7 @@ export class AccessProfileController {
                 settings,
             };
 
-            // 7. Respond with the profile
+                // 7. Respond with the profile
             return res.json({
                 success: true,
                 message: 'Access profile fetched successfully',

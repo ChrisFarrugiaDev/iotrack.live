@@ -65,7 +65,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('devices.view')">
+        <div class="sidebar__item" @click="goToView('devices.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/assets/svg/sprite.svg#icon-device"></use>
             </svg>

@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { Asset } from '@/types/asset'
+import type { Asset } from '@/types/asset.type'
 
 export const useAssetStore = defineStore('assetStore', () => {
 

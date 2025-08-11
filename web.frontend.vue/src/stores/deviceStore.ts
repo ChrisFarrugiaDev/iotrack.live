@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { Device } from '@/types/device';
+import type { Device } from '@/types/device.type';
 
 export const useDeviceStore = defineStore('deviceStore', () => {
 
