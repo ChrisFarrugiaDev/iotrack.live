@@ -61,17 +61,18 @@ router.beforeEach(async (
 
 
 	// flash message handling
-	messageStore.getPersistFlashMessage ?
-		messageStore.decreasePersistFlashMessage() :
-		messageStore.clearFlashMessage();
+	messageStore.getFlashMessageDuration ?
+		messageStore.decreaseFlashMessageDuration() :
+		messageStore.clearFlashMessageList();
 
-	// // auth gate (default to protected if meta not specified)
-	// const requiresAuth = to.meta.requiresAuth !== false;
 
-	// if (requiresAuth && !isAuthenticated.value) {
-	// 	authStore.setRedirectTo(to);
-	// 	return next({ name: 'login.view' });
-	// }
+	// auth gate (default to protected if meta not specified)
+	const requiresAuth = to.meta.requiresAuth !== false;
+
+	if (requiresAuth && !isAuthenticated.value) {
+		authStore.setRedirectTo(to);
+		return next({ name: 'login.view' });
+	}
 
 	// continue with the navigation
 	next();

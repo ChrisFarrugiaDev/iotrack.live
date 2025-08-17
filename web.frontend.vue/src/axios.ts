@@ -45,8 +45,7 @@ apiClient.interceptors.response.use (
 
         if (data?.messages) {
             const messageStore = useMessageStore();
-            messageStore.setFlashMessages(data.messages);
-            messageStore.setFlashClass('flash-message--blue');
+            messageStore.setFlashMessagesList([data.messages], 'flash-message--blue');
         }
         
         return response;
@@ -60,7 +59,7 @@ apiClient.interceptors.response.use (
         const status = err?.response?.status;
         const authStore = useAuthStore();
 
-        if (status === 401 && authStore.isAuthenticated) {
+        if (status === 401  && authStore.isAuthenticated) {
             localStorage.clear();
             sessionStorage.clear();
 

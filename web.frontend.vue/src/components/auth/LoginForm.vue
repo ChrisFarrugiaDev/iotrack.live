@@ -20,7 +20,7 @@
             <div class="ssign__row mt-3" @click="resetFlashMassage()">
                 <div class="ssign__remember" @click="toggleRememberMe()">
                     <svg class="ssign__icon" v-if="getRemeberMe">
-                        <use xlink:href="@/assets/svg/sprite.svg#icon-checkbox-3"></use>
+                        <use xlink:href="@/ui/svg/sprite.svg#icon-checkbox-3"></use>
                     </svg>
                     <svg class="ssign__icon ssign__icon--empty" v-else></svg>
                     Remeber me
@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <button class="bbtn bbtn--sky">Sign In</button>
+        <button class="vbtn vbtn--sky">Sign In</button>
     </form>
 </template>
 

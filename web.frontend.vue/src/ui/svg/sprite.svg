@@ -153,12 +153,12 @@
                 fill-rule="nonzero" />
         </symbol>
 
-        <symbol id="icon-pencil" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <symbol id="icon-edit" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path
                 d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
         </symbol>
         
-        <symbol id="icon-trash-can-solid" viewBox="0 0 24 24">
+        <symbol id="icon-delete" viewBox="0 0 24 24">
             <path
                 d="M5.755,20.283,4,8H20L18.245,20.283A2,2,0,0,1,16.265,22H7.735A2,2,0,0,1,5.755,20.283ZM21,4H16V3a1,1,0,0,0-1-1H9A1,1,0,0,0,8,3V4H3A1,1,0,0,0,3,6H21a1,1,0,0,0,0-2Z" />
         </symbol>
@@ -170,6 +170,14 @@
 
         <symbol id="icon-view-more" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <path d="m 2 6.007812 c -1.105469 0 -2 0.894532 -2 2 c 0 1.101563 0.894531 2 2 2 s 2 -0.898437 2 -2 c 0 -1.105468 -0.894531 -2 -2 -2 z m 6 0 c -1.105469 0 -2 0.894532 -2 2 c 0 1.101563 0.894531 2 2 2 s 2 -0.898437 2 -2 c 0 -1.105468 -0.894531 -2 -2 -2 z m 6 0 c -1.105469 0 -2 0.894532 -2 2 c 0 1.101563 0.894531 2 2 2 s 2 -0.898437 2 -2 c 0 -1.105468 -0.894531 -2 -2 -2 z m 0 0" />
+        </symbol>
+
+        <symbol id="icon-search" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15.7955 15.8111L21 21M18 10.5C18 14.6421 14.6421 18 10.5 18C6.35786 18 3 14.6421 3 10.5C3 6.35786 6.35786 3 10.5 3C14.6421 3 18 6.35786 18 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+
+        <symbol id="icon-close" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">         
+            <path id="Vector" d="M21 21L12 12M12 12L3 3M12 12L21.0001 3M12 12L3 21.0001" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </symbol>
     </defs>
 </svg>

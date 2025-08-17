@@ -1,14 +1,14 @@
 <template>
-    <div ref="theTabs" class="tabs-mb" :class="{ 'tabs-dt': isDesktop }">
-        <div v-for="(value, key) in props.tabsObjectData.tabs" :key="key" @click="emitActiveTab(key)"
-        class="tabs-mb__item" :class="{
-            'tabs-dt__item': isDesktop,
-            'tabs-mb__item--active': tabsObjectData.activeTab === key && !isDesktop,
-            'tabs-dt__item--active': tabsObjectData.activeTab === key && isDesktop
+    <div ref="vTabs" class="vtabs-mb" :class="{ 'vtabs-dt': isDesktop }">
+        <div v-for="(value, key) in props.vtabsObjectData.tabs" :key="key" @click="emitActiveTab(key)"
+        class="vtabs-mb__item" :class="{
+            'vtabs-dt__item': isDesktop,
+            'vtabs-mb__item--active': vtabsObjectData.activeTab === key && !isDesktop,
+            'vtabs-dt__item--active': vtabsObjectData.activeTab === key && isDesktop
         }">
             {{ value }}
         </div>
-        <p class="tabs-mb__empty" :class="{ 'tabs-dt__empty': isDesktop }"></p>
+        <p class="vtabs-mb__empty" :class="{ 'vtabs-dt__empty': isDesktop }"></p>
     </div>
 </template>
 
@@ -20,10 +20,10 @@ import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue';
     
 // -- Types ------------------------------------------------------------
 
-type TabsObjectData = {
-  tabs: Record<string, string>; // or more specific type if needed
-  activeTab: string;
-}
+// type vTabsObjectData = {
+//   tabs: Record<string, string>; // or more specific type if needed
+//   activeTab: string;
+// }
 
 // -- Emits ------------------------------------------------------------
 
@@ -36,7 +36,7 @@ const emit = defineEmits<{
 
 const props = withDefaults(defineProps<{
 
-    tabsObjectData: {
+    vtabsObjectData: {
         tabs: Record<string, string>;
         activeTab: string;
     };
@@ -52,26 +52,26 @@ const props = withDefaults(defineProps<{
 
 // -- Data -------------------------------------------------------------
 
-const theTabs = ref<HTMLElement | null>(null);
-const tabsWidth = ref(700);
+const vTabs = ref<HTMLElement | null>(null);
+const vtabsWidth = ref(700);
 
 // -- Computed ---------------------------------------------------------
 
-const isDesktop = computed(() => tabsWidth.value >= (props.layoutBreakpoint ?? 600));
+const isDesktop = computed(() => vtabsWidth.value >= (props.layoutBreakpoint ?? 600));
 
 // -- Methods for Responsiveness and Resizing --------------------------
 
-// Updates the tabsWidth ref with the current width of the tabs container element
+// Updates the vtabsWidth ref with the current width of the vtabs container element
 function updateWidth () {
-    // Check if theTabs (DOM element) is mounted and available
-    if (theTabs.value) {
+    // Check if vTabs (DOM element) is mounted and available
+    if (vTabs.value) {
 
-        // Set tabsWidth to the current width (in pixels) of the element
-        tabsWidth.value = theTabs.value.offsetWidth;
+        // Set vtabsWidth to the current width (in pixels) of the element
+        vtabsWidth.value = vTabs.value.offsetWidth;
     }
 };
 
-// Sets up a ResizeObserver to watch for changes in theTabs element's size
+// Sets up a ResizeObserver to watch for changes in vTabs element's size
 function setupResizeObserver() {
 
     // Create a new ResizeObserver that will run the callback whenever the element is resized
@@ -79,14 +79,14 @@ function setupResizeObserver() {
 
         // Use requestAnimationFrame for smoother updates in the next frame
         requestAnimationFrame(() => {
-            // Update tabsWidth when a resize is detected
+            // Update vtabsWidth when a resize is detected
             updateWidth(); 
         });
     });
 
-    // Start observing the theTabs element for size changes, if it's available
-    if (theTabs.value) {
-        resizeObserver.observe(theTabs.value);
+    // Start observing the vTabs element for size changes, if it's available
+    if (vTabs.value) {
+        resizeObserver.observe(vTabs.value);
     }
 
     // When the component is unmounted (destroyed), stop the observer to prevent memory leaks
@@ -115,25 +115,25 @@ onMounted(() => {
 
 
 <style lang="scss" scoped>
-.tabs-mb,
-.tabs-dt {
+.vtabs-mb,
+.vtabs-dt {
     display: flex;
     flex-direction: column;
     font-size: 1.1rem;
 }
 
-.tabs-mb {
+.vtabs-mb {
     &__empty {
         display: none;
     }
 
     &__item {
         cursor: pointer;
-        font-family: $font-display;
-        color: $col-zinc-400;
+        font-family: var(--font-display);
+        color: var(--color-zinc-400);
         font-weight: 400;
         padding: 2px 1rem;
-        border: 1px solid $col-zinc-400;
+        border: 1px solid var(--color-zinc-400);
         text-wrap: nowrap;
 
         &:not(:nth-last-child(2)) {
@@ -141,40 +141,40 @@ onMounted(() => {
         }
 
         &:hover {
-            color: $col-text-2;
-            background-color: $col-blue-200;
-            border-color: $col-text-2;
+            color: var(--color-text-2);
+            background-color: var(--color-blue-200);
+            border-color: var(--color-text-2);
 
-            &+.tabs-mb__item {
-                border-top: 1px solid $col-text-2;
+            &+.vtabs-mb__item {
+                border-top: 1px solid var(--color-text-2);
             }
         }
 
         &--active {
-            color: $col-white;
-            background-color: $col-zinc-400;
-            border-color: $col-zinc-400;
+            color: var(--color-white);
+            background-color: var(--color-zinc-400);
+            border-color: var(--color-zinc-400);
         }
     }
 }
 
-.tabs-dt {
+.vtabs-dt {
     flex-direction: row;
 
     &__empty {
         display: block;
-        border-bottom: 1px solid $col-zinc-400 !important;
+        border-bottom: 1px solid var(--color-zinc-400) !important;
         flex: 1;
     }
 
     &__item {
         cursor: pointer;
-        font-family: $font-display;
-        color: $col-zinc-400;
+        font-family: var(--font-display);
+        color: var(--color-zinc-400);
         font-weight: 400;
         padding: 2px 0.5rem;
         min-width: 11rem;
-        border: 1px solid $col-zinc-400;
+        border: 1px solid var(--color-zinc-400);
         display: flex;
         justify-content: center;
         font-size: .9rem;
@@ -185,27 +185,29 @@ onMounted(() => {
         }
 
         &:not(:nth-last-child(2)) {
-            border-bottom: 1px solid $col-zinc-400;
+            border-bottom: 1px solid var(--color-zinc-400);
             border-right: none;
         }
 
         &:hover {
-            color: $col-text-2;
-            background-color: $col-blue-200;
-            border-color: $col-text-2;
-            border-bottom: 1px solid $col-text-2 !important;
+            color: var(--color-text-2);
+            background-color: var(--color-blue-200);
+            border-color: var(--color-text-2);
+            border-bottom: 1px solid var(--color-text-2) !important;
 
-            &+.tabs-dt__item {
-                border-top: 1px solid $col-zinc-400;
-                border-left: 1px solid $col-text-2;
+            &+.vtabs-dt__item {
+                border-top: 1px solid var(--color-zinc-400);
+                border-left: 1px solid var(--color-text-2);
             }
         }
 
         &--active {
-            color: $col-white;
-            background-color: $col-zinc-400;
-            border-color: $col-zinc-400;
+            color: var(--color-white);
+            background-color: var(--color-zinc-400);
+            border-color: var(--color-zinc-400);
         }
     }
 }
+
+
 </style>

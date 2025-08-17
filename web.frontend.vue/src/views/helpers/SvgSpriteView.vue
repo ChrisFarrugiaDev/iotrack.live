@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
-import sprite from '@/assets/svg/sprite.svg'
+import sprite from '@/ui/svg/sprite.svg'
 
 // Types
 interface SymbolInfo {

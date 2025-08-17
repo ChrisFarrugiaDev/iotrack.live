@@ -5,63 +5,66 @@ export const useMessageStore = defineStore("messageStore", () => {
 
     // - State ---------------------------------------------------------
 
-    const flashMessages = ref<string[]>(["hello world"]);
+    const flashMessageList = ref<string[]>([]);
 
-    const flashClass = ref<string | null>('flash-message--orange');
+    const flashMessageClass = ref<string | null>('flash-message--orange');
 
-    const persistFlashMessage = ref<number>(0);
+    const flashMessageDuration = ref<number>(0);
 
     // - Getters -------------------------------------------------------
 
-    const getFlashMessages = computed(()=>{
-        return flashMessages.value;
+    const getFlashMessageList = computed(()=>{
+        return flashMessageList.value;
     });
 
-    const getFlashClass = computed(()=>{
-        return flashClass.value;
+    const getFlashMessageClass = computed(()=>{
+        return flashMessageClass.value;
     });
 
-    const getPersistFlashMessage = computed(()=>{
-        return persistFlashMessage.value;
+    const getFlashMessageDuration = computed(()=>{
+        return flashMessageDuration.value;
     });
 
     // - Actions -------------------------------------------------------
-    function setFlashMessages(msg: string[], msgClass: null | string = null) {       
-        flashMessages.value = msg;
+    function setFlashMessagesList(msg: string[], msgClass: null | string = null, duration=0) {       
+        flashMessageList.value = msg;
+        flashMessageDuration.value = duration;
         if (msgClass) {
-            flashClass.value = msgClass;
-        }
+            flashMessageClass.value = msgClass;
+        }        
     }
     
-    function setFlashClass(msgClass: string | null) {
-         flashClass.value = msgClass;
+    function setFlashMessageClass(msgClass: string | null) {
+         flashMessageClass.value = msgClass;
     }
 
-    function clearFlashMessage() {
-        flashMessages.value = [];
-        flashClass.value = null;
+    function clearFlashMessageList() {
+        flashMessageList.value = [];
+        flashMessageClass.value = null;
     }
 
-    function setPersistFlashMessage(val: number) {
-        persistFlashMessage.value = val
+    function setFlashMessageDuration(val: number) {
+        flashMessageDuration.value = val
     }
 
-    function decreasePersistFlashMessage() {
+    function decreaseFlashMessageDuration() {
         
-        if (persistFlashMessage.value != 0) {
-            persistFlashMessage.value -= 1;
-        }
-        console.log(persistFlashMessage.value);
+        if (flashMessageDuration.value != 0) {
+            flashMessageDuration.value -= 1;
+        } 
+        if (flashMessageDuration.value < 0) {
+            flashMessageDuration.value = 0;
+        }   
     }
 
     return {
-        getFlashMessages, 
-        getFlashClass, 
-        getPersistFlashMessage,
-        setFlashMessages,
-        setFlashClass,
-        clearFlashMessage,
-        setPersistFlashMessage,
-        decreasePersistFlashMessage,
+        getFlashMessageList, 
+        getFlashMessageClass, 
+        getFlashMessageDuration,
+        setFlashMessagesList,
+        setFlashMessageClass,
+        clearFlashMessageList,
+        setFlashMessageDuration,
+        decreaseFlashMessageDuration,
     }
 })

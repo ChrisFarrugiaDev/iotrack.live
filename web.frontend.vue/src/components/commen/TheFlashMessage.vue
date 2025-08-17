@@ -1,6 +1,6 @@
 <template>
-    <p class="flash-message my-4 p-2" :class="getFlashClass">
-        <div v-for="message in getFlashMessages" v-html="message"></div>
+    <p class="flash-message my-4 p-2" :class="getFlashMessageClass">
+        <div v-for="message in getFlashMessageList" v-html="message"></div>
     </p>
 </template>
 
@@ -13,7 +13,7 @@ import { ref } from 'vue';
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
-const { getFlashClass, getFlashMessages } = storeToRefs(messageStore);
+const { getFlashMessageClass, getFlashMessageList } = storeToRefs(messageStore);
 
 </script>
 

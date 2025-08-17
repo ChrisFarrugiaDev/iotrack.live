@@ -1,5 +1,5 @@
 <template>
-    <main class="dashboard">
+    <main class="dashboard v-ui">
 
         <VueLoadingOverlay :active="getIsLoading" :is-full-page="true" :lock-scroll="true" :width="256" :height="256"
             transition="fade" :opacity="0.5" />

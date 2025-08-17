@@ -13,7 +13,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
     // 1. Ensure Authorization header exists and is properly formatted
     if (!header || !header.startsWith("Bearer ")) {
-        return res.status(403).json({
+        return res.status(401).json({
             success: false,
             message: 'Authorization token missing or invalid format',
             error: {
@@ -39,8 +39,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         // 5. Continue to the next middleware/controller
         next();
     } catch (err: unknown) {
-        // 6. Token verification failed → respond with 403
-        return res.status(403).json({
+        // 6. Token verification failed → respond with 401
+        return res.status(401).json({
             success: false,
             message: 'Invalid or expired token',
             error: {

@@ -6,7 +6,7 @@
         <div class="sidebar__group">
             <div id="menu-btn" class="sidebar__item sidebar__item--first" @click="toggleUserMenu">
                 <svg class="sidebar__svg ">
-                    <use xlink:href="@/assets/svg/sprite.svg#icon-menu-1"></use>
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-menu-1"></use>
                 </svg>
                 <div class="sidebar__text">
                     <span>Menu</span>
@@ -23,7 +23,7 @@
 
         <div class="sidebar__item" @click="goToView('mapView')">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-map"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-map"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Map</span>
@@ -34,7 +34,7 @@
 
         <div class="sidebar__item" @click="goToView('organisationsView')">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-company"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-company"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Orgs</span>
@@ -45,7 +45,7 @@
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-users"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-users"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Users</span>
@@ -56,7 +56,7 @@
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-groups"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-groups"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Groups</span>
@@ -67,7 +67,7 @@
 
         <div class="sidebar__item" @click="goToView('devices.list')">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-device"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-device"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Devices</span>
@@ -78,7 +78,7 @@
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-asset"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-asset"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Assets</span>
@@ -89,7 +89,7 @@
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-audit"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-audit"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Audit</span>
@@ -100,7 +100,7 @@
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-reports"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-reports"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Reports</span>
@@ -111,7 +111,7 @@
 
         <div class="sidebar__item">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-alarm"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-alarm"></use>
             </svg>
             <div class="sidebar__text">
                 <span>Alarms</span>
@@ -121,7 +121,7 @@
 
         <div class="sidebar__item sidebar__item--last">
             <svg class="sidebar__svg ">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-about"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-about"></use>
             </svg>
             <div class="sidebar__text">
                 <span>About</span>

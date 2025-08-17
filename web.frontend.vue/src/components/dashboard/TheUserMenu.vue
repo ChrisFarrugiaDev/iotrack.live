@@ -3,28 +3,28 @@
         <div class="menu__link">
             <div class="menu__text">Profile Settings</div>
             <svg class="menu__icon">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-user-settings"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-user-settings"></use>
             </svg>
         </div>
 
         <div class="menu__link">
             <div class="menu__text">Application Settings</div>
             <svg class="menu__icon">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-settings"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-settings"></use>
             </svg>
         </div>
 
         <div class="menu__link">
             <div class="menu__text">White Lableling</div>
             <svg class="menu__icon">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-white-lableling"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-white-lableling"></use>
             </svg>
         </div>
 
         <div class="menu__link" @click="logout">
             <div class="menu__text">Logout</div>
             <svg class="menu__icon">
-                <use xlink:href="@/assets/svg/sprite.svg#icon-logout"></use>
+                <use xlink:href="@/ui/svg/sprite.svg#icon-logout"></use>
             </svg>
         </div>
 

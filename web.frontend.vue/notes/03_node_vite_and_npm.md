@@ -62,6 +62,15 @@ https://www.npmjs.com/package/vue-loading-overlay
 
     $ npm install vue-loading-overlay
 
+
+<!-- --------------------------------------------------------------- -->
+
+## vue3-select-component
+
+https://vue3-select-component.vercel.app/getting-started.html
+
+    $ npm add vue3-select-component
+
 <!-- --------------------------------------------------------------- -->
 ___
 <!-- --------------------------------------------------------------- -->

@@ -28,9 +28,10 @@ export default defineConfig(({ mode }) => {
 			preprocessorOptions: {
 				scss: {
 					additionalData: `
-            @use "~sass/main" as *;
-            @use "~sass/abstracts/_index" as *;
-          `,
+					@use "~sass/main" as *;
+					@use "~sass/abstracts/_index" as *;
+					@use "@/ui/index.scss" as *;
+          			`,
 					//   api: 'modern',
 				},
 			},

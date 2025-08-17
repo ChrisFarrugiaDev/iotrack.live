@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <button class="bbtn bbtn--sky">Send Reset Link</button>
+        <button class="vbtn vbtn--sky">Send Reset Link</button>
     </form>
 </template>
 

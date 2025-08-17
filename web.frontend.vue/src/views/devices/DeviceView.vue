@@ -1,35 +1,38 @@
 <template>
-    <main class="vview__main">
-        <section class="vview__section">
-            <div class="heading--2 ">Devices</div>
-            <TheFlashMessage></TheFlashMessage>
+    <Vview class="v-ui" data-theme="dark_not">
 
-            <TheTabs
-                class="mt-16"
-                :tabsObjectData="tabsObjectData_1"
-                :isDisabled="false"
-                :layoutBreakpoint="500"
-                @setActiveTab="setActiveTab"
-                @click="clearMessage"
-            ></TheTabs>
+        <div class="vheading--2 ">Devices</div>
+        <TheFlashMessage></TheFlashMessage>
+    
 
-<RouterView v-slot="{ Component, route }">
-  <KeepAlive>
-    <component :is="Component" :key="route.fullPath" />
-  </KeepAlive>
-</RouterView>
 
-        </section>
-    </main>
+        <VTabs class="mt-16" :vtabsObjectData="tabsObjectData_1" :isDisabled="false" :layoutBreakpoint="500" 
+           @setActiveTab="setActiveTab" @click="clearMessage">
+
+        </VTabs>
+    
+        <RouterView v-slot="{ Component, route }">
+            <KeepAlive>
+                <component :is="Component" :key="route.fullPath" />
+            </KeepAlive>
+        </RouterView>
+
+    </Vview>
+
 </template>
 
 <!-- --------------------------------------------------------------- -->
- 
+
 <script setup lang="ts">
 import { reactive, watch, type Component } from 'vue';
-import TheTabs from '@/components/commen/TheTabs.vue';
 import { useRoute, useRouter } from 'vue-router';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
+import Vview from '@/ui/primitives/Vview.vue';
+import { VTabs } from '@/ui';
+import { useMessageStore } from '@/stores/messageStore';
+
+
+const messageStore = useMessageStore();
 
 // - Route -------------------------------------------------------------
 
@@ -45,7 +48,8 @@ const tabsObjectData_1 = reactive({
     activeTab: 'devices.list' as TabKey,
     tabs: {
         'devices.list': 'Devices List',
-        'devices.create': 'Register new Device',    
+        'devices.create': 'Register new Device',
+
     },
 });
 
@@ -59,7 +63,7 @@ function setActiveTab(e: any) {
 }
 
 function clearMessage() {
-    // messageStore.clearFlashMessage();
+    messageStore.clearFlashMessageList();
 }
 </script>
 
