@@ -16,14 +16,18 @@ OK 7. Impliment latest telemetry on the devices
     'LastTelemetryMap    map[string]apptypes.FlatAvlRecord'
     from redis at start up
 
+<!-- =============================================================== -->
 
 In Vmodal set title as named slot as footer.
+
 
 web.backend.node.ts: 
     1. add assertion for exchange and routing key, 
     2. start implementing last telemetry logic.
     3. in authmiddleware add token version check.
     4. start warking on the device api crud.
+    5. When Login in api auth use zod not expres-validation
+    6. Put Zod validation as middleware
 
 web.frontend.vue:
     1 Device list:
@@ -35,6 +39,8 @@ web.frontend.vue:
         b. add iccid and phone number field
         b. add qr code and barcode scan
         b. add buttons with confirmation.
+
+    
 
 
 

@@ -6,7 +6,7 @@
         "text": "{\n    \"email\": \"dev@user.com\",\n    \"password\": \"DevPass123!\"\n}"
     },
     "url": "http://57.129.22.122:4001/api/auth/login",
-    "sortOrder": 7,
+    "sortOrder": 1,
     "parameters": [],
     "headers": [
         {

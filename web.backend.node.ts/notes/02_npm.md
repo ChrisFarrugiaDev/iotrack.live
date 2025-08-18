@@ -80,6 +80,14 @@ $ npm install bcryptjs
 
 <!-- --------------------------------------------------------------- -->
 
+### zod
+
+https://zod.dev/
+
+    npm install zod 
+
+<!-- --------------------------------------------------------------- -->
+
 
 ubuntu@d2-2-de1:~/iotrack.live$ pwd
 /home/ubuntu/iotrack.live

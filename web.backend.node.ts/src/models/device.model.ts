@@ -38,4 +38,18 @@ export class Device {
 
          return bigIntToString(result);
     }
+
+    // -----------------------------------------------------------------
+    
+    static async deleteByIDs(deviceIDs: string[]) {
+        const ids = deviceIDs.map(id => BigInt(id));
+        const result = await prisma.devices.deleteMany({
+            where: {
+                id: { in: ids}
+            }
+        })
+        return result;
+    }
+
+
 }

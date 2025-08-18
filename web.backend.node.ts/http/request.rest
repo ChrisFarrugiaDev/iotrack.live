@@ -7,3 +7,11 @@ Content-Type: application/json
   "email": "dev@user.com",
   "password": "DevPass123!"
 }
+
+###
+DELETE http://57.129.22.122:4001/api/device
+Content-Type: application/json
+
+{
+  "device_ids": ["1"]
+}

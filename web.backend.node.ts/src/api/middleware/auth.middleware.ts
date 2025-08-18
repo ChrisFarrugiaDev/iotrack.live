@@ -7,7 +7,6 @@ import { UserJWT } from "../../types/user-jwt.type";
  * Middleware to validate JWT and attach user info to the request object.
  */
 
-
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const header = req.header("Authorization");
 

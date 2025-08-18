@@ -1,0 +1,22 @@
+{
+    "_type": "request",
+    "method": "DELETE",
+    "body": {
+        "mimeType": "application/json",
+        "text": "{\n    \"device_ids\": 1\n}"
+    },
+    "url": "http://57.129.22.122:4001/api/device",
+    "sortOrder": 0,
+    "parameters": [],
+    "pathParameters": [],
+    "headers": [
+        {
+            "name": "Content-Type",
+            "value": "application/json"
+        }
+    ],
+    "authentication": {
+        "type": "bearer",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ191dWlkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIiwidG9rZW5fdmVyc2lvbiI6MTYsImlhdCI6MTc1NTU0MzM4NywiZXhwIjoxNzU1NTg2NTg3fQ.YwN9-hKMcZBvMb67S3AHsvIyv8JjmFqPmkFzCyEOy9c"
+    }
+}

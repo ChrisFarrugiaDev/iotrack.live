@@ -3,20 +3,11 @@ import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 
 import { User, UserType } from "../../models/user.model";
-import { Organisation, OrganisationType } from "../../models/organisation.model";
-import { UserOrganisationAccess } from "../../models/user-organisation-access.model";
 
-import { users, organisations, roles } from '../../../generated/prisma'
 import { ApiResponse } from "../../types/api-response.type";
 import { UserJWT } from "../../types/user-jwt.type";
 import * as redisUtils from "../../utils/redis.utils";
 import { logError } from "../../utils/logger.utils";
-
-import { UserAssetAccess } from "../../models/user-asset-access.model";
-import { Asset, AssetType } from "../../models/asset.model";
-import { UserDeviceAccess } from "../../models/user-device-access.model";
-import { Device, DeviceType } from "../../models/device.model";
-
 
 // -----------------------------------------------------------------------------
 
@@ -44,6 +35,7 @@ class AuthController {
      * Validates user credentials and returns JWT + user profile (with access rights).
      */
     static async login(req: Request, res: Response<ApiResponse>, next: NextFunction) {
+
         try {
             const { email, password } = req.body;
 
