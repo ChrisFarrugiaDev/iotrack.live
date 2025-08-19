@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"go.uber.org/zap"
 
@@ -42,6 +43,30 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 }
 
 // ---------------------------------------------------------------------
+// normalizeIDs ensures numeric fields (id, organisation_id, asset_id) are
+// converted to int64 if they arrive as strings in JSON from Redis.
+func normalizeIDs(jsonItem string) ([]byte, error) {
+	var m map[string]any
+	if err := json.Unmarshal([]byte(jsonItem), &m); err != nil {
+		return nil, err
+	}
+	if s, ok := m["id"].(string); ok {
+		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+			m["id"] = n
+		}
+	}
+	if s, ok := m["organisation_id"].(string); ok {
+		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+			m["organisation_id"] = n
+		}
+	}
+	if s, ok := m["asset_id"].(string); ok {
+		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+			m["asset_id"] = n
+		}
+	}
+	return json.Marshal(m)
+}
 
 func (s *Service) SyncDevicesFromRedisToVar() error {
 	items, err := s.App.Cache.HGetAll("devices")
@@ -54,8 +79,12 @@ func (s *Service) SyncDevicesFromRedisToVar() error {
 	var unmarshallErrCount int
 
 	for deviceID, jsonItem := range items {
+		fixed, err := normalizeIDs(jsonItem)
+		if err != nil {
+			continue
+		}
 		var d models.Device
-		if err := json.Unmarshal([]byte(jsonItem), &d); err != nil {
+		if err := json.Unmarshal(fixed, &d); err != nil {
 			logger.Error("failed to unmarshal device from Redis", zap.String("device_id", deviceID), zap.Error(err))
 			unmarshallErrCount++
 			continue

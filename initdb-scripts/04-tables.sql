@@ -165,7 +165,8 @@ EXECUTE FUNCTION check_device_asset_org_match();
 
 
 -- ---------------------------------------------------------------------------------------------------------------------
-
+-- NOTE: This table does NOT use PostgreSQL inheritance.
+-- It's a TimescaleDB hypertable. Ignore any Prisma warnings about inheritance.
 CREATE TABLE app.telemetry (
     id                BIGSERIAL,
     device_id         BIGINT NOT NULL,
