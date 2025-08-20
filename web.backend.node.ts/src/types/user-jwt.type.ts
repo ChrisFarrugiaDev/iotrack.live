@@ -3,6 +3,6 @@ export type UserJWT = {
   "id": string,
   "email": string,
   "role_id": string,
-  "org_uuid": string,
+  "org_id": string,
   "token_version": number,
 }

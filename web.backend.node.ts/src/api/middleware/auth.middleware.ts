@@ -32,7 +32,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
         // 4. Attach decoded user data to request for downstream handlers
         req.userID = decoded.id;
-        req.userOrgUuid = decoded.org_uuid;
+        req.userOrgID = decoded.org_id;
         req.userRoleID = decoded.role_id;
 
         // 5. Continue to the next middleware/controller

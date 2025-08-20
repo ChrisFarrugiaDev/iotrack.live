@@ -5,16 +5,15 @@ import { ApiResponse } from "../../types/api-response.type";
 
 export function validateBody(schema: z.ZodObject) {
     return (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
-
         const result = schema.safeParse(req.body);
 
         if (!result.success) {
-
+  
             const details = z.flattenError(result.error);           
 
             return res.status(400).json({
                 success: false,
-                message: "Invalid input",
+                message: "Invalid input.",
                 error: {
                     code: "INVALID_INPUT",
                     details: details
@@ -22,7 +21,7 @@ export function validateBody(schema: z.ZodObject) {
             })
         }
 
-        req.body = result.data;
+        req.body = result.data;    
         next();
     }
 }

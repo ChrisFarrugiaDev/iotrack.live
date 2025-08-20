@@ -9,23 +9,29 @@ Content-Type: application/json
 }
 
 ### --------------------------------------------------------------------
+GET http://57.129.22.122:4001/api/device
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ191dWlkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIiwidG9rZW5fdmVyc2lvbiI6MjEsImlhdCI6MTc1NTY5Njk4OCwiZXhwIjoxNzU1NzQwMTg4fQ.wGnp51jG3Atviiro1uHekMFHMRYmdGJTHsVleYciJag
+
+### --------------------------------------------------------------------
+
 DELETE http://57.129.22.122:4001/api/device
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ191dWlkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIiwidG9rZW5fdmVyc2lvbiI6MTcsImlhdCI6MTc1NTU5MjQ0NiwiZXhwIjoxNzU1NjM1NjQ2fQ.-Z8sfzOcbhcefikiDZou-giHLEfdT40yBR_Xl1wcDZY
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ191dWlkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIiwidG9rZW5fdmVyc2lvbiI6MjEsImlhdCI6MTc1NTY5Njk4OCwiZXhwIjoxNzU1NzQwMTg4fQ.wGnp51jG3Atviiro1uHekMFHMRYmdGJTHsVleYciJag
 
 {
-  "device_ids": ["35"]
+  "device_ids": ["47", "45", "51", "52", "53", "54", "56"]
 }
 
 ### --------------------------------------------------------------------
 
 POST http://57.129.22.122:4001/api/device
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ191dWlkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIiwidG9rZW5fdmVyc2lvbiI6MjAsImlhdCI6MTc1NTYzNTc4OCwiZXhwIjoxNzU1Njc4OTg4fQ.wNNErVCmpeZBITWL0PDVZZwWU72mT0A4OW1oMKntCYc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ191dWlkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIiwidG9rZW5fdmVyc2lvbiI6MjEsImlhdCI6MTc1NTY5Njk4OCwiZXhwIjoxNzU1NzQwMTg4fQ.wGnp51jG3Atviiro1uHekMFHMRYmdGJTHsVleYciJag
 
 {
   "organisation_id": "3",          
-  "external_id": "3337",
+  "external_id": "3338",
   "external_id_type": "imei",
   "protocol": "udp",
   "vendor": "teltonika",

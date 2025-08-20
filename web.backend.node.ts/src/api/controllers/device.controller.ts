@@ -8,20 +8,81 @@ import { Prisma } from "../../../generated/prisma";
 
 class DeviceController {
 
+    static async index(req: Request, res: Response<ApiResponse>) {
+        try {
+            const result = await Device.getAll();
+            return res.json({
+                success: true,
+                message: "Devices fetched.",
+                data: {
+                    count: result.length,
+                    devices: result
+                },
+            });
+        } catch (err) {
+            logError("! DeviceController index !", err);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch devices.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // TODO:  Test this method
+    static async list(req: Request, res: Response<ApiResponse>) {
+        try {
+
+
+            const { page, limit, sort_by, order } = req.body.query;
+            const skip = (page - 1) * limit;
+
+            const [items, total] = await Promise.all([
+                Device.list({ skip, take: limit, sortBy: sort_by, order }),
+                Device.count(),
+            ]);
+
+            return res.json({
+                success: true,
+                message: "Devices fetched.",
+                data: {
+                    items,
+                    page,
+                    limit,
+                    total,
+                    pages: Math.ceil(total / limit),
+                    sort_by,
+                    order,
+                },
+            });
+        } catch (err) {
+            logError("! DeviceController index !", err);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch devices.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
+
+
+    // -----------------------------------------------------------------
+
     static async destroy(req: Request, res: Response<ApiResponse>) {
         try {
-            // const parsed = destroySchema.safeParse(req.body);
-
-            // if (!parsed.success) {
-            //     return res.status(400).json({
-            //         success: false,
-            //         message: "Invalid input",
-            //         error: {
-            //             code: "INVALID_INPUT",
-            //             details: z.flattenError(parsed.error), 
-            //         },
-            //     });
-            // }
 
             const { device_ids } = req.body;
 
@@ -84,19 +145,10 @@ class DeviceController {
     // -----------------------------------------------------------------
 
     static async store(req: Request, res: Response<ApiResponse>) {
+        // TODO: 
+        //  need to check that device is with in user organisation scope
+        //  and if asset id provide and ONLY if provide check that asset exist and has the same org_id as device.
         try {
-            // const parsed = storeSchema.safeParse(req.body);
-
-            // if (!parsed.success) {
-            //     return res.status(400).json({
-            //         success: false,
-            //         message: "Invalid input",
-            //         error: {
-            //             code: "INVALID_INPUT",
-            //             details: z.flattenError(parsed.error), 
-            //         },
-            //     });
-            // }
 
             const {
                 organisation_id,
@@ -163,7 +215,7 @@ class DeviceController {
                         success: false,
                         message:
                             "Foreign key constraint failed (check organisation_id / asset_id).",
-                        error: { code: "FOREIGN_KEY_VIOLATION"},
+                        error: { code: "FOREIGN_KEY_VIOLATION" },
                     });
                 }
             }
@@ -187,11 +239,5 @@ class DeviceController {
 
 // =====================================================================
 
-
-
-
-
 export default DeviceController;
-
-
 

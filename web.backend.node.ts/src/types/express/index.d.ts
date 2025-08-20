@@ -8,6 +8,6 @@ declare module "express-serve-static-core" {
   interface Request {
     userID?: string;
     userRoleID?: string;
-    userOrgUuid?: string;
+    userOrgID?: string;
   }
 }

@@ -8,8 +8,9 @@ import { destroySchema, storeSchema } from "../schemas/device.scheme";
 
 const router = Router();
 
-router.delete("/", authMiddleware, validateBody(destroySchema),  DeviceController.destroy)
-router.post("/", authMiddleware, validateBody(storeSchema),  DeviceController.store)
+router.get("/", authMiddleware,  DeviceController.index);
+router.post("/", authMiddleware, validateBody(storeSchema),  DeviceController.store);
+router.delete("/", authMiddleware, validateBody(destroySchema),  DeviceController.destroy);
 
 
 export default router;

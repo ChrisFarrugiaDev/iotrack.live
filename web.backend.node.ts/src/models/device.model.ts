@@ -5,7 +5,44 @@ import { bigIntToString } from "../utils/utils";
 export type DeviceType = Omit<devices, 'id'> & {
     id: string;
 }
+
+type ListOpts = {
+    skip: number;
+    take: number;
+    sortBy: "id" | "external_id" | "model" | "vendor";
+    order: "asc" | "desc";
+};
 export class Device {
+
+    // count - returns how many rows exist in the devices table
+    static async count(): Promise<number> {
+        return prisma.devices.count();
+    }
+
+    // -----------------------------------------------------------------
+
+
+    static async getAll(): Promise<DeviceType[]> {   
+
+        const result = await prisma.devices.findMany({});
+
+        return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
+
+
+    static async list({ skip, take, sortBy, order }: ListOpts): Promise<DeviceType[]> {
+        const result = await prisma.devices.findMany({
+            skip,
+            take,
+            orderBy:{[sortBy]: order}
+        });
+
+        return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
 
     static async getByID(assetID: string): Promise<DeviceType> {
         const result = await prisma.devices.findFirst({
