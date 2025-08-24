@@ -1,9 +1,9 @@
 export interface Device {
-  id: number; // int8(64,0)
-  uuid: string; // uuid
+  id: string; 
+  uuid: string; 
 
-  organisation_id: number | null; // int8(64,0)
-  asset_id: number | null; // int8(64,0)
+  organisation_id: string | null; 
+  asset_id: string | null; 
 
   external_id: string | null; // varchar(64)
   external_id_type: string | null; // varchar(16)

@@ -1,8 +1,8 @@
 export interface Asset {
-  id: number; // int8(64,0)
+  id: string; // int8(64,0)
   uuid: string; // uuid
 
-  organisation_id: number 
+  organisation_id: string 
 
   name: string 
   asset_type: string 

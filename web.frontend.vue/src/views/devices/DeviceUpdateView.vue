@@ -1,76 +1,99 @@
 <template>
 
     <form class="vform mt-16 mb-4" autocomplete="off" @click="clearMessage">
+
         <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn }">
 
             <div class="vform__group">
                 <label class="vform__label">Vendor<span class="vform__required">*</span></label>
-                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="vendor" :options="[
-                    { label: 'Teltonika', value: 'teltonika' },
-                ]" placeholder="" />
+                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="vendor"
+                    :options="[
+                        { label: 'Teltonika', value: 'teltonika' },
+                    ]" placeholder="" />
             </div>
 
             <div class="vform__group">
                 <label class="vform__label">Model<span class="vform__required">*</span></label>
-                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="model" :options="[
-                    { label: 'FMC130', value: 'FMC130' },
-                    { label: 'FMC150', value: 'FMC150' },
-                    { label: 'GH5200', value: 'GH5200' },
-                    { label: 'FPM100', value: 'FPM100' },
-                    { label: 'TMT250', value: 'TMT250' },
-                    { label: 'TAT240', value: 'TAT240' },
-                    { label: 'FCM130', value: 'FCM130' },
-                ]" placeholder="" />
+                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="model"
+                    :options="[
+                        { label: 'FMC130', value: 'FMC130' },
+                        { label: 'FMC150', value: 'FMC150' },
+                        { label: 'GH5200', value: 'GH5200' },
+                        { label: 'FPM100', value: 'FPM100' },
+                        { label: 'TMT250', value: 'TMT250' },
+                        { label: 'TAT240', value: 'TAT240' },
+                        { label: 'FCM130', value: 'FCM130' },
+                    ]" placeholder="" />
             </div>
         </div>
 
-
-        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn }">
+        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn || asset_id != null }">
             <div class="vform__group">
-                <label class="vform__label">Protocol<span class="vform__required">*</span></label>
-                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="protocol" :options="[
-                    { label: '4G', value: '4G' },
-                ]" placeholder="" />
+                <label class="vform__label">Organisation<span class="vform__required">*</span></label>
+                <VueSelect :isDisabled="confirmOn || asset_id != null" class="vform__group" :style="vueSelectStyles"
+                    v-model="organisation_id" :options="getOrganisations" placeholder="" />
             </div>
 
             <div class="vform__group">
                 <label class="vform__label">Status<span class="vform__required">*</span></label>
-                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="status" :options="[
-                    { label: 'Active', value: 'active' },
-                    { label: 'Disabled', value: 'disabled' },
-                    { label: 'Retired', value: 'retired' },
-                    { label: 'New', value: 'new' },
-                ]" placeholder="" />
+                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="status"
+                    :options="[
+                        { label: 'Active', value: 'active' },
+                        { label: 'Disabled', value: 'disabled' },
+                        { label: 'Retired', value: 'retired' },
+                        { label: 'New', value: 'new' },
+                    ]" placeholder="" />
             </div>
 
+
+
         </div>
+
         <div class="vform__row mt-6 " :class="{ 'vform__disabled': confirmOn }">
+
+            <div class="vform__group">
+                <label class="vform__label">Protocol<span class="vform__required">*</span></label>
+                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="protocol"
+                    :options="[
+                        { label: '4G', value: '4G' },
+                    ]" placeholder="" />
+            </div>
+            <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+                <div class="vform__group ">
+                    <label class="vform__label" for="iccid">ICCID</label>
+                    <input class="vform__input" id="iccid" type="text" placeholder="Enter SIM Card ICCID"
+                        v-model.trim="iccid" :disabled="confirmOn">
+                </div>
+
+                <div class="vform__group ">
+                    <label class="vform__label" for="msisdn">MSISDN</label>
+                    <input class="vform__input" id="msisdn" type="text" placeholder="Enter SIM Card MSISDN"
+                        v-model.trim="msisdn" :disabled="confirmOn">
+                </div>
+
+            </div>
+
+
+
+        </div>
+
+
+        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn }">
+
+            <div class="vform__group">
+                <label class="vform__label">External ID Type <span class="vform__required">*</span></label>
+                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles"
+                    v-model="external_id_type" :options="[
+                        { label: 'Imei', value: 'imei' },
+                    ]" placeholder="" />
+            </div>
+
             <div class="vform__group ">
                 <label class="vform__label" for="device_id">External ID <span class="vform__required">*</span></label>
                 <input class="vform__input" id="device_id" type="text" placeholder="Enter device ID"
                     v-model.trim="external_id" :disabled="confirmOn">
             </div>
 
-            <div class="vform__group">
-                <label class="vform__label">External ID Type <span class="vform__required">*</span></label>
-                <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="external_id_type"
-                    :options="[
-                        { label: 'Imei', value: 'imei' },
-                    ]" placeholder="" />
-            </div>
-        </div>
-
-        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn }">
-            <div class="vform__group ">
-                <label class="vform__label" for="iccid">ICCID</label>
-                <input class="vform__input" id="iccid" type="text" placeholder="Enter SIM Card ICCID"
-                    v-model.trim="iccid" :disabled="confirmOn">
-            </div>
-            <div class="vform__group ">
-                <label class="vform__label" for="msisdn">MSISDN</label>
-                <input class="vform__input" id="msisdn" type="text" placeholder="Enter SIM Card MSISDN"
-                    v-model.trim="msisdn" :disabled="confirmOn">
-            </div>
         </div>
 
 
@@ -91,6 +114,8 @@ import VueSelect from "vue3-select-component";
 import { computed, onMounted, ref, watch } from 'vue';
 import type { Device } from "@/types/device.type";
 import { useVueSelectStyles } from '@/composables/useVueSelectStyles';
+import { useOrganisationStore } from "@/stores/organisationStore";
+import { useAssetStore } from "@/stores/assetStore";
 
 const vueSelectStyles = useVueSelectStyles();
 
@@ -102,10 +127,15 @@ const props = defineProps<{
     organisations?: Record<string, any> | null
 }>();
 
+// - Store -------------------------------------------------------------
+
+const organisationStore = useOrganisationStore();
+const assetStore = useAssetStore();
 
 // - Data --------------------------------------------------------------
 const confirmOn = ref(false);
 
+const id = ref<null | string>(null);
 const external_id = ref<null | string>(null);
 const external_id_type = ref<null | string>(null);
 const protocol = ref<null | string>('4G');
@@ -114,8 +144,20 @@ const vendor = ref<null | string>('teltonika');
 const model = ref<null | string>(null);
 const iccid = ref<null | string>(null);
 const msisdn = ref<null | string>(null);
+const organisation_id = ref<null | string>(null);
+const asset_id = ref<null | string>(null);
 
 
+
+// - Computed ----------------------------------------------------------
+const getOrganisations = computed(() => {
+    const orgs = organisationStore.getOrganisationScope || {};
+
+    return Object.values(orgs).map((o: any) => ({
+        label: o.name,
+        value: o.id,
+    }));
+});
 
 function clearMessage() {
 }
@@ -137,6 +179,7 @@ watch(
             const d = list.find((dev: any) => dev.uuid === selectedDeviceUUID);
 
             if (d) {
+                id.value = d.id || '';
                 external_id.value = d.external_id || '';
                 external_id_type.value = d.external_id_type || '';
                 protocol.value = d.protocol || '';
@@ -145,6 +188,8 @@ watch(
                 model.value = d.model || '';
                 iccid.value = d.attributes?.iccid || '';
                 msisdn.value = d.attributes?.msisdn || '';
+                organisation_id.value = d.organisation_id;
+                asset_id.value = d.asset_id;
             }
         }
     },
@@ -156,5 +201,4 @@ watch(
 <!-- --------------------------------------------------------------- -->
 
 <style scoped lang="scss">
-// 
-</style>
+// </style>
