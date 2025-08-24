@@ -1,5 +1,5 @@
 import redis, { redisKeyPrefix } from "../../config/redis.config";
-import { logDebug, logError } from "../logger.utils";
+import { logger } from "../logger.utils";
 
 export async function hset(
     key: string,
@@ -20,9 +20,9 @@ export async function hset(
 
         await redis.hset(fullKey, hashData);
 
-        logDebug(`Successfully saved hash to Redis: ${fullKey}`);
+        logger.debug({ key: fullKey }, "Successfully saved hash to Redis");
     } catch (err) {
-        logError("! redisUtils saveHashToRedis !", err);
+        logger.error({ err }, "! redisUtils saveHashToRedis !");
         throw err;
     }
 }
@@ -47,15 +47,13 @@ export async function hget(
             return rawValue;
         }
     } catch (err) {
-        logError("! redisUtils hget !", err);
+        logger.error({ err }, "! redisUtils hget !");
         throw err;
     }
 }
 
-
 // ---------------------------------------------------------------------
 
-// Add or update fields in an existing Redis hash
 export async function hadd(
     key: string,
     field: string,
@@ -71,13 +69,12 @@ export async function hadd(
 
         await redis.hset(fullKey, field, storedValue);
 
-        logDebug(`Added/updated field "${field}" in hash: ${fullKey}`);
+        logger.debug({ key: fullKey, field }, "Added/updated field in hash");
     } catch (err) {
-        logError("! redisUtils hadd !", err);
+        logger.error({ err }, "! redisUtils hadd !");
         throw err;
     }
 }
-
 
 // ---------------------------------------------------------------------
 
@@ -95,17 +92,17 @@ export async function hdel(
 
         const deletedCount = await redis.hdel(fullKey, ...fieldArray);
 
-        logDebug(
-            `Deleted ${deletedCount} field(s) [${fieldArray.join(", ")}] from hash: ${fullKey}`
+        logger.debug(
+            { key: fullKey, fields: fieldArray, deletedCount },
+            "Deleted field(s) from hash"
         );
 
         return deletedCount; // number of fields actually removed
     } catch (err) {
-        logError("! redisUtils hdel !", err);
+        logger.error({ err }, "! redisUtils hdel !");
         throw err;
     }
 }
-
 
 // ---------------------------------------------------------------------
 
@@ -137,14 +134,11 @@ export async function replaceHsetWithLua(
 
         await redis.eval(luaScript, 1, fullKey, ...argv);
 
-        logDebug(`Successfully replaced hash with key: ${fullKey}`);
+        logger.debug({ key: fullKey }, "Successfully replaced hash");
+
+
     } catch (err) {
-        logError("! redisUtils replaceHsetWithLua !", err);
+        logger.error({ err }, "! redisUtils replaceHsetWithLua !");
         throw err;
     }
 }
-
-
-
-
-

@@ -1,5 +1,4 @@
-
-import express, {Response, Request, json}from "express";
+import { FastifyInstance } from "fastify";
 import authRouter from "./auth.router";
 import teltonikaRouter from "./teltonika.router";
 import accessProfileRouter from "./access-profile.router";
@@ -7,15 +6,12 @@ import deviceRouter from "./device.router";
 
 // ---------------------------------------------------------------------
 
-const router = express.Router();
-
-router.use("/auth", authRouter);
-router.use('/teltonika', teltonikaRouter);
-router.use('/access-profile', accessProfileRouter);
-router.use('/device', deviceRouter);
-
+// Fastify uses plugin registration instead of .use
+export default async function router(fastify: FastifyInstance) {
+    await fastify.register(authRouter, { prefix: "/auth" });
+    await fastify.register(teltonikaRouter, { prefix: "/teltonika" });
+    await fastify.register(accessProfileRouter, { prefix: "/access-profile" });
+    await fastify.register(deviceRouter, { prefix: "/device" });
+}
 
 // ---------------------------------------------------------------------
-
-export default router;
-

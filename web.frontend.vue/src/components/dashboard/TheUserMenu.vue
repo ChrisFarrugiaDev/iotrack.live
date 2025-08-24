@@ -1,9 +1,18 @@
 <template>
-    <div id="the-user-menu" class="menu m-1">
-        <div class="menu__link">
+    <div id="the-user-menu" class="menu m-1 v-ui" :data-theme="getSidebarTheme" >
+        <div class="menu__link menu__link--first">
             <div class="menu__text">Profile Settings</div>
             <svg class="menu__icon">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-user-settings"></use>
+            </svg>
+        </div>
+
+        <div class="menu__link" @click="dashboardStore.toggleTheme">
+            <div class="menu__text">Switch Color Theme</div>
+            <svg class="menu__icon">
+                <use v-if="dashboardStore.getTheme == 'dark'" xlink:href="@/ui/svg/sprite.svg#icon-moon"></use>
+                <use v-if="dashboardStore.getTheme == 'light'" xlink:href="@/ui/svg/sprite.svg#icon-sun"></use>
+                <use v-if="dashboardStore.getTheme == 'normal'" xlink:href="@/ui/svg/sprite.svg#icon-contrast"></use>
             </svg>
         </div>
 
@@ -21,7 +30,7 @@
             </svg>
         </div>
 
-        <div class="menu__link" @click="logout">
+        <div class="menu__link menu__link--last" @click="logout">
             <div class="menu__text">Logout</div>
             <svg class="menu__icon">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-logout"></use>
@@ -34,10 +43,19 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
+import { useDashboardStore} from '@/stores/dashboardStore';
+import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 
 const router = useRouter();
+const dashboardStore = useDashboardStore();
+
+
+
+const getSidebarTheme = computed(() => {
+    return dashboardStore.getTheme == 'light' ? 'light' : 'dark';
+});
 
 function logout() {
     router.push({ name: "logout.view" });
@@ -49,10 +67,12 @@ function logout() {
 
 <style lang="scss" scoped>
 .menu {
-    background-color: $col-zinc-800;
-    border-radius: $border-radius;
+     
     box-shadow: $box-shadow-4;
     width: 14rem;
+    background-color: transparent;
+
+    // border: 1px solid var(--color-zinc-300);
 
 
 
@@ -60,24 +80,33 @@ function logout() {
         cursor: pointer;
         display: flex;
         justify-content: space-between;
+        background-color: var(--color-bg-li);  
         font-family: $font-display;
         gap: 1rem;
-
-
-
         width: 100%;
         padding: .5rem .8rem;
-        color: $col-zinc-100;
+        color: var(--color-text-1);
         font-size: .9rem;
         transition: all .1s ease;
+        border: 1px solid var(--color-zinc-300);
 
         &:not(&:last-child) {
-            border-bottom: 1px solid $col-zinc-200;
+            border-bottom: transparent;
         }
 
         &:hover {
-            background-color: $col-zinc-300;
-            color: $col-zinc-800;
+            background-color: var(--color-zinc-700);
+            color: var(--color-bg-li);
+            border: 1px solid var(--color-zinc-700);
+        }
+
+        &--first {
+            border-top-left-radius: $border-radius;
+            border-top-right-radius: $border-radius;
+        }
+        &--last {
+            border-bottom-left-radius: $border-radius;
+            border-bottom-right-radius: $border-radius;
         }
     }
 

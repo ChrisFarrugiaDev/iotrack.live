@@ -1,6 +1,5 @@
 import redis, { redisKeyPrefix } from "../../config/redis.config";
-import { logDebug, logError } from "../logger.utils";
-
+import { logger } from "../logger.utils";
 
 // Saves an array into a Redis list, with optional key prefix
 export async function saveArrayToList(
@@ -24,9 +23,9 @@ export async function saveArrayToList(
 
         await redis.rpush(fullKey, ...array);
 
-        logDebug(`Successfully saved array to Redis list: ${fullKey}`);
+        logger.debug({ key: fullKey, length: array.length }, "Successfully saved array to Redis list");
     } catch (err) {
-        logError('! redisUtils saveArrayToList !', err);
+        logger.error({ err }, "! redisUtils saveArrayToList !");
         throw err;
     }
 }

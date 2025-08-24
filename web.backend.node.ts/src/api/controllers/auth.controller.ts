@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { FastifyRequest, FastifyReply } from "fastify";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 
@@ -7,7 +7,7 @@ import { User, UserType } from "../../models/user.model";
 import { ApiResponse } from "../../types/api-response.type";
 import { UserJWT } from "../../types/user-jwt.type";
 import * as redisUtils from "../../utils/redis.utils";
-import { logError } from "../../utils/logger.utils";
+import { logger } from "../../utils/logger.utils";
 
 // -----------------------------------------------------------------------------
 
@@ -25,24 +25,20 @@ class AuthController {
         return jwt.sign(payload, getJwtSecret(), { expiresIn: '12h' });
     }
 
-
-
-
     // -------------------------------------------------------------------------
 
     /**
      * Login endpoint.
      * Validates user credentials and returns JWT + user profile (with access rights).
      */
-    static async login(req: Request, res: Response<ApiResponse>, next: NextFunction) {
-
+    static async login(request: FastifyRequest, reply: FastifyReply) {
         try {
-            const { email, password } = req.body;
+            const { email, password } = request.body as { email: string, password: string };
 
             // 1. Fetch user with roles and organisation info
             const user = await User.getByEmail(email, ['organisations', 'roles']);
             if (!user) {
-                return res.status(401).json({
+                return reply.status(401).send({
                     success: false,
                     message: 'Invalid credentials.',
                     error: {
@@ -55,7 +51,7 @@ class AuthController {
             // 2. Verify password using bcrypt
             const isMatch = await bcrypt.compare(password, user.password_hash);
             if (!isMatch) {
-                return res.status(401).json({
+                return reply.status(401).send({
                     success: false,
                     message: 'Invalid credentials.',
                     error: {
@@ -81,11 +77,8 @@ class AuthController {
 
             const token = AuthController.generateToken(tokenPayload);
 
-
-
-
             // 9. Return the successful login response with JWT and user profile
-            return res.json({
+            return reply.send({
                 success: true,
                 message: 'Login successful.',
                 data: {
@@ -95,9 +88,9 @@ class AuthController {
 
         } catch (err) {
             // Log and return a structured error response for any unexpected error
-            logError('! auth.controller.ts login !', err);
+            logger.error({ err }, '! auth.controller.ts login !');
 
-            return res.status(500).json({
+            return reply.status(500).send({
                 success: false,
                 message: "An unexpected error occurred. Please try again later.",
                 error: {
@@ -108,13 +101,12 @@ class AuthController {
         }
     }
 
-
     // ------------------------------------------------------------------------- 
 
     // Logout endpoint (implement as needed: e.g., blacklist token, clear cookie, etc)
-    static async logout(req: Request, res: Response<ApiResponse>, next: NextFunction) {
+    static async logout(request: FastifyRequest, reply: FastifyReply) {
         // Typically just instruct frontend to delete JWT from storage
-        return res.json({
+        return reply.send({
             success: true,
             message: 'Logged out.',
         });

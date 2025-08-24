@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { FastifyRequest, FastifyReply } from "fastify";
 import { ApiResponse } from "../../types/api-response.type";
 import jwt from 'jsonwebtoken';
 import { UserJWT } from "../../types/user-jwt.type";
@@ -6,13 +6,12 @@ import { UserJWT } from "../../types/user-jwt.type";
 /**
  * Middleware to validate JWT and attach user info to the request object.
  */
-
-export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-    const header = req.header("Authorization");
+export const authMiddleware = async (request: FastifyRequest, reply: FastifyReply) => {
+    const header = request.headers['authorization'];
 
     // 1. Ensure Authorization header exists and is properly formatted
-    if (!header || !header.startsWith("Bearer ")) {
-        return res.status(401).json({
+    if (!header || typeof header !== "string" || !header.startsWith("Bearer ")) {
+        return reply.status(401).send({
             success: false,
             message: 'Authorization token missing or invalid format',
             error: {
@@ -31,15 +30,16 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         const decoded = jwt.verify(token, secret) as UserJWT;
 
         // 4. Attach decoded user data to request for downstream handlers
-        req.userID = decoded.id;
-        req.userOrgID = decoded.org_id;
-        req.userRoleID = decoded.role_id;
+        (request as any).userID = decoded.id;
+        (request as any).userOrgID = decoded.org_id;
+        (request as any).userRoleID = decoded.role_id;
 
         // 5. Continue to the next middleware/controller
-        next();
+        // Fastify continues automatically if you return nothing and don't send a response
+        // (if you want compatibility with non-async middleware, you can also accept `done` and call it)
     } catch (err: unknown) {
         // 6. Token verification failed → respond with 401
-        return res.status(401).json({
+        return reply.status(401).send({
             success: false,
             message: 'Invalid or expired token',
             error: {

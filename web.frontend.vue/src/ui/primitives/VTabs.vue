@@ -1,4 +1,4 @@
-<template>
+vtabs-mb__item--active<template>
     <div ref="vTabs" class="vtabs-mb" :class="{ 'vtabs-dt': isDesktop }">
         <div v-for="(value, key) in props.vtabsObjectData.tabs" :key="key" @click="emitActiveTab(key)"
         class="vtabs-mb__item" :class="{
@@ -135,23 +135,24 @@ onMounted(() => {
         padding: 2px 1rem;
         border: 1px solid var(--color-zinc-400);
         text-wrap: nowrap;
+        background-color: var(--color-bg-li);
 
         &:not(:nth-last-child(2)) {
             border-bottom: none;
         }
 
         &:hover {
-            color: var(--color-text-2);
+            color: var(--color-zinc-800);
             background-color: var(--color-blue-200);
-            border-color: var(--color-text-2);
+            border-color: var(--color-zinc-800);
 
             &+.vtabs-mb__item {
-                border-top: 1px solid var(--color-text-2);
+                border-top: 1px solid var(--color-zinc-800);
             }
         }
 
         &--active {
-            color: var(--color-white);
+            color: var(--color-zinc-50);
             background-color: var(--color-zinc-400);
             border-color: var(--color-zinc-400);
         }
@@ -190,19 +191,19 @@ onMounted(() => {
         }
 
         &:hover {
-            color: var(--color-text-2);
+            color: var(--color-zinc-800);
             background-color: var(--color-blue-200);
-            border-color: var(--color-text-2);
-            border-bottom: 1px solid var(--color-text-2) !important;
+            border-color: var(--color-zinc-800);
+            border-bottom: 1px solid var(--color-zinc-800) !important;
 
             &+.vtabs-dt__item {
                 border-top: 1px solid var(--color-zinc-400);
-                border-left: 1px solid var(--color-text-2);
+                border-left: 1px solid var(--color-zinc-800);
             }
         }
 
         &--active {
-            color: var(--color-white);
+            color: var(--color-zinc-50);
             background-color: var(--color-zinc-400);
             border-color: var(--color-zinc-400);
         }

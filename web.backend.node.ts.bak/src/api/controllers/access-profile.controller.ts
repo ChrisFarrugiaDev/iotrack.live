@@ -46,7 +46,7 @@ export class AccessProfileController {
             }
 
             // 3. Determine all organisation IDs the user can access
-            const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(user);
+            const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(user.organisation_id, user.id);
 
             // 4. Fetch metadata for all accessible organisations from cache
             const organisationScope = await AccessProfileController.buildOrganisationInfoMap(accessibleOrgIds);
@@ -104,12 +104,12 @@ export class AccessProfileController {
      * Compute the effective organisation IDs a user can access,
      * considering default scope and overrides.
      */
-    static async computeAccessibleOrganisationIds(user: UserType): Promise<string[]> {
+    static async computeAccessibleOrganisationIds(organisationID: string, userID: string): Promise<string[]> {
         // 1. Get all descendant orgs for the user's primary organisation.
-        const defaultScope = await Organisation.getOrgScope(user.organisation_id);
+        const defaultScope = await Organisation.getOrgScope(organisationID);
 
         // 2. Get any explicit user overrides (allow/deny) for org access.
-        const overrides = await UserOrganisationAccess.getUserOrgOverrides(user.id);
+        const overrides = await UserOrganisationAccess.getUserOrgOverrides(userID);
 
         // 3. Categorize overrides into allow and deny lists.
         const allow: string[] = [];

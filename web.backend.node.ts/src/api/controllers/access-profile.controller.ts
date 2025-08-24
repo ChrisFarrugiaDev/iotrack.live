@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import { FastifyRequest, FastifyReply } from "fastify";
 import { User, UserType } from "../../models/user.model";
-import { logError } from "../../utils/logger.utils";
+import { logger } from "../../utils/logger.utils";
 import { ApiResponse } from "../../types/api-response.type";
 import { Organisation, OrganisationType } from "../../models/organisation.model";
 import { UserOrganisationAccess } from "../../models/user-organisation-access.model";
@@ -11,6 +11,7 @@ import { UserDeviceAccess } from "../../models/user-device-access.model";
 import { Device, DeviceType } from "../../models/device.model";
 import { AccessProfile } from "../../types/access-profile.type";
 
+// -------------------------------------------------------------------------
 
 export class AccessProfileController {
 
@@ -20,15 +21,15 @@ export class AccessProfileController {
      * organisations, assets, devices, and settings.
      */
 
-    static async getAccessProfile(req: Request, res: Response<ApiResponse>) {
+    static async getAccessProfile(request: FastifyRequest, reply: FastifyReply) {
         try {
             // 1. Extract the authenticated user ID from the request
             //    (this is set by the auth middleware from the JWT payload)       
-            const userID = req?.userID;
+            const userID = (request as any)?.userID;
 
             if (!userID) {
                 // If the middleware failed to attach a user ID, treat as bad request
-                return res.status(400).json({
+                return reply.status(400).send({
                     success: false,
                     message: 'User ID is required',
                     error: { code: 'MISSING_USER_ID' }
@@ -38,7 +39,7 @@ export class AccessProfileController {
             // 2. Load the user from the database with their roles and organisation info
             const user = await User.getByID(userID, ['organisations', 'roles']);
             if (!user) {
-                return res.status(404).json({
+                return reply.status(404).send({
                     success: false,
                     message: 'User not found',
                     error: { code: 'USER_NOT_FOUND' }
@@ -76,8 +77,8 @@ export class AccessProfileController {
                 settings,
             };
 
-                // 7. Respond with the profile
-            return res.json({
+            // 7. Respond with the profile
+            return reply.send({
                 success: true,
                 message: 'Access profile fetched successfully',
                 data: { access_profile: profile }
@@ -85,9 +86,9 @@ export class AccessProfileController {
 
         } catch (err: unknown) {
             // Log and return structured error for unexpected exceptions
-            logError('! access-profile.controller.ts getAccessProfile !', err);
+            logger.error({ err }, '! access-profile.controller.ts getAccessProfile !');
 
-            return res.status(500).json({
+            return reply.status(500).send({
                 success: false,
                 message: "An unexpected error occurred. Please try again later.",
                 error: {
@@ -167,8 +168,9 @@ export class AccessProfileController {
         }
 
         // 2. Fetch all assets in the specified organisations
-        const assets = await Asset.getByOrganisationsIDs(organisationIds);
+        const assets = await Asset.getByOrganisationsIDs(organisationIds, ['devices']);
 
+        
         // 3. Remove assets explicitly denied to the user
         const accessibleAssets = assets.filter((asset: AssetType) => !deny.includes(asset.id));
 
@@ -177,6 +179,7 @@ export class AccessProfileController {
         const assetMap: Record<string, AssetType> = {}
 
         for (let asset of accessibleAssets) {
+            asset.devices = asset.devices?.map(d => d.id);
             assetMap[asset.id] = asset;
         }
         return assetMap;

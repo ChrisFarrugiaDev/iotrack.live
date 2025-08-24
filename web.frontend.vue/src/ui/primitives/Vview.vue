@@ -1,5 +1,5 @@
 <template>
-    <main class="vview v-ui" :style="rootStyle">
+    <main class="vview"   :style="rootStyle">
         <section class="vview__section" :class="sectionClass" :style="sectionStyle">
             <slot />
         </section>
@@ -21,12 +21,12 @@ const props = withDefaults(defineProps<{
     contentBg?: string;    // section bg (white)
 }>(), {
     maxWidth: '90rem',
-    pad: '4rem 1rem',
+    pad: '3rem 1rem',
     inset: '3.75rem 2rem 3.75rem 6rem',
     bordered: true,
     elevated: false,
-    background: 'var(--color-zinc-100)',
-    contentBg: 'var(--color-white)',
+    background: 'var(--color-bg-hi)',
+    contentBg: 'var(--color-bg-li)',
 });
 
 const rootStyle = computed(() => ({
@@ -64,7 +64,7 @@ const sectionStyle = computed(() => ({
 
     /* modifiers */
     &--bordered {
-        border: 1px solid var(--color-zinc-200);
+        border: 1px solid var(--color-zinc-300);
     }
 
     &--elevated {

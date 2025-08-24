@@ -44,7 +44,7 @@ class AuthController {
             if (!user) {
                 return res.status(401).json({
                     success: false,
-                    message: 'Invalid credentials',
+                    message: 'Invalid credentials.',
                     error: {
                         code: 'AUTH_FAILED',
                         error: process.env.DEBUG === "true" ? "Invalid email" : undefined
@@ -57,7 +57,7 @@ class AuthController {
             if (!isMatch) {
                 return res.status(401).json({
                     success: false,
-                    message: 'Invalid credentials',
+                    message: 'Invalid credentials.',
                     error: {
                         code: 'AUTH_FAILED',
                         error: process.env.DEBUG === "true" ? "Invalid password" : undefined
@@ -75,7 +75,7 @@ class AuthController {
                 id: user.id,
                 email: user.email,
                 role_id: user.roles.id,
-                org_uuid: user.organisations.uuid,
+                org_id: user.organisations.id,
                 token_version: user.token_version,
             };
 
@@ -87,7 +87,7 @@ class AuthController {
             // 9. Return the successful login response with JWT and user profile
             return res.json({
                 success: true,
-                message: 'Login successful',
+                message: 'Login successful.',
                 data: {
                     token,
                 }
@@ -116,7 +116,7 @@ class AuthController {
         // Typically just instruct frontend to delete JWT from storage
         return res.json({
             success: true,
-            message: 'Logged out',
+            message: 'Logged out.',
         });
     }
 }

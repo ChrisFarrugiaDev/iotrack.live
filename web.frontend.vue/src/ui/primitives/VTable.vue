@@ -318,7 +318,7 @@ function toggleAllOnPage(checked: boolean) {
 
 	&__row {		
 		&:nth-of-type(odd) {
-			background-color: var(--color-zinc-100);
+			background-color: var(--color-bg-li);
 		}
 
 		&:hover {

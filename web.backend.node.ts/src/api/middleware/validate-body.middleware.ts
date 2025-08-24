@@ -1,28 +1,28 @@
-import { Request, Response, NextFunction } from "express";
+import { FastifyRequest, FastifyReply } from "fastify";
 import z from "zod";
 import { ApiResponse } from "../../types/api-response.type";
 
 
+
 export function validateBody(schema: z.ZodObject) {
-    return (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
-        const result = schema.safeParse(req.body);
+    return async (request: FastifyRequest, reply: FastifyReply) => {
+        const result = schema.safeParse(request.body);
 
         if (!result.success) {
   
             const details = z.flattenError(result.error);           
 
-            return res.status(400).json({
+            return reply.status(400).send({
                 success: false,
                 message: "Invalid input.",
                 error: {
                     code: "INVALID_INPUT",
                     details: details
                 }
-            })
+            } as ApiResponse);
         }
 
-        req.body = result.data;    
-        next();
+        request.body = result.data;    
     }
 }
 

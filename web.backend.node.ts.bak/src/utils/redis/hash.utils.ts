@@ -92,7 +92,6 @@ export async function hdel(
 
         // ensure fields is always an array
         const fieldArray = Array.isArray(fields) ? fields : [fields];
-        console.log(">", fieldArray)
 
         const deletedCount = await redis.hdel(fullKey, ...fieldArray);
 

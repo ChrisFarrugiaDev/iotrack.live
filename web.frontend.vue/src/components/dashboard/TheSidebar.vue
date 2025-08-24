@@ -1,5 +1,5 @@
 <template>
-    <section id="the-sidebar" class="sidebar" :class="{ 'sidebar__open': getIsUserMenuOpen }">
+    <section id="the-sidebar" class="sidebar v-ui" :data-theme="getSidebarTheme" :class="{ 'sidebar__open': getIsUserMenuOpen }">
 
         <div class="sidebar__space"></div>
 
@@ -76,7 +76,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item">
+        <div class="sidebar__item" @click="goToView('assets.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-asset"></use>
             </svg>
@@ -142,7 +142,7 @@ import { useDashboardStore } from '@/stores/dashboardStore';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import TheUserMenu from './TheUserMenu.vue';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 
 
 // - Router ------------------------------------------------------------
@@ -152,7 +152,13 @@ const router = useRouter();
 // - Store -------------------------------------------------------------
 
 const dashboardStore = useDashboardStore()
-const { getIsUserMenuOpen } = storeToRefs(dashboardStore);
+const { getIsUserMenuOpen, getTheme } = storeToRefs(dashboardStore);
+
+
+const getSidebarTheme = computed(() => {
+    return getTheme.value == 'light' ? 'light' : 'dark';
+});
+
 
 // -- methods ----------------------------------------------------------
 
@@ -204,12 +210,18 @@ onMounted(() => {
     height: 100vh;
     max-height: 100vh;
     display: flex;
-    flex-direction: column;
+    flex-direction: column; 
     background-color: transparent;
+
+
+    @include respondMinHeight(760) {
+        background-color: transparent;
+    }
 
     // Expanded state (when user menu open)
     &__open {
         width: 18.5rem;
+        
     }
 
     // ===== Sidebar Spacers =====
@@ -232,19 +244,25 @@ onMounted(() => {
         grid-template-columns: 4rem 1fr;
         position: relative;
         overflow: visible;
+        
     }
 
     // ===== Sidebar Divider Lines =====
     &__line {
         width: 4rem;
-        border-top: 1px solid $col-zinc-600;
+        // border-top: 1px solid  var(--color-zinc-300);
+
     }
 
     // ===== Sidebar Item (Buttons) =====
     &__item {
+        border: 1px solid var(--color-zinc-300);
+        border-bottom: none;
+        border-left: none;
+
         cursor: pointer;
-        background-color: $col-zinc-800;
-        color: $col-zinc-100;
+        background-color: var(--color-bg-li);
+        color: var(--color-zinc-800);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -261,26 +279,36 @@ onMounted(() => {
         @include respondMinHeight(760) {
             &--first {
                 border-top-right-radius: $border-radius;
+
+                &:hover {
+                    border-top: none;
+                }
             }
 
             &--last {
                 border-bottom-right-radius: $border-radius;
+                border-bottom: 1px solid var(--color-zinc-300);
+
+                &:hover {
+                    border-bottom: none;
+                }
             }
         }
 
         // Hover styles
         &:hover {
-            color: $col-zinc-800;
-            background-color: $col-zinc-300;
+            color: var(--color-bg-li);
+            background-color: var(--color-zinc-700);
+            border-right: transparent;
         }
 
         // Hidden/Compact state for items
         &--hidden {
-            background-color: $col-zinc-300;
+            background-color: var(--color-zinc-300);
             height: 3rem;
 
             &:not(&:first-child) {
-                border-top: 1px solid $col-zinc-50;
+                border-top: 1px solid var(--color-zinc-50);
             }
         }
     }
@@ -294,7 +322,7 @@ onMounted(() => {
         &--expand {
             transform: translateX(-7px);
 
-            @include respondMobile($bp-medium) {
+            @include respondMobile(760) {
                 transform: translateX(0px);
             }
         }
@@ -315,4 +343,5 @@ onMounted(() => {
         }
     }
 }
+
 </style>

@@ -1,11 +1,9 @@
 import redis, { redisKeyPrefix } from "../config/redis.config";
-import { logDebug, logError } from "./logger.utils";
-
+import { logger } from "./logger.utils";
 
 export * from "./redis/hash.utils";
-export * from "./redis/set.utils"
-export * from "./redis/list.utils"
-
+export * from "./redis/set.utils";
+export * from "./redis/list.utils";
 
 // ---------------------------------------------------------------------
 
@@ -29,9 +27,9 @@ export async function set(
             await redis.expire(fullKey, expireInSeconds);
         }
 
-        logDebug(`Successfully saved key: ${fullKey}`);
+        logger.debug({ key: fullKey, expireInSeconds }, "Successfully saved key to Redis");
     } catch (err) {
-        logError("! redisUtils set !", err);
+        logger.error({ err }, "! redisUtils set !");
         throw err;
     }
 }
@@ -46,7 +44,7 @@ export async function exists(key: string, prefix: string | null = null): Promise
         const exist = await redis.exists(fullKey);
         return exist === 1;
     } catch (err) {
-        logError("! redisUtils exists !", err);
+        logger.error({ err }, "! redisUtils exists !");
         throw err;
     }
 }
@@ -71,7 +69,7 @@ export async function get(
             return value;
         }
     } catch (err) {
-        logError("! redisUtils get !", err);
+        logger.error({ err }, "! redisUtils get !");
         throw err;
     }
 }
@@ -86,20 +84,15 @@ export async function del(key: string, prefix: string | null = null): Promise<bo
 
         const exist = await redis.exists(fullKey);
         if (!exist) {
-            logDebug(`Key ${fullKey} does not exist.`, 'yellow');
+            logger.debug({ key: fullKey }, "Key does not exist");
             return false;
         }
 
         await redis.del(fullKey);
-        logDebug(`Successfully deleted the key: ${fullKey}`, 'green');
+        logger.debug({ key: fullKey }, "Successfully deleted the key from Redis");
         return true;
     } catch (err) {
-        logError("! redisUtils del !", err);
+        logger.error({ err }, "! redisUtils del !");
         throw err;
     }
 }
-
-
-
-// ---------------------------------------------------------------------
-

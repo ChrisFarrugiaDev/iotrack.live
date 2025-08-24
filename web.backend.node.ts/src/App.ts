@@ -1,34 +1,42 @@
-import { Server as ServerHttp } from "node:http";
-import { Server as ServerHttps } from "node:https";
-
-import express, { Express } from "express";
-import cors from "cors";
+import Fastify, { FastifyInstance } from "fastify";
+import fastifyCors from "@fastify/cors";
 import router from "./api/routers";
-import { logError, logInfo } from "./utils/logger.utils";
+import { logger } from "./utils/logger.utils"; // Uses your Pino instance
 import { cacheAllOrganisationsToRedis } from "./services/organisation-cache.service";
 import redis from "./config/redis.config";
 import prisma from "./config/prisma.config";
 
-
+// ---------------------------------------------------------------------
 
 class App {
     // Hold the single instance of App
     private static _instance: App;
 
-    public httpServer?: ServerHttp | ServerHttps;
-    public expressApp: Express;
+    public fastify!: FastifyInstance;
 
     private constructor() {
-        this.expressApp = express();
-        this.initializeSingleton();
-        logInfo("App instance created")
+        // Create Fastify instance with logger
+        this.fastify = Fastify({
+            logger: {
+                transport: {
+                    target: "pino-pretty",
+                    options: {
+                        colorize: true,
+                        translateTime: "SYS:standard",
+                        ignore: "pid,hostname",
+                        singleLine: false,
+                    },
+                },
+                level: 'warn', // 'debug' for more, 'warn' for less
+            }
+        });
+        logger.info("App instance created");
     }
 
     // -----------------------------------------------------------------
 
     // Static getter to access the singleton instance
     public static get instance(): App {
-
         if (!App._instance) {
             App._instance = new App();
         }
@@ -39,95 +47,90 @@ class App {
 
     // Central method to organize all initialization functions
     async initializeSingleton() {
-        await this.runStartupTasks()
-        // this.setupAppDependencies();
-        // this.initializeDatabaseConnections();
-        this.initializeMiddleware();
-        this.initializeRoutes();
-        // this.scheduleCronTasks();
+        await this.runStartupTasks();
+        await this.initializeMiddleware();
+        await this.initializeRoutes();
     }
 
     // -----------------------------------------------------------------
 
-    // initializeMiddleware - initialize middleware for parsing request bodies
-    initializeMiddleware() {
-        this.expressApp.use(cors());
-        this.expressApp.use(express.urlencoded({ extended: false }));          // Middleware for URL-encoded data
-        this.expressApp.use(express.json());                                   // Middleware for JSON data
+    // initializeMiddleware - register CORS and other plugins for Fastify
+    async initializeMiddleware() {
+        await this.fastify.register(fastifyCors, { origin: true });
+        // Fastify handles JSON and URL-encoded body parsing natively
     }
 
     // -----------------------------------------------------------------
 
-
-    // initializeRoutes - initialize and attach routers
-    initializeRoutes() {
-        this.expressApp.use('/api', router);
+    // initializeRoutes - register routers using Fastify's plugin system
+    async initializeRoutes() {
+        await this.fastify.register(router, { prefix: "/api" });
     }
 
     // -----------------------------------------------------------------
 
-    public init(httpPort = 80) {
+    // Start Fastify server on the given port
+    public async init(httpPort = 80) {
+        await this.initializeSingleton();
         try {
-            this.httpServer = this.expressApp.listen(httpPort, () => {
-                logInfo(`HTTP server listening on port ${httpPort}`)
-            });
+            await this.fastify.listen({ port: httpPort, host: "0.0.0.0" });
+            logger.info(`HTTP server listening on port ${httpPort}`);
         } catch (err) {
-            logError("! App.init !", err)
+            logger.error({ err }, "! App.init !");
+            process.exit(1);
         }
     }
 
     // -----------------------------------------------------------------
 
+    // Run any startup logic before serving requests
     async runStartupTasks(): Promise<void> {
         await cacheAllOrganisationsToRedis();
-
         this.startIntervalTasks();
     }
 
+    // -----------------------------------------------------------------
+
+    // startIntervalTasks - schedule regular background jobs (e.g. cache updates)
     startIntervalTasks(): void {
-        setInterval( async()=>{
+        setInterval(async () => {
             await cacheAllOrganisationsToRedis();
-        }, 1000 * 60 * 10)
+        }, 1000 * 60 * 10);
     }
+
+    // -----------------------------------------------------------------
 
     registerCronJobs(): void { }
 
     // -----------------------------------------------------------------
 
+    // Graceful shutdown for Fastify, Redis, and Prisma
     public async gracefulShutdown() {
-        logInfo("Graceful shutdown initiated...");
+        logger.info("Graceful shutdown initiated...");
 
         try {
-            // Close HTTP server
-            this.httpServer?.close(() => {
-                logInfo("HTTP server closed.");
-            });
+            await this.fastify.close();
+            logger.info("Fastify server closed.");
 
             // Clean up Redis
             try {
                 await redis.quit();
-                logInfo("Redis connection closed.");
+                logger.info("Redis connection closed.");
             } catch (err) {
-                logError("Error closing Redis", err);
+                logger.error({ err }, "Error closing Redis");
             }
 
             // Clean up Prisma (optional)
             try {
                 await prisma.$disconnect();
-                logInfo("Prisma disconnected.");
+                logger.info("Prisma disconnected.");
             } catch (err) {
-                logError("Error disconnecting Prisma", err);
+                logger.error({ err }, "Error disconnecting Prisma");
             }
             process.exit(0);
 
-        } catch (err: unknown) {
-
-            if (err instanceof Error) {
-                console.error("Error during shutdown:", err.message)
-            } else {
-                console.error("Non-Error thrown during shutdown:", err);
-            }
-
+        } catch (err) {
+            logger.error({ err }, "Error during shutdown");
             process.exit(1);
         }
     }
@@ -135,4 +138,4 @@ class App {
 
 // ---------------------------------------------------------------------
 // Export the singleton instance
-export default App.instance
+export default App.instance;

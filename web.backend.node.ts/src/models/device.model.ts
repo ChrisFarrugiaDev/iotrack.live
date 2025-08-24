@@ -107,10 +107,10 @@ export class Device {
 
     // -----------------------------------------------------------------
 
-    static async create(devices: Prisma.devicesCreateInput) {
+    static async create(device: Prisma.devicesCreateInput) {
 
         const result = await prisma.devices.create({
-            data: devices
+            data: device
         });
 
         return bigIntToString(result);
@@ -130,6 +130,17 @@ export class Device {
 
     // -----------------------------------------------------------------
 
+    static async updateByID(deviceID: string, data: Prisma.devicesUpdateInput): Promise<DeviceType> {
+        const result = await prisma.devices.update({
+            where: {id: BigInt(deviceID)},
+            data
+        });
+
+        return bigIntToString(result);
+    }
+    
+    // -----------------------------------------------------------------
+
     static async deleteByIDs(deviceIDs: string[]) {
         const ids = deviceIDs.map(id => BigInt(id));
         const result = await prisma.devices.deleteMany({
@@ -140,8 +151,5 @@ export class Device {
         return result;
     }
 
-
     // -----------------------------------------------------------------
-
-
 }

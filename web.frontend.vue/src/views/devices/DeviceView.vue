@@ -1,14 +1,12 @@
 <template>
-    <Vview class="v-ui" data-theme="dark_not">
+    <Vview>
 
         <div class="vheading--2 ">Devices</div>
-        <TheFlashMessage></TheFlashMessage>
-    
+        <TheFlashMessage></TheFlashMessage>   
 
 
         <VTabs class="mt-16" :vtabsObjectData="tabsObjectData_1" :isDisabled="false" :layoutBreakpoint="500" 
            @setActiveTab="setActiveTab" @click="clearMessage">
-
         </VTabs>
     
         <RouterView v-slot="{ Component, route }">
@@ -27,17 +25,15 @@
 import { reactive, watch, type Component } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
-import Vview from '@/ui/primitives/Vview.vue';
-import { VTabs } from '@/ui';
+import { VTabs, Vview } from '@/ui';
 import { useMessageStore } from '@/stores/messageStore';
 
-
+// - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
 
 // - Route -------------------------------------------------------------
 
 const router = useRouter();
-const route = useRoute();
 
 // - Data --------------------------------------------------------------
 
@@ -70,5 +66,5 @@ function clearMessage() {
 <!-- --------------------------------------------------------------- -->
 
 <style scoped lang="scss">
-// kjhkh
+// 
 </style>

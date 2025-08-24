@@ -12,6 +12,14 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     // ---- Getters ----------------------------------------------------
 
     const getDevices = computed(() => devices.value);
+    const getUUID_2_ID = computed(() => {
+        const UUID_2_ID: Record<string, string> = {};
+        for (const  id in devices.value) {
+            const  uuid  = devices.value[id].uuid;
+            UUID_2_ID[uuid] = id;
+        }
+        return UUID_2_ID;
+    })
 
     // ---- Actions ----------------------------------------------------
 
@@ -28,5 +36,6 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         getDevices, 
         setDevices,
         clear,
+        getUUID_2_ID,
     };
 });

@@ -1,12 +1,10 @@
-
-
-import { Router } from "express";
+import { FastifyInstance } from "fastify";
 import TeltonikaController from "../controllers/teltonika.controller";
 
+// ---------------------------------------------------------------------
 
-const router = Router();
+export default async function teltonikaRouter(fastify: FastifyInstance) {
+    fastify.post("/codec12/commands/:imei", TeltonikaController.addCodec12Command );
+}
 
-router.post("/codec12/commands/:imei", TeltonikaController.addCodec12Command );
-
-
-export default router;
+// ---------------------------------------------------------------------

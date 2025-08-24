@@ -3,7 +3,7 @@ npm install typescript --save-dev
 ```
 <!-- --------------------------------------------------------------- -->
 
-### express
+### express (relapse for fastify)
 
 https://www.npmjs.com/package/express
 
@@ -14,12 +14,49 @@ npm install @types/express --save-dev
 
 <!-- --------------------------------------------------------------- -->
 
+### fastify 
+
+https://www.npmjs.com/package/fastify
+
+```
+npm install fastify 
+```
+
+
+<!-- --------------------------------------------------------------- -->
+### cors (relapse for @fastify/cors)
+
+npm install cors -save
+npm install @types/cors --save-dev
+
+
+<!-- --------------------------------------------------------------- -->
+
+### @fastify/cors
+
+https://www.npmjs.com/package/@fastify/cors
+
+```
+npm i @fastify/cors
+```
+<!-- --------------------------------------------------------------- -->
+
 ### dotenv
 
 https://www.npmjs.com/package/dotenv
 
 ```
 npm install dotenv
+```
+
+<!-- --------------------------------------------------------------- -->
+### pino pino-pretty
+
+https://github.com/pinojs/pino
+https://github.com/pinojs/pino-pretty
+
+```
+npm install pino pino-pretty
 ```
 
 <!-- --------------------------------------------------------------- -->
@@ -38,9 +75,6 @@ https://www.npmjs.com/package/uuidv7
 
     $ npm install uuidv7
 
-<!-- --------------------------------------------------------------- -->
-npm install cors -save
-npm install @types/cors --save-dev
 
 <!-- --------------------------------------------------------------- -->
 
@@ -74,9 +108,9 @@ npm install --save @types/jsonwebtoken
 ### bcryptjs
 
 https://www.npmjs.com/package/bcryptjs
-
+```
 $ npm install bcryptjs    
-
+```
 
 <!-- --------------------------------------------------------------- -->
 

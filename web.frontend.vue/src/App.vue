@@ -1,5 +1,5 @@
 <template>
-    <main class="dashboard v-ui">
+    <main class="dashboard v-ui" :data-theme="getTheme">
 
         <VueLoadingOverlay :active="getIsLoading" :is-full-page="true" :lock-scroll="true" :width="256" :height="256"
             transition="fade" :opacity="0.5" />
@@ -46,7 +46,7 @@ import { useSettingsStore } from './stores/settingsStore';
 // - Store -------------------------------------------------------------
 
 const dashboardStore = useDashboardStore();
-const { getIsUserMenuOpen, getIsLoading } = storeToRefs(dashboardStore);
+const { getIsUserMenuOpen, getIsLoading, getTheme } = storeToRefs(dashboardStore);
 
 const authStore = useAuthStore();
 const { isAuthenticated, getRedirectTo } = storeToRefs(authStore);
@@ -193,4 +193,8 @@ async function fetchAccessProfile() {
     top: .25rem;
     z-index: 500;
 }
+</style>
+
+<style lang="scss">
+
 </style>

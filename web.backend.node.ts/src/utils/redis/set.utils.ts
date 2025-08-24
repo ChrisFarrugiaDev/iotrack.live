@@ -1,5 +1,5 @@
 import redis, { redisKeyPrefix } from "../../config/redis.config";
-import { logDebug, logError } from "../logger.utils";
+import { logger } from "../logger.utils";
 
 // Adds one or more members to a Redis set. Duplicate values are ignored by Redis.
 export async function sadd(
@@ -16,13 +16,12 @@ export async function sadd(
 
         await redis.sadd(fullKey, ...members);
 
-        logDebug(`SADD: Added to set ${fullKey}: [${members.join(', ')}]`);
+        logger.debug({ key: fullKey, members }, "SADD: Added to set");
     } catch (err) {
-        logError("! redisUtils sadd !", err);
+        logger.error({ err }, "! redisUtils sadd !");
         throw err;
     }
 }
-
 
 // Retrieves all members of a Redis set.
 export async function smembers(
@@ -34,14 +33,13 @@ export async function smembers(
         const fullKey = `${usedPrefix}${key}`;
         const members: string[] = await redis.smembers(fullKey);
 
-        logDebug(`SMEMBERS: Members of set ${fullKey}: [${members.join(', ')}]`);
+        logger.debug({ key: fullKey, members }, "SMEMBERS: Members of set");
         return members;
     } catch (err) {
-        logError("! redisUtils smembers !", err);
+        logger.error({ err }, "! redisUtils smembers !");
         throw err;
     }
 }
-
 
 export async function smembersAndDeleteWithLua(
     key: string,
@@ -60,10 +58,10 @@ export async function smembersAndDeleteWithLua(
         // `eval` returns the result directly
         const members = await redis.eval(luaScript, 1, fullKey) as string[];
 
-        logDebug(`SMEMBERS+DEL: Retrieved and deleted set ${fullKey}: [${(members || []).join(', ')}]`);
+        logger.debug({ key: fullKey, members }, "SMEMBERS+DEL: Retrieved and deleted set");
         return members || [];
     } catch (err) {
-        logError("! redisUtils smembersAndDeleteLua !", err);
+        logger.error({ err }, "! redisUtils smembersAndDeleteLua !");
         throw err;
     }
 }

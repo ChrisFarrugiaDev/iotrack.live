@@ -295,6 +295,9 @@
   --color-rose-950: #4c0519;
 
   --color-white: #ffffff;
+
+  --color-bg-li:#f4f4f5;
+  --color-bg-hi:#ffffff;
 }
 
 .v-ui[data-theme='dark'] {
@@ -593,4 +596,7 @@
   --color-rose-950: #fff1f2;
 
   --color-white: #18181b; // for inverted cases
+
+  --color-bg-li:#1B1B1F;
+  --color-bg-hi:#161618;
 }

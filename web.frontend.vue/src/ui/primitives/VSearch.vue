@@ -148,7 +148,7 @@ defineExpose({ focus, clear });
         font-family: var(--font-primary);
         /* leaves space for icon */
         color: var(--color-text-1);
-        background: var(--color-white);
+        background: var(--color-bg-hi);
         border: 1px solid var(--color-zinc-300);
         border-radius: var(--radius-md, 6px);
         outline: none;
