@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
     // animation: vmodal-popin 0.15s;
     display: flex;
     flex-direction: column;
-    transform: translateY(-5vh);
+
 
       /* size caps – account for overlay padding top & bottom (2rem + 2rem) */
   max-height: calc(100vh - 4rem);
@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
         align-items: center;
         justify-content: center;
         
-        backdrop-filter: saturate(120%) blur(1px) brightness(20%);
+        backdrop-filter: saturate(120%) blur(1px);
         /* your margins become overlay padding */
         /* top, right, bottom, left */
 
