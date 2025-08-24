@@ -1,19 +1,14 @@
 <template>
-
     <form class="vform mt-16 mb-4" autocomplete="off" @click="clearMessage">
-
-        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn }">
-
+        <!-- Row 1: Vendor & Model -->
+        <div class="vform__row mt-4" :class="{ 'vform__disabled': confirmOn }">
             <div class="vform__group">
-                <label class="vform__label">Vendor<span class="vform__required">*</span></label>
+                <label class="vform__label" for="vendor">Vendor<span class="vform__required">*</span></label>
                 <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="vendor"
-                    :options="[
-                        { label: 'Teltonika', value: 'teltonika' },
-                    ]" placeholder="" />
+                    :options="[{ label: 'Teltonika', value: 'teltonika' }]" placeholder="" id="vendor" />
             </div>
-
             <div class="vform__group">
-                <label class="vform__label">Model<span class="vform__required">*</span></label>
+                <label class="vform__label" for="model">Model<span class="vform__required">*</span></label>
                 <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="model"
                     :options="[
                         { label: 'FMC130', value: 'FMC130' },
@@ -22,89 +17,81 @@
                         { label: 'FPM100', value: 'FPM100' },
                         { label: 'TMT250', value: 'TMT250' },
                         { label: 'TAT240', value: 'TAT240' },
-                        { label: 'FCM130', value: 'FCM130' },
-                    ]" placeholder="" />
+                        { label: 'FCM130', value: 'FCM130' }
+                    ]" placeholder="" id="model" />
             </div>
         </div>
 
-        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn || asset_id != null }">
+        <!-- Row 2: Organisation & Status -->
+        <div class="vform__row mt-4" :class="{ 'vform__disabled': confirmOn || asset_id != null }">
             <div class="vform__group">
-                <label class="vform__label">Organisation<span class="vform__required">*</span></label>
+                <label class="vform__label" for="organisation_id">Organisation<span
+                        class="vform__required">*</span></label>
                 <VueSelect :isDisabled="confirmOn || asset_id != null" class="vform__group" :style="vueSelectStyles"
-                    v-model="organisation_id" :options="getOrganisations" placeholder="" />
+                    v-model="organisation_id" :options="getOrganisations" placeholder="" id="organisation_id" />
             </div>
-
             <div class="vform__group">
-                <label class="vform__label">Status<span class="vform__required">*</span></label>
+                <label class="vform__label" for="status">Status<span class="vform__required">*</span></label>
                 <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="status"
                     :options="[
                         { label: 'Active', value: 'active' },
                         { label: 'Disabled', value: 'disabled' },
                         { label: 'Retired', value: 'retired' },
-                        { label: 'New', value: 'new' },
-                    ]" placeholder="" />
+                        { label: 'New', value: 'new' }
+                    ]" placeholder="" id="status" />
             </div>
-
-
-
         </div>
 
-        <div class="vform__row mt-6 " :class="{ 'vform__disabled': confirmOn }">
-
+        <!-- Row 3: Protocol, ICCID, MSISDN (as you had them: ICCID & MSISDN in a nested row) -->
+        <div class="vform__row mt-6" :class="{ 'vform__disabled': confirmOn }">
             <div class="vform__group">
-                <label class="vform__label">Protocol<span class="vform__required">*</span></label>
+                <label class="vform__label" for="protocol">Protocol<span class="vform__required">*</span></label>
                 <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="protocol"
-                    :options="[
-                        { label: '4G', value: '4G' },
-                    ]" placeholder="" />
+                    :options="[{ label: '4G', value: '4G' }]" placeholder="" id="protocol" />
             </div>
             <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
-                <div class="vform__group ">
+                <div class="vform__group">
                     <label class="vform__label" for="iccid">ICCID</label>
                     <input class="vform__input" id="iccid" type="text" placeholder="Enter SIM Card ICCID"
-                        v-model.trim="iccid" :disabled="confirmOn">
+                        v-model.trim="iccid" :disabled="confirmOn" />
                 </div>
-
-                <div class="vform__group ">
+                <div class="vform__group">
                     <label class="vform__label" for="msisdn">MSISDN</label>
                     <input class="vform__input" id="msisdn" type="text" placeholder="Enter SIM Card MSISDN"
-                        v-model.trim="msisdn" :disabled="confirmOn">
+                        v-model.trim="msisdn" :disabled="confirmOn" />
                 </div>
-
             </div>
-
-
-
         </div>
 
-
-        <div class="vform__row mt-4 " :class="{ 'vform__disabled': confirmOn }">
-
+        <!-- Row 4: External ID Type & External ID -->
+        <div class="vform__row mt-4" :class="{ 'vform__disabled': confirmOn }">
             <div class="vform__group">
-                <label class="vform__label">External ID Type <span class="vform__required">*</span></label>
+                <label class="vform__label" for="external_id_type">External ID Type <span
+                        class="vform__required">*</span></label>
                 <VueSelect :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles"
-                    v-model="external_id_type" :options="[
-                        { label: 'Imei', value: 'imei' },
-                    ]" placeholder="" />
+                    v-model="external_id_type" :options="[{ label: 'Imei', value: 'imei' }]" placeholder=""
+                    id="external_id_type" />
             </div>
-
-            <div class="vform__group ">
+            <div class="vform__group">
                 <label class="vform__label" for="device_id">External ID <span class="vform__required">*</span></label>
                 <input class="vform__input" id="device_id" type="text" placeholder="Enter device ID"
-                    v-model.trim="external_id" :disabled="confirmOn">
+                    v-model.trim="external_id" :disabled="confirmOn" />
             </div>
-
         </div>
 
-
-        <div class="vform__row mt-16 ">
-            <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="confirmOn = true">Update Device</button>
-            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt" @click.prevent="confirmOn = false">Cancel</button>
-            <button v-if="confirmOn" class="vbtn vbtn--sky" @click.prevent="confirmOn = false">Confirm</button>
+        <!-- Row 5: Buttons -->
+        <div class="vform__row mt-16">
+            <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="confirmOn = true" type="button">Update
+                Device</button>
+            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt" @click.prevent="confirmOn = false"
+                type="button">Cancel</button>
+            <button v-if="confirmOn" class="vbtn vbtn--sky" @click.prevent="confirmOn = false"
+                type="button">Confirm</button>
         </div>
-
     </form>
 </template>
+
+
 
 <!-- --------------------------------------------------------------- -->
 
