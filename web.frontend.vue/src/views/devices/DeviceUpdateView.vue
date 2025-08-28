@@ -104,25 +104,29 @@
 <script setup lang="ts">
 
 import VueSelect from "vue3-select-component";
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onDeactivated, onMounted, ref, watch } from 'vue';
 import type { Device } from "@/types/device.type";
 import { useVueSelectStyles } from '@/composables/useVueSelectStyles';
 import { useOrganisationStore } from "@/stores/organisationStore";
+import { useDeviceStore } from "@/stores/deviceStore";
+import { storeToRefs } from "pinia";
+import { useAuthStore } from "@/stores/authStore";
 
 
 const vueSelectStyles = useVueSelectStyles();
 
 // - Props -------------------------------------------------------------
 
-const props = defineProps<{
-    devices?: Record<string, Device> | null,
-    selectedDeviceUUID?: string | null,
-    organisations?: Record<string, any> | null
+const props = defineProps<{   
+    deviceUuid?: string | null,
 }>();
 
 // - Store -------------------------------------------------------------
 
 const organisationStore = useOrganisationStore();
+const deviceStore = useDeviceStore();
+
+const { getDevices, uuidToIdMap } = storeToRefs(deviceStore);
 
 
 // - Data --------------------------------------------------------------
@@ -177,11 +181,14 @@ defineExpose({
 });
 
 watch(
-    [() => props.devices, () => props.selectedDeviceUUID],
-    ([devices, selectedDeviceUUID]) => {
-        if (devices && selectedDeviceUUID) {
-            const list = Object.values(devices);
-            const d = list.find((dev: any) => dev.uuid === selectedDeviceUUID);
+    [() => props.deviceUuid, getDevices, uuidToIdMap],
+    ([deviceUuid, devices, uuidToIdMap]) => {
+        
+        if (devices && deviceUuid) {
+      
+            const _id = uuidToIdMap[deviceUuid];
+            const d = devices[_id];
+
 
             if (d) {
                 id.value = d.id || '';
@@ -200,6 +207,8 @@ watch(
     },
     { immediate: true }
 );
+
+
 
 </script>
 

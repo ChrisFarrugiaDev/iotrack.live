@@ -2,14 +2,14 @@
     <Teleport to=".v-ui">
         <transition name="vmodal-fade">
             <div v-if="modelValue" class="vmodal__overlay" @click.self="onOverlayClick">
-                <section class="vmodal" :class="`vmodal--${props.size}`">
+                <section class="overflow-visible vmodal" :class="`vmodal--${props.size}`">
 
                     <header v-if="$slots.header" class="vmodal__header">
                         <slot name="header" />
-                        <button class="vmodal__close" @click="close" aria-label="Close">&times;</button>
+                        <button class="overflow-visible vmodal__close" @click="close" aria-label="Close">&times;</button>
                     </header>
 
-                    <div class="vmodal__body">
+                    <div class="overflow-visible vmodal__body">
                         <slot />
                     </div>
 
@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
         align-items: center;
         justify-content: center;
         
-        backdrop-filter: saturate(120%) blur(1px);
+        // backdrop-filter: saturate(120%) blur(1px);
         /* your margins become overlay padding */
         /* top, right, bottom, left */
 
@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
 /* Fade transition */
 .vmodal-fade-enter-active,
 .vmodal-fade-leave-active {
-    transition: opacity 0.13s;
+    transition: opacity 0.2s;
 }
 
 .vmodal-fade-enter-from,
@@ -216,5 +216,9 @@ onBeforeUnmount(() => {
         transform: scale(1);
         opacity: 1;
     }
+}
+
+.overflow-visible {
+    overflow: visible !important;
 }
 </style>

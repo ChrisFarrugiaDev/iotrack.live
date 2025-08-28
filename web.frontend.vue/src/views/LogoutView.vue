@@ -22,7 +22,7 @@ onActivated(async() => {
     } catch (err: any) {
 
     } finally {
-
+        
         useOrganisationStore().clear();
         useDeviceStore().clear();
         useAssetStore().clear();

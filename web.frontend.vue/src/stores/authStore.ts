@@ -76,6 +76,7 @@ export const useAuthStore = defineStore('authStore', () => {
     })
     function updateLogCounter() {
         logCounter.value++;
+        console.log(logCounter.value)
     }
 
     // - Expose --------------------------------------------------------

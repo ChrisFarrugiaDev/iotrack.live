@@ -91,7 +91,6 @@ const getOrganisations = computed(() => {
 const getDevices = computed(() => {
   const devices = deviceStore.getDevices ?? {};
   const orgId = organisation_id.value;
-  console.log(devices)
 
   const availableDevices = Object.values(devices)
     .filter((d: any) => d.organisation_id == orgId && d.asset_id == null)
@@ -99,10 +98,6 @@ const getDevices = computed(() => {
       label: d.model ? `${d.model} ${d.external_id}` : `${d.vendor} ${d.external_id}`,
       value: d.id,
     }));
-
-	if(availableDevices.length >= 2) {
-		availableDevices[1] = {...availableDevices[1]}
-	}
 
   // If no devices found, show a disabled message option
   if (availableDevices.length === 0) {

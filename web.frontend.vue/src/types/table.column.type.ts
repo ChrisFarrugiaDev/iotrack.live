@@ -12,5 +12,8 @@ export interface TableColumn {
 		urlKey?: string;         
 		target?: "_blank" | "_self";
 	};
-	className?: string;      
+	className?: string;   
+	
+  to?: string | ((row: any) => string);                 // -> <RouterLink>
+  onClick?: (row: any, value: any, ev: MouseEvent) => void; // plain click handler   
 }

@@ -22,7 +22,7 @@
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
             <div class="vform__group mb-7">
                 <label class="vform__label" for="organisation_id">Organisation<span class="vform__required">*</span></label>         
-                <VueSelect :shouldAutofocusOption="false" class="vform__group" :style="vueSelectStyles"
+                <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles"
                     v-model="organisation_id" :options="getOrganisations" placeholder="" id="organisation_id" />
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>

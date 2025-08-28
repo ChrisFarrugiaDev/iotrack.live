@@ -33,11 +33,12 @@
     </div>
 
     <!-- Update Modal: opens device update form for selected device -->
+     
     <VModal v-model="isUpdateModalOpen" size="xl">
         <template #header>
             <div class="vheading--2">Device Details</div>
         </template>
-        <DeviceUpdateView ref="deviceUpdateRef" :devices="getDevices" :selectedDeviceUUID="selectedDeviceUUID"
+        <DeviceUpdateView ref="deviceUpdateRef" :deviceUuid="selectedDeviceUuid"
             :organisations="getOrganisationScope" />
     </VModal>
 
@@ -106,7 +107,7 @@ const selectedKeys = ref<string[]>([]); // Device row selection
 // Modal visibility state
 const isUpdateModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
-const selectedDeviceUUID = ref<string | null>(null);
+const selectedDeviceUuid = ref<string | null>(null);
 
 // --- Table Columns -----------------------------------------------
 const tableCol = ref<TableColumn[]>([
@@ -132,11 +133,12 @@ const tableCol = ref<TableColumn[]>([
         data: "asset",
         sort: true,
         searchable: true,
-        anchor: {
-            enabled: true,
-            urlKey: "asset_url",
-            target: "_blank",
-        },
+        to: (row) => row.asset_url
+        // anchor: {
+        //     enabled: true,
+        //     urlKey: "asset_url",
+        //     target: "_blank",
+        // },
     },
     {
         col: "External ID",
@@ -189,7 +191,7 @@ const tableData = computed(() => {
             ...d,
             asset: asset?.name || null,
             organisation: organisation || null,
-            asset_url: d.asset_id ? `/assets/${d.asset_id}` : null,
+            asset_url: d.asset_id ? `/assets?update=true&asset_uuid=${asset?.uuid}` : "/devices",
             organisation_url: d.organisation_id ? `/organisations/${d.organisation_id}` : null,
             created_at: d.created_at ? new Date(d.created_at) : null,
         };
@@ -220,9 +222,9 @@ function showDeleteDeviceModal() {
 
 // Show update modal for selected device (skip if already open on same device)
 function showUpdateDeviceModal(id: string) {
-    if (id === selectedDeviceUUID.value) return;
+    if (id === selectedDeviceUuid.value) return;
     isUpdateModalOpen.value = true;
-    selectedDeviceUUID.value = id;
+    selectedDeviceUuid.value = id;
 }
 
 // Called on delete modal confirm
@@ -237,32 +239,32 @@ function deleteDevices() {
 // 1. On mount, read modal state from query params
 onMounted(() => {
     const q = route.query;
-    const uuid = typeof q.uuid === 'string' ? q.uuid : null;
+    const device_uuid = typeof q.device_uuid === 'string' ? q.device_uuid : null;
     const open = q.update === 'true' || q.update === '1';
-    selectedDeviceUUID.value = uuid;
-    isUpdateModalOpen.value = !!(open && uuid); // Only open if we have an id
+    selectedDeviceUuid.value = device_uuid;
+    isUpdateModalOpen.value = !!(open && device_uuid) && route.name == 'devices.list'; // Only open if we have an id and on the right page
 });
 
 // 2. Watch for URL query changes (browser nav/manual edit)
 watch(
     () => route.query,
     (q) => {
-        const uuid = typeof q.uuid === 'string' ? q.uuid : null;
+        const device_uuid = typeof q.device_uuid === 'string' ? q.device_uuid : null;
         const open = q.update === 'true' || q.update === '1';
-        selectedDeviceUUID.value = uuid;
-        isUpdateModalOpen.value = !!(open && uuid);
+        selectedDeviceUuid.value = device_uuid;
+        isUpdateModalOpen.value = !!(open && device_uuid)  && route.name == 'devices.list';
     }
 );
 
 // 3. Watch modal state and write to URL (replace to avoid history spam)
-watch([selectedDeviceUUID, isUpdateModalOpen], ([uuid, open]) => {
+watch([selectedDeviceUuid, isUpdateModalOpen], ([device_uuid, open]) => {
     const next = { ...route.query };
-    if (open && uuid) {
+    if (open && device_uuid) {
         next.update = 'true';
-        next.uuid = uuid;
+        next.device_uuid = device_uuid;
     } else {
         delete next.update;
-        delete next.uuid;
+        delete next.device_uuid;
     }
     router.replace({ query: next });
 });

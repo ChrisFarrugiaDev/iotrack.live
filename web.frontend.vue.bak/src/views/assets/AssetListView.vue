@@ -3,8 +3,20 @@
         <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
             v-model:page="currentPage" row-key="id" :selectable="true" :searchTerm="searchTerm"
             @update:page="currentPage = Number($emit)" @update:selectedKeys="selectedKeys = ($event as any)">
+            <template #actions="{ row }">          
+                <VIconButton icon="icon-view-more" @click="showUpdateDeviceModal(row.uuid)"/>
+            </template>
         </VTable>
+
     </div>
+
+        <!-- Update Modal: opens device update form for selected device -->
+    <VModal v-model="isUpdateModalOpen" size="xl">
+        <template #header>
+            <div class="vheading--2">Asset Details</div>
+        </template>
+        <AssetUpdateView :assets="getAssets" :selectedAssetUUID="selectedAssetUUID" :devices="getDevices" :organisations="getOrganisationScope" />
+    </VModal>
 </template>
 
 <!-- --------------------------------------------------------------- -->
@@ -18,6 +30,7 @@ import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
 import { VSearch, ThePager, VTable, VIconButton, VModal } from '@/ui';
 import { useDeviceStore } from '@/stores/deviceStore';
+import AssetUpdateView from './AssetUpdateView.vue';
 
 
 // - Store -------------------------------------------------------------
@@ -38,9 +51,10 @@ const searchTerm = ref("");
 const currentPage = ref(1);
 const selectedKeys = ref<string[]>([])
 
-// state for showing modals
-const isEditModalOpen = ref(false);
+// Modal visibility state
+const isUpdateModalOpen = ref(true);
 const isDeleteModalOpen = ref(false);
+const selectedAssetUUID = ref<string | null>(null);
 
 const tableCol = ref<TableColumn[]>([
     {
@@ -87,6 +101,8 @@ const tableCol = ref<TableColumn[]>([
 
 ]);
 
+
+
 // - Computed ----------------------------------------------------------
 
 const tableData = computed(() => {
@@ -117,6 +133,12 @@ const tableData = computed(() => {
     });
 });
 
+// Show update modal for selected device (skip if already open on same device)
+function showUpdateDeviceModal(id: string) {
+    if (id === selectedAssetUUID.value) return;
+    isUpdateModalOpen.value = true;
+    selectedAssetUUID.value = id;
+}
 </script>
 
 <!-- --------------------------------------------------------------- -->

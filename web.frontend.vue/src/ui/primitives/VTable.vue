@@ -54,6 +54,21 @@
 									{{ cellContent(c, row) }}
 								</a>
 							</template>
+
+							  <!-- Client-side navigation via RouterLink -->
+							<template v-else-if="c.to">
+								<RouterLink :to="resolveTo(c, row)">
+								{{ cellContent(c, row) }}
+								</RouterLink>
+							</template>
+
+							<!-- Custom click handler -->
+							<template v-else-if="c.onClick">
+								<button type="button" class="vtable__cell-btn" @click.stop="handleCellClick(c, row, $event)">
+								{{ cellContent(c, row) }}
+								</button>
+							</template>
+
 							<!-- Plain Cell -->
 							<template v-else>
 								{{ cellContent(c, row) }}
@@ -90,6 +105,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { RouterLink } from "vue-router";
 
 
 // - Types & Interfaces ------------------------------------------------
@@ -107,6 +123,9 @@ interface TableColumn {
 	format?: (value: any, row?: any) => string | number;
 	anchor?: { enabled: boolean; urlKey?: string; target?: "_blank" | "_self" };
 	className?: string;
+
+	to?: string | ((row: any) => string);                 // -> <RouterLink>
+	onClick?: (row: any, value: any, ev: MouseEvent) => void; // plain click handler
 }
 
 
@@ -264,6 +283,19 @@ function toggleAllOnPage(checked: boolean) {
 	emit("update:selectedKeys", Array.from(selectedSet.value));
 }
 
+// - Handles "to" logic ------------------------------------------------
+
+function resolveTo(c: TableColumn, row: any) {
+	return typeof c.to === "function" ? c.to(row) : c.to!;
+}
+
+// - Handles "onCLick" logic -------------------------------------------
+function handleCellClick(c: TableColumn, row: any, ev: MouseEvent) {
+	if (!c.onClick) return;
+	const val = row?.[c.data];
+	c.onClick(row, val, ev);
+}
+
 </script>
 
 <!-- --------------------------------------------------------------- -->
@@ -316,7 +348,7 @@ function toggleAllOnPage(checked: boolean) {
 		}
 	}
 
-	&__row {		
+	&__row {
 		&:nth-of-type(odd) {
 			background-color: var(--color-bg-li);
 		}
@@ -382,7 +414,7 @@ function toggleAllOnPage(checked: boolean) {
 
 		&--active {
 			opacity: 1;
-			
+
 		}
 
 		&--desc {
@@ -432,6 +464,19 @@ function toggleAllOnPage(checked: boolean) {
 .vtabs-mb__empty,
 .vtable__inline-btns,
 .viconbtn {
-  overflow: visible !important;
+	overflow: visible !important;
+}
+
+.vtable {
+  &__cell--clickable { cursor: pointer; }
+  &__cell-btn {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: inherit;
+  }
 }
 </style>
