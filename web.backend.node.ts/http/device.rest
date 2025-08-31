@@ -1,0 +1,44 @@
+### --------------------------------------------------------------------
+GET http://57.129.22.122:4001/api/device
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjoyNywiaWF0IjoxNzU2MDIzNjAxLCJleHAiOjE3NTYwNjY4MDF9.8HKJbRhm4Lypxnoxi5TqRCpHa7LcUv3QlQuXnbHfSmk
+
+### --------------------------------------------------------------------
+PATCH  http://57.129.22.122:4001/api/device/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjoyNywiaWF0IjoxNzU2MDIzNjAxLCJleHAiOjE3NTYwNjY4MDF9.8HKJbRhm4Lypxnoxi5TqRCpHa7LcUv3QlQuXnbHfSmk
+
+{
+   "asset_id": "1"
+}
+
+### --------------------------------------------------------------------
+
+DELETE http://57.129.22.122:4001/api/device
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozMCwiaWF0IjoxNzU2NTU0NTMyLCJleHAiOjE3NTY1OTc3MzJ9.6ZSs6sjAW_qa4ly2YN6xYg6kiUr7IWZ7kvlfispH0io
+
+{
+  "device_ids": ["73"]
+}
+
+### --------------------------------------------------------------------
+
+POST http://57.129.22.122:4001/api/device
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjoyNywiaWF0IjoxNzU2MDIzNjAxLCJleHAiOjE3NTYwNjY4MDF9.8HKJbRhm4Lypxnoxi5TqRCpHa7LcUv3QlQuXnbHfSmk
+
+{
+  "organisation_id": "2",   
+  "asset_id" : "1",       
+  "external_id": "3338",
+  "external_id_type": "imei",
+  "protocol": "udp",
+  "vendor": "teltonika",
+  "model": "FMC130",
+  "status": "active",
+  "attributes": {
+    "color": "black",
+    "version": "1.0"
+  }
+}

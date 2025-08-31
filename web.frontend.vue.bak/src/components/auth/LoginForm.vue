@@ -92,7 +92,7 @@ async function submitForm() {
             return
         }
 
-        const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/auth/login`
+        const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/auth/login`;
 
         const response = await axios.post(url, {
             email: email.value,
@@ -118,6 +118,7 @@ async function submitForm() {
 
 
     } catch (err: any) {
+        console.log(err)
         const errorMessage = err.response?.data.message || 'Unable to log in. Please check your email and password.';
         flashMessage.value = errorMessage;
         console.error("! login form !\n", err);

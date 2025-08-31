@@ -55,6 +55,7 @@ const appStore = useAppStore();
 const { getShouldFetchAccessProfile } = storeToRefs(appStore);
 
 
+
 const deviceStore = useDeviceStore();
 const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
@@ -150,8 +151,10 @@ async function fetchAccessProfile() {
                 first_name: profile.first_name,
                 last_name: profile.last_name,
                 email: profile.email,
-                role: profile.role
+                role: profile.role,
+                organisation: profile.organisation,
             };
+        
             settingsStore.setAuthenticatedUser(autUserPayload)
         }
         appStore.setShouldFetchAccessProfile(false);

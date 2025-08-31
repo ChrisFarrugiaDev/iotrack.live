@@ -1,22 +1,52 @@
 <template>
-    <div>
+    <div>        
+        <!-- Search bar and delete button row -->
+        <div class="mt-16 flex">
+            <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
+            <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteAssetModal" />
+        </div>
+
         <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
             v-model:page="currentPage" row-key="id" :selectable="true" :searchTerm="searchTerm"
             @update:page="currentPage = Number($emit)" @update:selectedKeys="selectedKeys = ($event as any)">
             <template #actions="{ row }">          
-                <VIconButton icon="icon-view-more" @click="showUpdateDeviceModal(row.uuid)"/>
+                <VIconButton icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
             </template>
         </VTable>
 
     </div>
 
-        <!-- Update Modal: opens device update form for selected device -->
+    <!-- Update Modal: opens asset update form for selected asset -->
     <VModal v-model="isUpdateModalOpen" size="xl">
         <template #header>
             <div class="vheading--2">Asset Details</div>
         </template>
-        <AssetUpdateView :assets="getAssets" :selectedAssetUUID="selectedAssetUUID" :devices="getDevices" :organisations="getOrganisationScope" />
+        <AssetUpdateView :assetUuid="selectedAssetUUID" :assets="getAssets" />
     </VModal>
+
+
+    <!-- Delete Confirmation Modal -->
+    <VModal v-model="isDeleteModalOpen" size="xs">
+        <template #header>
+            <div class="vheading--3">Delete Confirmation</div>
+        </template>
+        <div class="delete-modal">
+            <svg class="delete-modal__icon">
+                <use xlink:href="@/ui/svg/sprite.svg#icon-close" />
+            </svg>
+            <p v-if="selectedKeys.length === 1" class="delete-modal__text">
+                Do you really want to delete this asset?
+            </p>
+            <p v-else class="delete-modal__text">
+                Do you really want to delete these assets?
+            </p>
+        </div>
+        <template #footer>
+            <button class="vbtn vbtn--zinc-lt" @click="isDeleteModalOpen = false">Cancel</button>
+            <button class="vbtn vbtn--red" @click="deleteAssets">Delete</button>
+        </template>
+    </VModal>
+
 </template>
 
 <!-- --------------------------------------------------------------- -->
@@ -27,10 +57,11 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useOrganisationStore } from '@/stores/organisationStore';
 import type { TableColumn } from '@/types/table.column.type';
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { VSearch, ThePager, VTable, VIconButton, VModal } from '@/ui';
 import { useDeviceStore } from '@/stores/deviceStore';
 import AssetUpdateView from './AssetUpdateView.vue';
+import { useRoute, useRouter } from 'vue-router';
 
 
 // - Store -------------------------------------------------------------
@@ -45,6 +76,12 @@ const { getDevices } = storeToRefs(deviceStore);
 
 const messageStore = useMessageStore();
 
+
+// --- Router -------------------------------------------------------
+const route = useRoute();
+const router = useRouter();
+
+
 // - Data --------------------------------------------------------------
 // state for search & pagination
 const searchTerm = ref("");
@@ -52,7 +89,7 @@ const currentPage = ref(1);
 const selectedKeys = ref<string[]>([])
 
 // Modal visibility state
-const isUpdateModalOpen = ref(true);
+const isUpdateModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const selectedAssetUUID = ref<string | null>(null);
 
@@ -88,7 +125,8 @@ const tableCol = ref<TableColumn[]>([
         data: "tracking_device",
         sort: true,
         searchable: true,
-        anchor: {enabled: true, urlKey: "tracking_device_url"}
+        // anchor: {enabled: true, urlKey: "tracking_device_url"}
+        to: (row) => row.tracking_device_url
     },
         {
         col: "Created At",
@@ -126,23 +164,108 @@ const tableData = computed(() => {
             organisation_url: a.organisation_id ? `/organisations/${a.organisation_id}` : null,
 
             tracking_device : tracking_device?.external_id || null,
-            tracking_device_url: tracking_device ? `/devices?update=true&uuid=${tracking_device.uuid}` : null,
+            tracking_device_url: tracking_device ? `/devices?update=true&device_uuid=${tracking_device?.uuid}` : "/assets",             
 
             created_at: a.created_at ? new Date(a.created_at) : null,
         };
     });
 });
 
-// Show update modal for selected device (skip if already open on same device)
-function showUpdateDeviceModal(id: string) {
+// - Methods -----------------------------------------------------------
+
+// Show update modal for selected asset (skip if already open on same asset)
+function showUpdateAssetModal(id: string) {
     if (id === selectedAssetUUID.value) return;
     isUpdateModalOpen.value = true;
     selectedAssetUUID.value = id;
 }
+
+
+// Show delete modal if selection exists, else flash warning
+function showDeleteAssetModal() {
+    if (selectedKeys.value.length === 0) {
+        messageStore.setFlashMessagesList(
+            ["No asset selected. Select an asset to proceed with delete."],
+            "flash-message--red", 2
+        );
+    } else {
+        isDeleteModalOpen.value = true;
+    }
+}
+
+
+// Called on delete modal confirm
+function deleteAssets() {
+    console.log(selectedKeys.value);
+    isDeleteModalOpen.value = false;
+    // TODO: Call store action to delete assets, refresh data, etc
+}
+
+// --- Modal sync with URL query params -----------------------------
+
+// 1. On mount, read modal state from query params
+onMounted(() => {
+    const q = route.query;
+    const asset_uuid = typeof q.asset_uuid === 'string' ? q.asset_uuid : null;
+    const open = q.update === 'true' || q.update === '1';
+    selectedAssetUUID.value = asset_uuid;
+    isUpdateModalOpen.value = !!(open && asset_uuid) && route.name == 'assets.list'; // Only open if we have an id
+});
+
+// 2. Watch for URL query changes (browser nav/manual edit)
+watch(
+    () => route.query,
+    (q) => {
+        const asset_uuid = typeof q.asset_uuid === 'string' ? q.asset_uuid : null;
+        const open = q.update === 'true' || q.update === '1';
+        selectedAssetUUID.value = asset_uuid;
+        isUpdateModalOpen.value = !!(open && asset_uuid)  && route.name == 'assets.list';
+    }
+);
+
+// 3. Watch modal state and write to URL (replace to avoid history spam)
+watch([selectedAssetUUID, isUpdateModalOpen], ([asset_uuid, open]) => {
+    const next = { ...route.query };
+    if (open && asset_uuid) {
+        next.update = 'true';
+        next.asset_uuid = asset_uuid;
+    } else {
+        delete next.update;
+        delete next.asset_uuid;
+    }
+    router.replace({ query: next });
+});
+
 </script>
 
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
 // Placeholder comment to ensure global styles are imported correctly
+.flex {
+    display: flex;
+    gap: .5rem;
+}
+
+.delete-modal {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    &__icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        fill: var(--color-red-500);
+        color: var(--color-red-500);
+        border: 2px solid currentColor;
+        border-radius: 50%;
+        padding: 6px;
+        margin-bottom: 1rem;
+    }
+
+    &__text {
+        text-align: center;
+    }
+}
 </style>

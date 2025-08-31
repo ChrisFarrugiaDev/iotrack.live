@@ -5,6 +5,7 @@ export function useVueSelectStyles() {
     '--vs-min-height': '4rem',
     '--vs-padding': '1.9rem 0.5rem 0.5rem 0.5rem',
     '--vs-background-color': 'var(--color-bg-hi)',
+    '--vs-disabled-background-color': 'var(--color-bg-lo)',
     '--vs-text-color': 'var(--color-text-1)',
     '--vs-border': '1px solid var(--color-zinc-300)',
     '--vs-border-radius': 'var(--radius-md, 0.375rem)',

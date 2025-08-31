@@ -30,9 +30,9 @@ export const authMiddleware = async (request: FastifyRequest, reply: FastifyRepl
         const decoded = jwt.verify(token, secret) as UserJWT;
 
         // 4. Attach decoded user data to request for downstream handlers
-        (request as any).userID = decoded.id;
-        (request as any).userOrgID = decoded.org_id;
-        (request as any).userRoleID = decoded.role_id;
+        request.userID = decoded.id;
+        request.userOrgID = decoded.org_id;
+        request.userRoleID = decoded.role_id;
 
         // 5. Continue to the next middleware/controller
         // Fastify continues automatically if you return nothing and don't send a response

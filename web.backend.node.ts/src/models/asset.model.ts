@@ -93,5 +93,15 @@ export class Asset {
 
     // -----------------------------------------------------------------
 
-    
+    static async deleteByIDs(assetIDs: string[]) {
+        const ids = assetIDs.map( id => BigInt(id) );
+
+        const result = await prisma.assets.deleteMany({
+            where: {
+                id: {in: ids }
+            }
+        });
+
+        return result;
+    }
 }

@@ -7,10 +7,10 @@
         <VTabs class="mt-16" :vtabsObjectData="tabsObjectData_1" :isDisabled="false" :layoutBreakpoint="500" 
            @setActiveTab="setActiveTab" @click="clearMessage">
         </VTabs>
-    
+
         <RouterView v-slot="{ Component, route }">
-            <KeepAlive>
-                <component :is="Component" :key="route.fullPath" />
+            <KeepAlive :exclude="['assets.list', 'assets.create']">
+                <component :is="Component" :key="route.name" />
             </KeepAlive>
         </RouterView>
     </Vview>

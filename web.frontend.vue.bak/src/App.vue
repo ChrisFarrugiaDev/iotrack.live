@@ -9,16 +9,14 @@
         </section>
 
         <section class="page">
-            <router-view v-slot="{ Component }">
-                <template v-if="useKeepAlive">
-                    <KeepAlive>
-                        <component :is="Component" />
-                    </KeepAlive>
-                </template>
-                <template v-else>
-                    <component :is="Component" />
-                </template>
-            </router-view>
+            <RouterView v-slot="{ Component, route }">
+                <!-- <Transition :name="(route.meta?.transition as string) || 'fade'" > -->
+                <KeepAlive v-if="useKeepAlive" :exclude="['devices.list', 'assets.list']">
+                    <component :is="Component" :key="route.name" />
+                </KeepAlive>
+                <component v-else :is="Component" :key="route.name" />
+                <!-- </Transition> -->
+            </RouterView>
         </section>
 
     </main>
@@ -34,7 +32,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import TheSidebar from './components/dashboard/TheSidebar.vue';
 import { useDashboardStore } from './stores/dashboardStore';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAuthStore } from './stores/authStore';
 import { useAppStore } from './stores/appStore';
 import axios from '@/axios';
@@ -42,11 +40,12 @@ import { useDeviceStore } from './stores/deviceStore';
 import { useAssetStore } from './stores/assetStore';
 import { useOrganisationStore } from './stores/organisationStore';
 import { useSettingsStore } from './stores/settingsStore';
+import type { AuthenticatedUser } from './types/authenticated.user.type';
 
 // - Store -------------------------------------------------------------
 
 const dashboardStore = useDashboardStore();
-const { getIsUserMenuOpen, getIsLoading, getTheme } = storeToRefs(dashboardStore);
+const { getIsLoading, getTheme } = storeToRefs(dashboardStore);
 
 const authStore = useAuthStore();
 const { isAuthenticated, getRedirectTo } = storeToRefs(authStore);
@@ -147,12 +146,20 @@ async function fetchAccessProfile() {
             organisationStore.setOrganisation(profile.organisation);
             organisationStore.setOrganisationScope(profile.organisation_scope);
             settingsStore.setMapsApiKey(profile.settings?.maps_api_key);
+            const autUserPayload: AuthenticatedUser = {
+                first_name: profile.first_name,
+                last_name: profile.last_name,
+                email: profile.email,
+                role: profile.role
+            };
+            settingsStore.setAuthenticatedUser(autUserPayload)
         }
         appStore.setShouldFetchAccessProfile(false);
     } catch (err) {
         // optional: if 401/403 -> force logout
         // authStore.logout();
         console.error('fetchAccessProfile failed', err);
+        router.push({ name: "logout.view" });
     } finally {
         setTimeout(() => {
             dashboardStore.setIsLoading(false);
@@ -195,6 +202,4 @@ async function fetchAccessProfile() {
 }
 </style>
 
-<style lang="scss">
-
-</style>
+<style lang="scss"></style>

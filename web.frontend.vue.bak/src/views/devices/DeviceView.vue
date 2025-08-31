@@ -4,14 +4,14 @@
         <div class="vheading--2 ">Devices</div>
         <TheFlashMessage></TheFlashMessage>   
 
-
+        
         <VTabs class="mt-16" :vtabsObjectData="tabsObjectData_1" :isDisabled="false" :layoutBreakpoint="500" 
            @setActiveTab="setActiveTab" @click="clearMessage">
         </VTabs>
     
         <RouterView v-slot="{ Component, route }">
-            <KeepAlive>
-                <component :is="Component" :key="route.fullPath" />
+            <KeepAlive :exclude="['devices.list', 'devices.create']">
+                <component :is="Component" :key="route.name" />
             </KeepAlive>
         </RouterView>
 

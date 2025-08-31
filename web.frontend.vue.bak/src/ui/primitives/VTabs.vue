@@ -104,10 +104,10 @@ function emitActiveTab(tab: string) {
 
 // -- Hooks ------------------------------------------------------------
 
-onMounted(() => {
-    updateWidth();
+    onMounted(()=>{
+            updateWidth();
     setupResizeObserver();
-});
+    })
 
 </script>
 

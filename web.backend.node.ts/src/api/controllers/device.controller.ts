@@ -52,7 +52,7 @@ class DeviceController {
 
             // Org access check: user must have access to the device's organisation
             const accessibleOrgsByUser = await AccessProfileController.computeAccessibleOrganisationIds(
-                (request as any).userOrgID!, (request as any).userID!
+                request.userOrgID!, request.userID!
             );
             if (!accessibleOrgsByUser.includes(String(device.organisation_id))) {
                 return reply.status(403).send({
@@ -146,7 +146,7 @@ class DeviceController {
             if (!external_ids || external_ids.length === 0) {
                 return reply.status(404).send({
                     success: false,
-                    message: "No matching devices found for the provided IDs.",
+                    message: "No matching devices were found to delete.",
                     data: { count: 0 },
                 });
             }
@@ -166,9 +166,9 @@ class DeviceController {
             return reply.send({
                 success: true,
                 message:
-                    result.count === 0
-                        ? "No devices were deleted."
-                        : `${result.count} device(s) deleted.`,
+                    result.count === 1
+                        ? "Device deleted successfully."
+                        : `${result.count} devices were deleted successfully.`,
                 data: { count: result.count, device_ids },
             });
         } catch (err: unknown) {
@@ -206,7 +206,7 @@ class DeviceController {
             // Ensure the device's organisation belongs to the user's accessible orgs (own or child).
             // Otherwise return 403 Forbidden.
             const accessibleOrgsByUser = await AccessProfileController.computeAccessibleOrganisationIds(
-                (request as any).userOrgID!, (request as any).userID!
+                request.userOrgID!, request.userID!
             );
 
             if (!accessibleOrgsByUser.includes(organisation_id)) {
@@ -286,14 +286,13 @@ class DeviceController {
 
             return reply.status(201).send({
                 success: true,
-                message: "Device created.",
-                data: result,
+                message: "Device created  successfully.",
+                data: { device: result },
             });
         } catch (err: unknown) {
             // Prisma-known errors
-            if (
-                err instanceof Prisma.PrismaClientKnownRequestError
-            ) {
+            if (err instanceof Prisma.PrismaClientKnownRequestError) {
+
                 // Duplicate (unique constraint)
                 if (err.code === "P2002") {
                     return reply.status(409).send({
@@ -378,8 +377,8 @@ class DeviceController {
             // Guard: ensure user can act on the target organisation (new org if provided, else existing)
             const targetOrgID = organisation_id ?? existing.organisation_id;
             const accessibleOrgsByUser = await AccessProfileController.computeAccessibleOrganisationIds(
-                (request as any).userOrgID!,
-                (request as any).userID!
+                request.userOrgID!,
+                request.userID!
             );
             if (!accessibleOrgsByUser.includes(String(targetOrgID))) {
                 return reply.status(403).send({
@@ -432,6 +431,59 @@ class DeviceController {
                 }
             }
 
+            // ------------------------
+
+            const isEmpty = (v: unknown) => v === null || v === undefined || (typeof v === "string" && v.trim() === "");
+
+            // Critical fields that can never be set to empty/null via update:
+            const CRITICAL: Array<keyof typeof existing> = [
+                "organisation_id",
+                "external_id",
+                "external_id_type",
+                "vendor",
+                "model",
+                "protocol",
+                "status",
+            ];
+
+            const body = request.body as Record<string, unknown>;
+            const fieldErrors: Record<string, string[]> = {};
+
+          
+
+            // check existing DB (critical field already missing there)
+            if (isEmpty(existing.external_id))      fieldErrors["external_id"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.external_id_type)) fieldErrors["external_id_type"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.vendor))           fieldErrors["vendor"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.model))            fieldErrors["model"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.protocol))         fieldErrors["protocol"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.status))           fieldErrors["status"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.organisation_id))  fieldErrors["organisation_id"] = ["Field cannot be empty (missing in DB)."];
+
+            for (const k of CRITICAL) {
+                if (k in body) {
+
+                    if (isEmpty(body[k])) {
+                        fieldErrors[k] = ["Field cannot be empty."];
+                    } else {
+                        delete  fieldErrors[k];
+                    }
+                }
+            }  
+
+            if (Object.keys(fieldErrors).length > 0) {
+                return reply.status(400).send({
+                        success: false,
+                        message: "Invalid input.",
+                        error: {
+                            code: "INVALID_INPUT",
+                            details: { fieldErrors },
+                        },
+                } as ApiResponse);
+            }
+
+            // ------------------
+
             // Build Prisma update payload (only include provided fields)
             const data: Prisma.devicesUpdateInput = {};
             if (typeof organisation_id !== "undefined") {
@@ -479,8 +531,10 @@ class DeviceController {
 
             return reply.send({
                 success: true,
-                message: "Device updated.",
-                data: updated,
+                message: "Device updated successfully.",
+                data: {
+                    device: updated
+                },
             });
         } catch (err: any) {
             // Known Prisma errors
