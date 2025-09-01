@@ -5,9 +5,9 @@ import { useMessageStore } from "./stores/messageStore";
 // ---------------------------------------------------------------------
 
 const apiClient = axios.create({
-    headers: {
-        "Content-Type": "application/json" // Ensure all requests use JSON
-    },
+    // headers: {
+    //     "Content-Type": "application/json" // Ensure all requests use JSON
+    // },
 
     timeout: 15000 // Timeout if the request takes longer than 15 seconds
 });

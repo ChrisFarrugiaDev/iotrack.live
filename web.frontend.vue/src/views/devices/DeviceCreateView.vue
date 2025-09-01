@@ -6,8 +6,8 @@
 
             <div class="vform__group mb-7">
                 <label class="vform__label" for="device_id">External ID <span class="vform__required">*</span></label>
-                <input v-model.trim="form.external_id" class="vform__input"
-                    :class="{ 'vform__input--error': errors.external_id }" 
+                <input v-model.trim="form.external_id" 
+                    :class="{ 'vform__input--error': errors.external_id }" class="vform__input"
                     id="device_id" type="text"
                     placeholder="Enter device ID" :disabled="confirmOn">
                 <p class="vform__error">{{ errors.external_id }}</p>
@@ -16,7 +16,7 @@
             <div class="vform__group mb-7">
                 <label class="vform__label">External ID Type <span class="vform__required">*</span></label>
                 <VueSelect v-model="form.external_id_type" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.external_id_type)]"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.external_id_type)]" class="vform__group" 
                     :options="[
                         { label: 'Imei', value: 'imei' },
                     ]" placeholder="" />
@@ -42,7 +42,8 @@
                 <div class="vform__group mb-7">
                     <label class="vform__label">Vendor<span class="vform__required">*</span></label>
                     <VueSelect v-model="form.vendor" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                        class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]" :options="[
+                        :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]" class="vform__group" 
+                        :options="[
                             { label: 'Teltonika', value: 'teltonika' },
                         ]" placeholder="" />
                     <p class="vform__error">{{ errors.vendor }}</p>
@@ -50,8 +51,11 @@
 
                 <div class="vform__group mb-7">
                     <label class="vform__label">Model<span class="vform__required">*</span></label>
-                    <VueSelect v-model="form.model" class="vform__group" :shouldAutofocusOption="false"
-                        :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]" :options="[
+                    <VueSelect v-model="form.model" 
+                        :shouldAutofocusOption="false"
+                        :isDisabled="confirmOn" 
+                        :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]" class="vform__group"
+                        :options="[
                             { label: 'FMC130', value: 'FMC130' },
                             { label: 'FMC150', value: 'FMC150' },
                             { label: 'GH5200', value: 'GH5200' },
@@ -204,7 +208,7 @@ function initCreateDevice() {
         iccid: '',
         msisdn: '',
     };
-
+    clearMessage();
     confirmOn.value = true
 }
 
@@ -223,7 +227,6 @@ async function createDevice() {
         if (iccid) attributes.iccid = iccid;
         if (msisdn) attributes.msisdn = msisdn;
 
-
         const payload = {
             ...coreFields,
             attributes,
@@ -236,18 +239,17 @@ async function createDevice() {
         // Success message
         messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
 
-        // Reset form fields to defaults
-        const orgID = settingsStore.getAuthenticatedUser?.organisation.id
+        // Reset form fields to defaults     
         Object.assign(form, {
             external_id: null,
-            external_id_type: 'imei',
-            protocol: '4G',
+            external_id_type: form.external_id_type,
+            protocol: form.protocol,
             status: 'active',
-            vendor: 'teltonika',
-            model: null,
+            vendor: form.vendor,
+            model: form.model,
             iccid: null,
             msisdn: null,
-            organisation_id: orgID && null,
+            organisation_id: form.organisation_id,
         });
 
     } catch (err: any) {

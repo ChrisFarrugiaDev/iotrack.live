@@ -33,7 +33,7 @@
     </div>
 
     <!-- Update Modal: opens device update form for selected device -->
-     
+
     <VModal v-model="isUpdateModalOpen" size="xl">
         <template #header>
             <div class="vheading--2">Device Details</div>
@@ -228,10 +228,47 @@ function showUpdateDeviceModal(id: string) {
 }
 
 // Called on delete modal confirm
-function deleteDevices() {
-    console.log(selectedKeys.value);
-    isDeleteModalOpen.value = false;
-    // TODO: Call store action to delete devices, refresh data, etc
+async function deleteDevices() {
+
+    try {
+        isDeleteModalOpen.value = false;
+        var payload = { 'device_ids': selectedKeys.value };
+
+        const r = await deviceStore.deleteDevices(payload);
+
+        for(let id of r.data.data.device_ids) {
+            deviceStore.removeDeviceFromStore(id);
+        }
+
+        // success → show confirmation
+        messageStore.setFlashMessagesList(
+            [r.data.message || "Device(s) deleted successfully."],
+            "flash-message--blue"
+        );
+
+
+    } catch (err: any) {        
+
+        // Backend-provided error message
+        const message = err?.response?.data?.message;
+
+        if (message) {
+            messageStore.setFlashMessagesList([message], "flash-message--orange");
+            return;
+        }
+
+        console.error("! DeviceDeleteView deleteDevices !", err);
+
+        // Fallback
+        messageStore.setFlashMessagesList(
+            ["An unexpected error occurred while deleting devices."],
+            "flash-message--orange"
+        );
+    } finally {
+
+    }
+
+
 }
 
 // --- Modal sync with URL query params -----------------------------
@@ -252,7 +289,7 @@ watch(
         const device_uuid = typeof q.device_uuid === 'string' ? q.device_uuid : null;
         const open = q.update === 'true' || q.update === '1';
         selectedDeviceUuid.value = device_uuid;
-        isUpdateModalOpen.value = !!(open && device_uuid)  && route.name == 'devices.list';
+        isUpdateModalOpen.value = !!(open && device_uuid) && route.name == 'devices.list';
     }
 );
 

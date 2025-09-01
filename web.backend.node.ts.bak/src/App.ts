@@ -56,7 +56,13 @@ class App {
 
     // initializeMiddleware - register CORS and other plugins for Fastify
     async initializeMiddleware() {
-        await this.fastify.register(fastifyCors, { origin: true });
+        await this.fastify.register(fastifyCors, {
+            origin: true,
+            methods : ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            credentials: true, // only if you use cookies/sessions
+            maxAge: 86400,     // cache preflight 24h
+        });
         // Fastify handles JSON and URL-encoded body parsing natively
     }
 

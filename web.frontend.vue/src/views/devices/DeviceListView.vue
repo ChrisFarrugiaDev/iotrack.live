@@ -267,8 +267,6 @@ async function deleteDevices() {
     } finally {
 
     }
-
-
 }
 
 // --- Modal sync with URL query params -----------------------------

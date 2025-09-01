@@ -275,6 +275,14 @@ onMounted(() => {
         transition: all .1s ease;
         position: relative;
 
+        &--last  {
+            border-bottom: 1px solid var(--color-zinc-300);
+            &:hover {
+                border-bottom: none;
+            }
+        }
+        
+
         // Rounded corners for first/last items (only on tall screens)
         @include respondMinHeight(760) {
             &--first {

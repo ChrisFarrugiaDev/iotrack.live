@@ -189,8 +189,8 @@ watch(
 
                 let loadedDeviceId = NO_DEVICE;
            
-                if (Array.isArray(a.devices) && a.devices.length > 0 && a.devices[0]) {                 
-                    loadedDeviceId = String(a.devices[0]);
+                if (Array.isArray(a.devices) && a.devices.length > 0 && a.devices[0].id) {                 
+                    loadedDeviceId = String(a.devices[0].id);
                 }
 
                 device_id.value = loadedDeviceId;

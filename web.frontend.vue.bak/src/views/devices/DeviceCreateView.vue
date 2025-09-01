@@ -1,92 +1,125 @@
 <template>
     <form class="vform mt-16" autocomplete="off" @click="clearMessage">
+
         <!-- Row 1: External ID & Type -->
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+
             <div class="vform__group mb-7">
                 <label class="vform__label" for="device_id">External ID <span class="vform__required">*</span></label>
-                <input class="vform__input" id="device_id" type="text" placeholder="Enter device ID"
-                    v-model.trim="external_id" :disabled="confirmOn">
+                <input v-model.trim="form.external_id" class="vform__input"
+                    :class="{ 'vform__input--error': errors.external_id }" 
+                    id="device_id" type="text"
+                    placeholder="Enter device ID" :disabled="confirmOn">
                 <p class="vform__error">{{ errors.external_id }}</p>
             </div>
+
             <div class="vform__group mb-7">
                 <label class="vform__label">External ID Type <span class="vform__required">*</span></label>
-                <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="external_id_type"
+                <VueSelect v-model="form.external_id_type" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.external_id_type)]"
                     :options="[
                         { label: 'Imei', value: 'imei' },
                     ]" placeholder="" />
                 <p class="vform__error">{{ errors.external_id_type }}</p>
             </div>
+
         </div>
 
         <!-- Row 2: Organisation, Vendor & Model -->
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+
             <div class="vform__group mb-7">
-                <label class="vform__label" for="organisation_id">Organisation<span class="vform__required">*</span></label>         
-                <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles"
-                    v-model="organisation_id" :options="getOrganisations" placeholder="" id="organisation_id" />
+                <label class="vform__label" for="organisation_id">Organisation<span
+                        class="vform__required">*</span></label>
+                <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]"
+                    :options="getOrganisations" placeholder="" id="organisation_id" />
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>
+
             <div class="vform__row">
+
                 <div class="vform__group mb-7">
                     <label class="vform__label">Vendor<span class="vform__required">*</span></label>
-                    <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="vendor" :options="[
-                            { label: 'Teltonika', value: 'teltonika' },                     
+                    <VueSelect v-model="form.vendor" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                        class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]" :options="[
+                            { label: 'Teltonika', value: 'teltonika' },
                         ]" placeholder="" />
                     <p class="vform__error">{{ errors.vendor }}</p>
                 </div>
+
                 <div class="vform__group mb-7">
                     <label class="vform__label">Model<span class="vform__required">*</span></label>
-                    <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="model" :options="[
-                            { label: 'FMC130', value: 'FMC130' },                       
-                            { label: 'FMC150', value: 'FMC150' },                       
-                            { label: 'GH5200', value: 'GH5200' },                       
-                            { label: 'FPM100', value: 'FPM100' },                       
-                            { label: 'TMT250', value: 'TMT250' },                       
-                            { label: 'TAT240', value: 'TAT240' },                       
-                            { label: 'FCM130', value: 'FCM130' },                       
+                    <VueSelect v-model="form.model" class="vform__group" :shouldAutofocusOption="false"
+                        :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]" :options="[
+                            { label: 'FMC130', value: 'FMC130' },
+                            { label: 'FMC150', value: 'FMC150' },
+                            { label: 'GH5200', value: 'GH5200' },
+                            { label: 'FPM100', value: 'FPM100' },
+                            { label: 'TMT250', value: 'TMT250' },
+                            { label: 'TAT240', value: 'TAT240' },
+                            { label: 'FCM130', value: 'FCM130' },
                         ]" placeholder="" />
                     <p class="vform__error">{{ errors.model }}</p>
                 </div>
+
             </div>
+
         </div>
 
         <!-- Row 3: Protocol, Status, ICCID, MSISDN -->
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+
             <div class="vform__group mb-7">
                 <label class="vform__label">Protocol<span class="vform__required">*</span></label>
-                <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="protocol" :options="[
-                        { label: '4G', value: '4G' },                     
+                <VueSelect v-model="form.protocol"
+                    :shouldAutofocusOption="false" 
+                    :isDisabled="confirmOn" class="vform__group"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.protocol)]" 
+                    :options="[
+                        { label: '4G', value: '4G' },
                     ]" placeholder="" />
                 <p class="vform__error">{{ errors.protocol }}</p>
             </div>
+
             <div class="vform__group mb-7">
                 <label class="vform__label">Status<span class="vform__required">*</span></label>
-                <VueSelect :shouldAutofocusOption="false" :isDisabled="confirmOn" class="vform__group" :style="vueSelectStyles" v-model="status" :options="[
+                <VueSelect v-model="form.status" class="vform__group"
+                    :shouldAutofocusOption="false" 
+                    :isDisabled="confirmOn" 
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]"  :options="[
                         { label: 'New', value: 'new' },
                         { label: 'Active', value: 'active' },
                         { label: 'Disabled', value: 'disabled' },
-                        { label: 'Retired', value: 'retired' },                       
+                        { label: 'Retired', value: 'retired' },
                     ]" placeholder="" />
                 <p class="vform__error">{{ errors.status }}</p>
             </div>
+
             <div class="vform__group mb-7">
                 <label class="vform__label" for="iccid">ICCID</label>
-                <input class="vform__input" id="iccid" type="text" placeholder="Enter SIM Card ICCID"
-                    v-model.trim="iccid" :disabled="confirmOn">
+                <input v-model.trim="form.iccid" class="vform__input" id="iccid" type="text"
+                    placeholder="Enter SIM Card ICCID" 
+                    :disabled="confirmOn"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.iccid)]">
                 <p class="vform__error">{{ errors.iccid }}</p>
             </div>
+
             <div class="vform__group mb-7">
                 <label class="vform__label" for="msisdn">MSISDN</label>
-                <input class="vform__input" id="msisdn" type="text" placeholder="Enter SIM Card MSISDN"
-                    v-model.trim="msisdn" :disabled="confirmOn">
+                <input v-model.trim="form.msisdn" 
+                    class="vform__input" id="msisdn" type="text"
+                    placeholder="Enter SIM Card MSISDN" :disabled="confirmOn"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.msisdn)]">
                 <p class="vform__error">{{ errors.msisdn }}</p>
             </div>
+
         </div>
 
         <div class="vform__row mt-12 ">
-            <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="confirmOn = true">Register Device</button>
+            <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="initCreateDevice">Register Device</button>
             <button v-if="confirmOn" class="vbtn vbtn--zinc-lt" @click.prevent="confirmOn = false">Cancel</button>
-            <button v-if="confirmOn" class="vbtn vbtn--sky" @click.prevent="confirmOn = false">Confirm</button>           
+            <button v-if="confirmOn" class="vbtn vbtn--sky" @click.prevent="createDevice">Confirm</button>
         </div>
     </form>
 </template>
@@ -96,10 +129,13 @@
 
 <script setup lang="ts">
 import VueSelect from "vue3-select-component";
-import { ref } from 'vue';
-import { useVueSelectStyles } from "@/composables/useVueSelectStyles";
+import { onActivated, onBeforeMount, onMounted, reactive, ref } from 'vue';
+import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { computed } from "vue";
 import { useOrganisationStore } from "@/stores/organisationStore";
+import { useDeviceStore } from "@/stores/deviceStore";
+import { useMessageStore } from "@/stores/messageStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 // - Composable --------------------------------------------------------
 
@@ -108,29 +144,35 @@ const vueSelectStyles = useVueSelectStyles();
 // - Store -------------------------------------------------------------
 
 const organisationStore = useOrganisationStore();
+const deviceStore = useDeviceStore();
+const messageStore = useMessageStore();
+const settingsStore = useSettingsStore();
+
 
 const confirmOn = ref(false)
 
-const external_id = ref<null | string>(null);
-const external_id_type = ref<null | string>(null);
-const protocol = ref<null | string>('4G');
-const status = ref<null | string>('active');
-const vendor = ref<null | string>('teltonika');
-const model = ref<null | string>(null);
-const iccid = ref<null | string>(null);
-const msisdn = ref<null | string>(null);
-const organisation_id = ref<null | string>(null);
+const form = reactive({
+  external_id: null as null | string,
+  external_id_type: null as null | string,
+  protocol: '4G' as string,
+  status: 'active' as string,
+  vendor: 'teltonika' as string,
+  model: null as null | string,
+  iccid: null as null | string,
+  msisdn: null as null | string,
+  organisation_id: null as null | string,
+});
 
 const errors = ref<Record<string, string>>({
-  external_id: '',
-  external_id_type: '',
-  organisation_id: '',
-  vendor: '',
-  model: '',
-  protocol: '',
-  status: '',
-  iccid: '',
-  msisdn: '',
+    external_id: '',
+    external_id_type: '',
+    organisation_id: '',
+    vendor: '',
+    model: '',
+    protocol: '',
+    status: '',
+    iccid: '',
+    msisdn: '',
 });
 
 // - Computed ----------------------------------------------------------
@@ -147,14 +189,121 @@ const getOrganisations = computed(() => {
 // - Methods -----------------------------------------------------------
 
 function clearMessage() {
+    messageStore.clearFlashMessageList();
 }
+
+function initCreateDevice() {
+    errors.value = {
+        external_id: '',
+        external_id_type: '',
+        organisation_id: '',
+        vendor: '',
+        model: '',
+        protocol: '',
+        status: '',
+        iccid: '',
+        msisdn: '',
+    };
+
+    confirmOn.value = true
+}
+
+async function createDevice() {
+    try {
+        // Create payload, omitting iccid/msisdn from top-level if you only want them in attributes
+        // (If backend expects iccid/msisdn both top-level & in attributes, spread as needed)
+        const {
+            iccid,
+            msisdn,
+            ...coreFields
+        } = form;
+
+        // Build 'attributes' only if fields are present
+        const attributes: Record<string, any> = {};
+        if (iccid) attributes.iccid = iccid;
+        if (msisdn) attributes.msisdn = msisdn;
+
+
+        const payload = {
+            ...coreFields,
+            attributes,
+        };
+
+        // Send request
+        const r = await deviceStore.createDevice(payload);
+        deviceStore.addDeviceToStore(r.data.data.device);
+
+        // Success message
+        messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+        // Reset form fields to defaults
+        const orgID = settingsStore.getAuthenticatedUser?.organisation.id
+        Object.assign(form, {
+            external_id: null,
+            external_id_type: 'imei',
+            protocol: '4G',
+            status: 'active',
+            vendor: 'teltonika',
+            model: null,
+            iccid: null,
+            msisdn: null,
+            organisation_id: orgID && null,
+        });
+
+    } catch (err: any) {
+        // Try to extract server-side validation errors
+        const fieldErrors = err?.response?.data?.error?.details?.fieldErrors;
+        if (fieldErrors && typeof fieldErrors === "object") {
+            for (const key in fieldErrors) {
+                if (Object.prototype.hasOwnProperty.call(errors.value, key)) {
+                    errors.value[key] = fieldErrors[key][0];
+                }
+            }
+            messageStore.setFlashMessagesList(
+                ["Please fix the highlighted errors and try again."],
+                'flash-message--orange'
+            );
+            return;
+        }
+
+        // Known global error messages from backend
+        const message = err?.response?.data?.message;
+        if (message === 'Invalid input.') {
+            messageStore.setFlashMessagesList(
+                ["Some of the provided information is invalid."],
+                'flash-message--orange'
+            );
+            return;
+        }
+
+        // Fallback for totally unexpected errors
+        messageStore.setFlashMessagesList(
+            ["An unexpected error occurred. Please try again later."],
+            'flash-message--orange'
+        );
+
+        // Always log error for developer debugging
+        console.error("! DeviceCreateView createDevice !", err);
+
+    } finally {
+        // Always reset confirm flag, success or error
+        confirmOn.value = false;
+    }
+}
+
+
+
+onActivated(() => {
+    const orgID = settingsStore.getAuthenticatedUser?.organisation.id
+    form.organisation_id = orgID ?? null;
+    form.external_id_type = 'imei';
+});
+
 
 </script>
 
 <!-- --------------------------------------------------------------- -->
 
 <style scoped lang="scss">
-
 // 
-
 </style>

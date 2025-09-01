@@ -18,7 +18,6 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     const getDevices = computed(() => devices.value);
 
 
-
     const uuidToIdMap = computed<Record<string, string>>(() => {
         const map: Record<string, string> = {};
 

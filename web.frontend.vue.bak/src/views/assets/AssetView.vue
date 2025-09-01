@@ -4,7 +4,11 @@
         <TheFlashMessage></TheFlashMessage>
 
 
-        <VTabs class="mt-16" :vtabsObjectData="tabsObjectData_1" :isDisabled="false" :layoutBreakpoint="500" 
+        <VTabs class="mt-16" 
+            :activeTab="route.name as string"
+            :tabs="tabsObjectData_1.tabs"
+            :isDisabled="false" 
+            :layoutBreakpoint="500" 
            @setActiveTab="setActiveTab" @click="clearMessage">
         </VTabs>
 
@@ -23,7 +27,7 @@ import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { VTabs, Vview } from '@/ui';
 import { reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
@@ -31,6 +35,7 @@ const messageStore = useMessageStore();
 // - Route -------------------------------------------------------------
 
 const router = useRouter();
+const route = useRoute();
 
 
 // - Data --------------------------------------------------------------

@@ -28,3 +28,12 @@ export function useVueSelectStyles() {
     '--vs-indicator-icon-color': 'var(--color-text-1)',
   }));
 }
+
+
+export const selectErrorStyle = (hasError: boolean) =>
+  hasError
+    ? {
+        '--vs-border': '1px solid var(--color-orange-500)',
+        '--vs-outline-color': 'var(--color-orange-500)',
+      }
+    : {};

@@ -115,11 +115,11 @@ class AssetController {
                 assetData.devices = { connect: { id: BigInt(device_id) } };
             }
 
-            const result = await Asset.create(assetData, ['devices']);
+            const result = await Asset.create(assetData);
             return reply.status(201).send({
                 success: true,
                 message: "Asset created successfully.",
-                data: { asset: result },
+                data: result,
             } as ApiResponse);
 
         } catch (err: unknown) {

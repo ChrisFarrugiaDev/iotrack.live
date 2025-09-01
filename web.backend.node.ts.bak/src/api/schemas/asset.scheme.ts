@@ -17,8 +17,6 @@ const assetTypeSchima = z.enum(["vehicle", "personal", "asset"], {
 		error: (iss) => "Invalid input."
 });
 
-const nonEmptyString = requiredString.trim().min(1, "Required");
-
 // ------------------------------------------------------------------
 // Asset Schemas
 
@@ -30,7 +28,7 @@ export type AssetDestroyBody = z.infer<typeof destroySchema>;
 // name, asset_type, organisation_id, asset_id 
 export const storeSchema = z.object({
 	organisation_id: numericString,
-	device_id: nonEmptyString.optional(),
+	device_id: numericString.optional(),
 	name: requiredString,
 	asset_type: assetTypeSchima,
 	attributes: z.record(z.string(), z.any()),

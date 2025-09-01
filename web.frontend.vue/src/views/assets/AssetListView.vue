@@ -152,10 +152,10 @@ const tableData = computed(() => {
 
     return assets.map((a) => {
 
-        const organisation = a.organisation_id ? organisations[a.organisation_id]?.name : null;
-        
+        const organisation = a.organisation_id ? organisations[a.organisation_id]?.name : null;        
 
-        const tracking_device = devices[a.devices[0]];
+        const device = a.devices?.length ? a.devices[0] : null
+        const tracking_device = device ?  devices[device.id] : null;
 
         return {
             ...a,
@@ -193,13 +193,49 @@ function showDeleteAssetModal() {
     }
 }
 
-
 // Called on delete modal confirm
-function deleteAssets() {
-    console.log(selectedKeys.value);
-    isDeleteModalOpen.value = false;
-    // TODO: Call store action to delete assets, refresh data, etc
+async function deleteAssets() {
+
+    try {        
+        var payload = { 'asset_ids': selectedKeys.value };
+
+        const r = await assetStore.deleteAssets(payload);
+
+        for(let id of r.data.data.asset_ids) {
+            assetStore.removeAssetFromStore(id);
+        }
+
+        // success → show confirmation
+        messageStore.setFlashMessagesList(
+            [r.data.message || "Asset(s) deleted successfully."],
+            "flash-message--blue"
+        );
+
+
+    } catch (err: any) {        
+
+        // Backend-provided error message
+        const message = err?.response?.data?.message;
+
+        if (message) {
+            messageStore.setFlashMessagesList([message], "flash-message--orange");
+            return;
+        }
+
+        console.error("! AssetDeleteView deleteAssets !", err);
+
+        // Fallback
+        messageStore.setFlashMessagesList(
+            ["An unexpected error occurred while deleting assets."],
+            "flash-message--orange"
+        );
+    } finally {
+        isDeleteModalOpen.value = false;
+    }
 }
+
+
+
 
 // --- Modal sync with URL query params -----------------------------
 

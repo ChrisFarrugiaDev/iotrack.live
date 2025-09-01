@@ -71,10 +71,18 @@ export class Asset {
 
     // -----------------------------------------------------------------
 
-    static async create(asset: Prisma.assetsCreateInput) {
+    static async create(
+        asset: Prisma.assetsCreateInput,
+        relations?: AssetRelation[]
+    ) {
+        const include =
+            relations && relations.length
+                ? Object.fromEntries(relations.map(r => [r, true]))
+                : undefined;
 
         const result = await prisma.assets.create({
-            data: asset
+            data: asset,
+            include, // ← return relations
         });
 
         return bigIntToString(result);
@@ -84,7 +92,7 @@ export class Asset {
 
     static async updateByID(assetID: string, data: Prisma.assetsUpdateInput): Promise<AssetType> {
         const result = await prisma.assets.update({
-            where: {id: BigInt(assetID)},
+            where: { id: BigInt(assetID) },
             data
         });
 
@@ -94,11 +102,11 @@ export class Asset {
     // -----------------------------------------------------------------
 
     static async deleteByIDs(assetIDs: string[]) {
-        const ids = assetIDs.map( id => BigInt(id) );
+        const ids = assetIDs.map(id => BigInt(id));
 
         const result = await prisma.assets.deleteMany({
             where: {
-                id: {in: ids }
+                id: { in: ids }
             }
         });
 

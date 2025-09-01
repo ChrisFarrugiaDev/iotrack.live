@@ -57,6 +57,8 @@ export class AccessProfileController {
             const devices = await AccessProfileController.getAccessibleDevicesForUser(user.id, accessibleOrgIds);
             const settings = await AccessProfileController.getUserSettings(user);
 
+            console.log(assets[0])
+
             // 6. Construct the access profile object
             const profile: AccessProfile = {
                 first_name: user.first_name,
@@ -178,10 +180,10 @@ export class AccessProfileController {
 
         const assetMap: Record<string, AssetType> = {}
 
-        for (let asset of accessibleAssets) {
-            asset.devices = asset.devices?.map(d => d.id);
+        for (let asset of accessibleAssets) {    
             assetMap[asset.id] = asset;
         }
+
         return assetMap;
     }
 
