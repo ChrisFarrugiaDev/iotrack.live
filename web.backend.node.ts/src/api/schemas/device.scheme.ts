@@ -51,18 +51,18 @@ export const storeSchema = z.object({
 
 // update schema — all optional BUT if present must be non-empty (except asset_id which can be null to detach)
 export const updateSchema = z.object({
-	organisation_id: numericString.optional(),
-	asset_id: numericString.optional().nullable(),      // nullable allowed → detach
-	external_id: nonEmptyString.optional(),
-	external_id_type: externalIdTypeSchima.optional(),
-	protocol: nonEmptyString.optional(),
-	vendor: nonEmptyString.optional(),
-	model: nonEmptyString.optional(),
-	status: statusSchima.optional(),
-	attributes: z.record(z.string(), z.any()).optional(),
-})
+		organisation_id: numericString.optional(),
+		asset_id: numericString.optional().nullable(),      // nullable allowed → detach
+		external_id: nonEmptyString.optional(),
+		external_id_type: externalIdTypeSchima.optional(),
+		protocol: nonEmptyString.optional(),
+		vendor: nonEmptyString.optional(),
+		model: nonEmptyString.optional(),
+		status: statusSchima.optional(),
+		attributes: z.record(z.string(), z.any()).optional(),
+	})
 	.refine((data) => Object.keys(data).length > 0, {
-		message: "At least one field must be provided to update.",
+		message: "At least one field must be provided to update",
 	});
 
 

@@ -35,6 +35,19 @@ export const storeSchema = z.object({
 	asset_type: assetTypeSchima,
 	attributes: z.record(z.string(), z.any()),
 });
+
+export const updateSchema = z.object({
+	organisation_id: numericString.optional(),
+	device_id: nonEmptyString.optional(),
+	name: requiredString.optional(),
+	asset_type: assetTypeSchima.optional(),
+	attributes: z.record(z.string(), z.any()).optional(),	
+	
+})
+.refine((data) => Object.keys(data).length > 0, {
+	message: "At least one field must be provided to update.",
+});
+
 export type AssetStoreBody = z.infer<typeof storeSchema>;
 
 

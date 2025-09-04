@@ -109,12 +109,12 @@
         </div>
 
         <!-- Row 5: Buttons -->
-        <div class="vform__row mt-16">
-            <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="initUpdateDevice" type="button">Update
+        <div class="vform__row mt-9">
+            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateDevice" type="button">Update
                 Device</button>
-            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt" @click.prevent="confirmOn = false"
+            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false"
                 type="button">Cancel</button>
-            <button v-if="confirmOn" class="vbtn vbtn--sky" @click.prevent="updateDevice" type="button">Confirm</button>
+            <button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="updateDevice" type="button">Confirm</button>
         </div>
     </form>
 </template>

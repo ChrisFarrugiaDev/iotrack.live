@@ -20,6 +20,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4O
 
 ### --------------------------------------------------------------------
 
+PATCH  http://57.129.22.122:4001/api/asset/18
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozMSwiaWF0IjoxNzU3MDA5Njc3LCJleHAiOjE3NTcwNTI4Nzd9.2pL-mchy37ODeDUPj1DwH_qdamb8thqJhUAeFd1BH7w
+
+{
+    "attributes": {}
+}
+
+### --------------------------------------------------------------------
+
 
 DELETE http://57.129.22.122:4001/api/asset
 Content-Type: application/json

@@ -42,7 +42,7 @@
 			</div>
 
 			<div class="vform__group mt-7">
-				<label class="vform__label">Device<span class="vform__required">*</span></label>
+				<label class="vform__label">Device</label>
 				<VueSelect v-model="form.device_id" 
 					:shouldAutofocusOption="false" 
 					:isDisabled="confirmOn" 
@@ -163,6 +163,13 @@ function initCreateAsset() {
 	};
 	clearMessage();
 	confirmOn.value = true;
+
+
+	if (form.device_id == null|| form.device_id.trim() == "") {
+		setTimeout(()=>{
+			messageStore.setFlashMessagesList(["⚠️ You are about to create this asset without an attached device."], 'flash-message--yellow')
+		}, 100)
+	}
 }
 
 

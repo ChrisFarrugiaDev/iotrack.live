@@ -1,8 +1,8 @@
 <template>
     <Teleport to=".v-ui">
         <transition name="vmodal-fade">
-            <div v-if="modelValue" class="vmodal__overlay" @click.self="onOverlayClick">
-                <section class="overflow-visible vmodal" :class="`vmodal--${props.size}`">
+            <div v-if="modelValue" class="vmodal__overlay" :class="{'flex-align-center': ['xs', 'sm'].includes(props.size)}" @click.self="onOverlayClick">
+                <section class="overflow-visible vmodal" :class="[`vmodal--${props.size}`]" >
 
                     <header v-if="$slots.header" class="vmodal__header">
                         <slot name="header" />
@@ -109,11 +109,12 @@ onBeforeUnmount(() => {
     // animation: vmodal-popin 0.15s;
     display: flex;
     flex-direction: column;
+    height:fit-content;
 
 
       /* size caps – account for overlay padding top & bottom (2rem + 2rem) */
-  max-height: calc(100vh - 4rem);
-  max-height: calc(100svh - 4rem); /* modern viewport units */
+//   max-height: calc(100vh - 4rem);
+//   max-height: calc(100svh - 4rem); /* modern viewport units */
 
     &--xs { max-width: 20rem; } 
     &--sm { max-width: 36rem; } 
@@ -126,10 +127,13 @@ onBeforeUnmount(() => {
     &__overlay {
         position: fixed;
         z-index: 50;
-        inset: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
         background: rgba(0, 0, 0, 0.18);
-        display: flex;
-        align-items: center;
+        display: flex;        
         justify-content: center;
         
         // backdrop-filter: saturate(120%) blur(1px);
@@ -140,9 +144,11 @@ onBeforeUnmount(() => {
         padding: 2rem 2rem 2rem 2rem;
 
         @include respondMobile(1440) {
-            padding: 2rem 2rem 2rem 6rem;
+            padding: 3.7rem 2rem 2rem 6rem;
         }
+
     }
+
 
     &__header {
         display: flex;
@@ -221,4 +227,10 @@ onBeforeUnmount(() => {
 .overflow-visible {
     overflow: visible !important;
 }
+
+.flex-align-center {
+    align-items: center !important;
+}
+
+
 </style>

@@ -182,11 +182,13 @@ class AssetController {
                 asset_type,
                 organisation_id,
                 device_id,   // string to attach, null to detach, undefined = no change
+                attributes,
             } = request.body as Partial<{
                 name: string;
                 asset_type: string;
                 organisation_id: string;
                 device_id: string | null;
+                attributes: Record<string, any>;
             }>;
 
             // Org access check on the final/target org
@@ -265,13 +267,17 @@ class AssetController {
             const fieldErrors: Record<string, string[]> = {};
 
             // If any critical field is already empty in DB → require it now
-            if (isEmpty(existing.name)) fieldErrors["name"] = ["Field cannot be empty."];
-            if (isEmpty(existing.asset_type)) fieldErrors["asset_type"] = ["Field cannot be empty."];
-            if (isEmpty(existing.organisation_id)) fieldErrors["organisation_id"] = ["Field cannot be empty."];
+            if (isEmpty(existing.name))             fieldErrors["name"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.asset_type))       fieldErrors["asset_type"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.organisation_id))  fieldErrors["organisation_id"] = ["Field cannot be empty (missing in DB)."];
 
             // If client provided any critical field as empty → reject
             for (const k of CRITICAL) {
-                if (k in body && isEmpty(body[k])) fieldErrors[k] = ["Field cannot be empty."];
+                if (k in body && isEmpty(body[k])) {
+                    fieldErrors[k] = ["Field cannot be empty."];
+                } else {
+                    delete  fieldErrors[k];
+                }
             }
 
             if (Object.keys(fieldErrors).length > 0) {
@@ -298,15 +304,18 @@ class AssetController {
                     ? { set: [{ id: BigInt(device_id) }] } // attach/replace with this one
                     : { set: [] };                         // detach all
             }
+            if (typeof attributes !== "undefined") {
+                data.attributes = attributes;
+            }
 
             // No-op guard
-            if (Object.keys(data).length === 0) {
-                return reply.status(400).send({
-                    success: false,
-                    message: "At least one field must be provided to update.",
-                    error: { code: "EMPTY_UPDATE" },
-                } as ApiResponse);
-            }
+            // if (Object.keys(data).length === 0) {
+            //     return reply.status(400).send({
+            //         success: false,
+            //         message: "At least one field must be provided to update.",
+            //         error: { code: "EMPTY_UPDATE" },
+            //     } as ApiResponse);
+            // }
 
             // Update
             const updated = await Asset.updateByID(assetID, data);
