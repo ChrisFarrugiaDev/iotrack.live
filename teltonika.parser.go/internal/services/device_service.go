@@ -21,8 +21,9 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 		return fmt.Errorf("failed to get devices from database: %w", err)
 	}
 
-	// Map devices by ExternalID
+	// Map devices by ExternalID to be saved on chac
 	devicesMap := make(map[string]*models.Device)
+
 	for _, d := range devices {
 		devicesMap[d.ExternalID] = d
 	}
@@ -42,6 +43,12 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 	)
 
 	return nil
+}
+
+func (s *Service) BuildDeviceTsMap() {
+	for _, d := range s.App.Devices {
+		s.App.LastTsMap[d.ID] = d.LastTelemetryTs
+	}
 }
 
 func (s *Service) SyncDevicesFromRedisToVar() error {

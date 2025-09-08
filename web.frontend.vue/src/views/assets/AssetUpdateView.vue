@@ -274,7 +274,7 @@ function buildUpdatePayload(form: Form, current: Asset) {
 
         const curVal = norm((current as any)[key]);
 
-        if (newVal == '-1' && curVal == null && key == 'device_id') {
+        if (key == 'device_id') {
             continue
         }
 
@@ -282,6 +282,30 @@ function buildUpdatePayload(form: Form, current: Asset) {
             payload[key as string] = coreFields[key];
         }
     }
+
+    // - Device ID update logic ------------------------
+  
+    if (asset.value?.devices.length) {
+        // Asset currently has a device linked
+        const currentDeviceId = String(asset.value.devices[0].id);
+        const isDetach = [null, "-1", 0, "0"].includes(form.device_id);
+
+        if (isDetach) {
+            // User chose to detach device
+            payload["device_id"] = "0";
+        } else if (String(form.device_id) !== currentDeviceId) {
+            // User chose a different device (not detaching and not the same)
+            payload["device_id"] = form.device_id;
+        }
+    } else { 
+        // If no device, attach if user picks valid device
+        const isAttach = ![null, "-1", 0, "0"].includes(form.device_id);
+        if (isAttach) {
+            // User picked a device to attach
+            payload["device_id"] = form.device_id;
+        }
+    }
+
 
     // 2) Attributes merge/diff (preserve unknown attrs, update/remove iccid/msisdn)
     const curAttrs = { ...(current.attributes ?? {}) };
@@ -304,6 +328,7 @@ async function updateAsset() {
 
     const payload = buildUpdatePayload(form, asset.value);
 
+
     if (Object.keys(payload).length == 0) {
         
         messageStore.setFlashMessagesList(
@@ -312,6 +337,75 @@ async function updateAsset() {
         );
         confirmOn.value = false;
         return;
+    }
+
+    try {
+
+        // Determine new and old device IDs for asset-device linking
+        const device_id_new = (payload.device_id && payload.device_id !== '0') ? payload.device_id : null;
+        const device_id_old = (payload.device_id && asset.value.devices.length) ? String(asset.value.devices[0].id) : null;
+
+        // Update asset in backend and local store
+        const r = await assetStore.updatedAsset(asset.value.id, payload);
+        assetStore.addAssetToStore(r.data.data.asset);
+
+        // Link new device to asset (if any)
+        if (device_id_new) {
+            deviceStore.changeDeviceAssetID(device_id_new, asset.value.id); // Link new device to asset
+        }
+
+        // Unlink old device if changed (if any)
+        if (device_id_old && device_id_old !== device_id_new) {
+            deviceStore.changeDeviceAssetID(device_id_old, null); // Unlink old device
+        }
+
+        // If org changed, update on device (if any)
+        if (payload.organisation_id && r.data.data.asset.devices.length) {
+            deviceStore.changeDeviceOrganisationID(r.data.data.asset.devices[0].id, payload.organisation_id);
+        }
+
+        // Show success message
+        messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+    } catch (err: any) {
+    
+        // Try to extract server-side validation errors
+        const fieldErrors = err?.response?.data?.error?.details?.fieldErrors;
+
+  
+        if (fieldErrors && typeof fieldErrors === "object") {
+            for (const key in fieldErrors) {
+                if (Object.prototype.hasOwnProperty.call(errors.value, key)) {
+                    errors.value[key] = fieldErrors[key][0];
+                }
+            }
+            messageStore.setFlashMessagesList(
+                ["Please fix the highlighted errors and try again."],
+                'flash-message--orange'
+            );
+            return;
+        }
+
+        // Known global error messages from backend
+        const message = err?.response?.data?.message;
+        if (message === 'Invalid input.') {
+            messageStore.setFlashMessagesList(
+                ["Some of the provided information is invalid."],
+                'flash-message--orange'
+            );
+            return;
+        }
+
+        // Fallback for totally unexpected errors
+        messageStore.setFlashMessagesList(
+            [ message ?? "An unexpected error occurred. Please try again later."],
+            'flash-message--orange'
+        );
+
+        // Always log error for developer debugging
+        console.error("! AssetUpdateView updateAsset !", err);
+    } finally {
+        confirmOn.value = false;
     }
 }
 

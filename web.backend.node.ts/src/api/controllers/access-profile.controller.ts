@@ -57,8 +57,6 @@ export class AccessProfileController {
             const devices = await AccessProfileController.getAccessibleDevicesForUser(user.id, accessibleOrgIds);
             const settings = await AccessProfileController.getUserSettings(user);
 
-            console.log(assets[0])
-
             // 6. Construct the access profile object
             const profile: AccessProfile = {
                 first_name: user.first_name,

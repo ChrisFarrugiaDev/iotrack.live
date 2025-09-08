@@ -3,10 +3,11 @@ import { Asset } from "../../models/asset.model";
 import { ApiResponse } from "../../types/api-response.type";
 import { logger } from "../../utils/logger.utils";
 import { AccessProfileController } from "./access-profile.controller";
-import { Device } from "../../models/device.model";
+import { Device, DeviceType } from "../../models/device.model";
 import { Prisma } from "../../../generated/prisma";
 import z from "zod";
 import { AssetDestroyBody, AssetStoreBody } from "../schemas/asset.scheme";
+import prisma from "../../config/prisma.config";
 
 
 
@@ -209,9 +210,9 @@ class AssetController {
                 } as ApiResponse);
             }
 
-            // Device attach/detach validations (if requested)
+            // Device attach/detach validations (if requested)            
             if (typeof device_id !== "undefined") {
-                if (device_id === null) {
+                if (device_id === null || device_id === '0') {
                     // explicit detach -> ok
                 } else {
                     const dev = await Device.getByID(device_id);
@@ -234,21 +235,6 @@ class AssetController {
                             error: {
                                 code: "DEVICE_ALREADY_ATTACHED",
                                 details: process.env.DEBUG === "true" ? { attached_asset_id: dev.asset_id } : undefined,
-                            },
-                        } as ApiResponse);
-                    }
-
-                    // Org must match final asset org
-                    const finalOrgID = targetOrgID;
-                    if (String(dev.organisation_id) !== String(finalOrgID)) {
-                        return reply.status(409).send({
-                            success: false,
-                            message: "Device belongs to a different organisation. Device cannot be set to Asset.",
-                            error: {
-                                code: "ORG_DEVICE_MISMATCH",
-                                details: process.env.DEBUG === "true"
-                                    ? { device_org_id: dev.organisation_id, requested_org_id: finalOrgID }
-                                    : undefined,
                             },
                         } as ApiResponse);
                     }
@@ -300,7 +286,7 @@ class AssetController {
                 data.organisations = { connect: { id: BigInt(organisation_id) } };
             }
             if (typeof device_id !== "undefined") {
-                data.devices = device_id
+                data.devices = device_id 
                     ? { set: [{ id: BigInt(device_id) }] } // attach/replace with this one
                     : { set: [] };                         // detach all
             }
@@ -317,13 +303,30 @@ class AssetController {
             //     } as ApiResponse);
             // }
 
-            // Update
-            const updated = await Asset.updateByID(assetID, data);
+            const orgIsChanging = typeof organisation_id !== "undefined" && String(existing.organisation_id) !== String(organisation_id);
+
+
+
+            const updated = await prisma.$transaction(async (tx) => {
+                // 1. Update asset (with related devices)
+                const updatedAsset = await Asset.updateByID(assetID, data, ['devices'], tx);
+
+                // 2. If org changed and there’s a device attached, update device org(s)
+                if (orgIsChanging && updatedAsset.devices?.length) {
+                    for (const dev of updatedAsset.devices) {
+                        await Device.updateByID(dev.id, {
+                            organisations: { connect: { id: BigInt(organisation_id) } }
+                        }, tx);
+                    }
+                }
+
+                return updatedAsset;
+            });
 
             return reply.send({
                 success: true,
                 message: "Asset updated successfully.",
-                data: updated,
+                data: {asset: updated},
             } as ApiResponse);
 
         } catch (err: any) {

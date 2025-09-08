@@ -28,7 +28,6 @@ func NewCache(c *redis.Pool, p string) *RedisCache {
 }
 
 func CreateRedisPool() (*redis.Pool, error) {
-	
 
 	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 
@@ -60,7 +59,7 @@ func CreateRedisPool() (*redis.Pool, error) {
 
 	pool := &redis.Pool{
 		MaxIdle:     50,
-		MaxActive:   10000,
+		MaxActive:   1000,
 		IdleTimeout: 240 * time.Second,
 
 		Dial: func() (redis.Conn, error) {
@@ -71,6 +70,9 @@ func CreateRedisPool() (*redis.Pool, error) {
 				redisAddress,
 				redis.DialPassword(redisPassword),
 				redis.DialDatabase(redisDB),
+				redis.DialConnectTimeout(2*time.Second),
+				redis.DialReadTimeout(2*time.Second),
+				redis.DialWriteTimeout(2*time.Second),
 			)
 			if err != nil {
 				return nil, err

@@ -1,7 +1,7 @@
 {
   "name": "web.backend.node.ts",
   "version": "1.0.0",
-  "description": "",
+  "description": "Main backend API node for iotrack.live. Handles authentication, database, device and asset APIs.",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -10,8 +10,20 @@
     "prisma-pull": "npx prisma db pull --schema=prisma/schema.prisma",
     "prisma-generate": "npx prisma generate --schema=prisma/schema.prisma"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "iot",
+    "nodejs",
+    "typescript",
+    "fastify",
+    "api",
+    "auth",
+    "postgresql",
+    "prisma",
+    "redis",
+    "zod",
+    "pino"
+  ],
+  "author": "Chris Farrugia <chrisfarrugia.dev>",
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^11.1.0",

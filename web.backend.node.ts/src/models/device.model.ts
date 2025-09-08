@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import { Prisma, devices } from "../../generated/prisma";
 import prisma from "../config/prisma.config";
 import { bigIntToString } from "../utils/utils";
@@ -130,8 +131,12 @@ export class Device {
 
     // -----------------------------------------------------------------
 
-    static async updateByID(deviceID: string, data: Prisma.devicesUpdateInput): Promise<DeviceType> {
-        const result = await prisma.devices.update({
+    static async updateByID(
+        deviceID: string, 
+        data: Prisma.devicesUpdateInput,
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ): Promise<DeviceType> {
+        const result = await prismaClient.devices.update({
             where: {id: BigInt(deviceID)},
             data
         });

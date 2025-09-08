@@ -70,6 +70,7 @@ export const useAssetStore = defineStore('assetStore', () => {
     }
 
     async function updatedAsset(assetId: string | number, payload: Record<string, any>) {
+
         try {
             const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/asset/${assetId}`;
             return await axios.request({

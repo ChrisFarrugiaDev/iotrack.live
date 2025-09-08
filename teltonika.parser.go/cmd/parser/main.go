@@ -16,6 +16,7 @@ import (
 
 	"iotrack.live/internal/appcore"
 	"iotrack.live/internal/apptypes"
+	"iotrack.live/internal/cache"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/rabbitmq"
 	"iotrack.live/internal/services"
@@ -26,12 +27,15 @@ var app appcore.App
 
 func initializeAppCore(app *appcore.App) {
 	app.UUID = uuid7.New()
-	app.LastTelemetryMap = make(map[string]apptypes.FlatAvlRecord)
-	app.UpdatedDevicesSetA = make(map[string]struct{})
-	app.UpdatedDevicesSetB = make(map[string]struct{})
+	app.LastTelemetryMap = make(map[int64]apptypes.FlatAvlRecord)
+	app.UpdatedDevicesSetA = make(map[int64]struct{})
+	app.UpdatedDevicesSetB = make(map[int64]struct{})
 	app.ActiveList = "A"
 	app.LatestTelemetryLock = sync.Mutex{}
 	app.Cron = cron.New(cron.WithSeconds())
+
+	app.LastTsMap = make(map[int64]time.Time)
+
 }
 
 func main() {
@@ -59,6 +63,10 @@ func main() {
 
 	// Initialize database connection
 	initializeDatabase()
+
+	// -----------------------------------------------------------------
+	ch, stopPublisher := cache.StartPublisher(app.Cache, 2000)
+	app.PubCh = ch
 
 	// -----------------------------------------------------------------
 
@@ -109,6 +117,8 @@ func main() {
 		logger.Log.Warn("TCP server shutdown timeout - forcing exit.")
 	}
 
+	stopPublisher()
+
 	// Close Redis
 	if app.Cache != nil {
 		err := app.Cache.Close()
@@ -154,7 +164,8 @@ func isInvalidSyncError(err error) bool {
 func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) {
 
 	// Initial sync at startup: DB -> Redis
-	if err := appService.SyncDevicesFromDBToRedis(); err != nil {
+	err := appService.SyncDevicesFromDBToRedis()
+	if err != nil {
 		logger.Error("Initial device sync from DB to Redis failed", zap.Error(err))
 	}
 
@@ -162,6 +173,9 @@ func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) 
 	if err := appService.SyncDevicesFromRedisToVar(); err != nil {
 		logger.Error("Initial device sync from Redis to in-memory variable failed", zap.Error(err))
 	}
+
+	// Build in-memory LastTsMap map with the last telemetry timestamp for each device.
+	appService.BuildDeviceTsMap()
 
 	// Periodically sync devices from DB to Redis every 5 minutes.
 	go func(ctx context.Context, ds *services.Service) {

@@ -1,6 +1,7 @@
 import { bigIntToString } from '../utils/utils';
 import { Prisma, assets } from '../../generated/prisma';
 import prisma from '../config/prisma.config';
+import { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------
 
@@ -90,10 +91,22 @@ export class Asset {
 
     // -----------------------------------------------------------------
 
-    static async updateByID(assetID: string, data: Prisma.assetsUpdateInput): Promise<AssetType> {
-        const result = await prisma.assets.update({
+    static async updateByID(
+        assetID: string, 
+        data: Prisma.assetsUpdateInput, 
+        relations?: AssetRelation[],
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ): Promise<AssetType> {
+
+        const include =
+            relations && relations.length
+                ? Object.fromEntries(relations.map(r => [r, true]))
+                : undefined;
+
+        const result = await prismaClient.assets.update({
             where: { id: BigInt(assetID) },
-            data
+            data,
+            include,
         });
 
         return bigIntToString(result);

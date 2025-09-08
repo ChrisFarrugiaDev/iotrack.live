@@ -1,13 +1,15 @@
 package services
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 	"iotrack.live/internal/apptypes"
 	"iotrack.live/internal/logger"
 )
 
 // UpdateLastTelemetry merges non-zero fields and elements from telemetry into the device's record, creating it if missing.
-func (s *Service) UpdateLastTelemetry(deviceID string, telemetry apptypes.FlatAvlRecord) {
+func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvlRecord) {
 	s.App.LatestTelemetryLock.Lock()
 	defer s.App.LatestTelemetryLock.Unlock()
 
@@ -76,27 +78,27 @@ func (s *Service) UpdateLastTelemetry(deviceID string, telemetry apptypes.FlatAv
 func (s *Service) FlushLastTelemetry() {
 	// Lock and swap the active set
 	s.App.LatestTelemetryLock.Lock()
-	var processSet map[string]struct{}
+	var processSet map[int64]struct{}
 	if s.App.ActiveList == "A" {
 		s.App.ActiveList = "B"
 		processSet = s.App.UpdatedDevicesSetA
-		s.App.UpdatedDevicesSetA = make(map[string]struct{}) // Reset A to empty
+		s.App.UpdatedDevicesSetA = make(map[int64]struct{}) // Reset A to empty
 	} else {
 		s.App.ActiveList = "A"
 		processSet = s.App.UpdatedDevicesSetB
-		s.App.UpdatedDevicesSetB = make(map[string]struct{}) // Reset B to empty
+		s.App.UpdatedDevicesSetB = make(map[int64]struct{}) // Reset B to empty
 	}
 	s.App.LatestTelemetryLock.Unlock()
 
 	// Prepare a slice to track updated device IDs
-	deviceIDs := make([]string, 0, len(processSet))
+	deviceIDs := make([]int64, 0, len(processSet))
 	for deviceID := range processSet {
 		lt := s.App.LastTelemetryMap[deviceID]
 
 		// Save latest telemetry to Redis with no expiration (-1 means persist)
-		err := s.App.Cache.Set("device-latest-telemetry:"+deviceID, lt, -1)
+		err := s.App.Cache.Set(fmt.Sprintf("device-latest-telemetry:%d", deviceID), lt, -1)
 		if err != nil {
-			logger.Error("Failed to cache latest telemetry for device", zap.String("device_id", deviceID), zap.Error(err))
+			logger.Error("Failed to cache latest telemetry for device", zap.Int64("device_id", deviceID), zap.Error(err))
 		}
 
 		deviceIDs = append(deviceIDs, deviceID)
@@ -104,7 +106,13 @@ func (s *Service) FlushLastTelemetry() {
 
 	// Update the Redis set of all known device IDs (for lookups/enumeration)
 	if len(deviceIDs) > 0 {
-		err := s.App.Cache.SAddLua("device-latest-telemetry:id", deviceIDs...)
+		deviceIDsStr := []string{}
+
+		for _, id := range deviceIDs {
+			deviceIDsStr = append(deviceIDsStr, fmt.Sprintf("%d", id))
+		}
+
+		err := s.App.Cache.SAddLua("device-latest-telemetry:id", deviceIDsStr...)
 		if err != nil {
 			logger.Error("Failed to update Redis set of device IDs", zap.Error(err))
 		}

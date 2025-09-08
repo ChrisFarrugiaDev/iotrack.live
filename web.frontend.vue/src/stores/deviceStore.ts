@@ -31,6 +31,10 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
     // ---- Actions ----------------------------------------------------
 
+    function clear() {
+        devices.value = null
+    }
+
     function setDevices(payload: Record<string, Device>) {
         devices.value = payload
     }
@@ -47,8 +51,17 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         }
     }
 
-    function clear() {
-        devices.value = null
+    function changeDeviceAssetID(deviceID: string, assetID: string | null) {
+        const device = devices.value?.[deviceID];
+        if (!device) return;
+        device.asset_id = assetID ?? null;
+    }
+
+    function changeDeviceOrganisationID(deviceID: string, organisationID: string ) {
+        const device = devices.value?.[deviceID];
+  
+        if (!device) return;
+        device.organisation_id = organisationID;
     }
 
     async function createDevice(payload: Record<string, any>) {
@@ -107,6 +120,8 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         addDeviceToStore,
         removeDeviceFromStore , 
         updatedDevice,
+        changeDeviceAssetID,
+        changeDeviceOrganisationID,
 
     };
 });

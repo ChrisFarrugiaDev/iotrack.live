@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"net"
 
+	"time"
+
 	"go.uber.org/zap"
 	"iotrack.live/internal/apptypes"
+	"iotrack.live/internal/cache"
 	"iotrack.live/internal/logger"
 	"iotrack.live/internal/models"
-
 	"iotrack.live/internal/teltonika"
-	// "iotrack.live/internal/util"
 )
 
 // ---------------------------------------------------------------------
@@ -277,9 +278,40 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				s.App.MQProducer.SendDirectMessage("teltonika_tat240", "teltonika", string(msg))
 			}
 
+			// i == 0: first message in the packet is the most recent
 			if i == 0 {
-				deviceID := fmt.Sprintf("%d", currentDevice.ID)
-				s.Service.UpdateLastTelemetry(deviceID, telemetry)
+
+				lastTs, ok := s.App.LastTsMap[currentDevice.ID]
+
+				// Parse the new telemetry timestamp from string to time.Time.
+				incomingTs, err := time.Parse(time.RFC3339, telemetry.Timestamp)
+				if err != nil {
+					logger.Warn("invalid telemetry timestamp; skipping comparison",
+						zap.String("device_external_id", currentDevice.ExternalID),
+						zap.String("timestamp_raw", telemetry.Timestamp),
+						zap.Error(err),
+					)
+					return // or continue
+				}
+
+				// Only process if this is the first seen or the newest message
+				if !ok || incomingTs.After(lastTs) {
+					s.Service.UpdateLastTelemetry(currentDevice.ID, telemetry)
+
+					// Update the in-memory cache
+					s.App.LastTsMap[currentDevice.ID] = incomingTs
+
+					// Marshal and publish live message (non-blocking, with burst buffer)
+					payload, err := json.Marshal(msg)
+					if err == nil {
+						s.App.PubCh <- cache.PubMsg{
+							Channel: "teltonika:live",
+							Payload: payload,
+						}
+					} else {
+						logger.Warn("failed to marshal live message", zap.Error(err))
+					}
+				}
 			}
 
 		}

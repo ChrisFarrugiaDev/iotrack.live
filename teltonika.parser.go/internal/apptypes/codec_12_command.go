@@ -10,7 +10,7 @@ import (
 )
 
 type Codec12Command struct {
-	ID          int64      `json:"id"`
+	ID          string     `json:"id"`
 	UUID        string     `json:"uuid"`
 	IMEI        string     `json:"imei"`
 	Command     string     `json:"command"`

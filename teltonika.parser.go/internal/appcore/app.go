@@ -2,6 +2,7 @@ package appcore
 
 import (
 	"sync"
+	"time"
 
 	"github.com/GoWebProd/uuid7"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,9 +24,13 @@ type App struct {
 	DevicesLock sync.RWMutex
 	UUID        *uuid7.Generator
 
-	LastTelemetryMap    map[string]apptypes.FlatAvlRecord
-	UpdatedDevicesSetA  map[string]struct{}
-	UpdatedDevicesSetB  map[string]struct{}
+	LastTsMap           map[int64]time.Time
+	LastTelemetryMap    map[int64]apptypes.FlatAvlRecord
+	UpdatedDevicesSetA  map[int64]struct{}
+	UpdatedDevicesSetB  map[int64]struct{}
 	ActiveList          string //  A/B double-buffering
 	LatestTelemetryLock sync.Mutex
+
+	// Redis publisher
+	PubCh chan<- cache.PubMsg // send-only channel for publishing
 }
