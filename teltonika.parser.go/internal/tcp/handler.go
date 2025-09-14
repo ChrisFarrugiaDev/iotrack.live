@@ -65,7 +65,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			}
 
 			// Update in-memory cache
-			if err := s.App.Cache.HSet("devices", imei, newDevice); err != nil {
+			if err := s.App.Cache.HSet("devices", imei, newDevice, "iotrack.live:"); err != nil {
 				logger.Error("Failed to cache new device", zap.Error(err))
 				conn.Write([]byte{0x00})
 				return
@@ -297,6 +297,12 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				// Only process if this is the first seen or the newest message
 				if !ok || incomingTs.After(lastTs) {
 					s.Service.UpdateLastTelemetry(currentDevice.ID, telemetry)
+
+					orgID := fmt.Sprintf("%d", currentDevice.OrganisationID)
+					org := s.App.Organisations[orgID]
+					path := org.Path
+					record["path"] = path
+					msg, _ := json.Marshal(record)
 
 					// Update the in-memory cache
 					s.App.LastTsMap[currentDevice.ID] = incomingTs

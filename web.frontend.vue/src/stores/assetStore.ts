@@ -14,6 +14,15 @@ export const useAssetStore = defineStore('assetStore', () => {
     // ---- Getters ----------------------------------------------------
     const getAssets = computed(() => assets.value);
 
+    const getAssetsWithDevice = computed(() => {
+        if(assets.value == null) return [];
+        let a = Object.values(assets.value);
+        a = a.filter(a => {
+            return a.devices.length && Object.keys(a.devices[0].last_telemetry).length
+        })
+        return a;
+    })
+
     const uuidToIdMap = computed<Record<string, string>>(() => {
         const map: Record<string, string> = {};
 
@@ -100,5 +109,6 @@ export const useAssetStore = defineStore('assetStore', () => {
         updatedAsset,
         addAssetToStore,
         removeAssetFromStore,
+        getAssetsWithDevice,
     }
 })

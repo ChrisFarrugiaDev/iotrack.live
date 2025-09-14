@@ -169,9 +169,18 @@ func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) 
 		logger.Error("Initial device sync from DB to Redis failed", zap.Error(err))
 	}
 
+	err = appService.SyncOrganisatiosFromDBToRedis()
+	if err != nil {
+		logger.Error("Initial organisation sync from DB to Redis failed", zap.Error(err))
+	}
+
 	// Initial sync at startup: Redis -> in-memory map
 	if err := appService.SyncDevicesFromRedisToVar(); err != nil {
 		logger.Error("Initial device sync from Redis to in-memory variable failed", zap.Error(err))
+	}
+
+	if err := appService.SyncOrganisationsFromRedisToVar(); err != nil {
+		logger.Error("Initial organisations sync from Redis to in-memory variable failed", zap.Error(err))
 	}
 
 	// Build in-memory LastTsMap map with the last telemetry timestamp for each device.
@@ -193,6 +202,12 @@ func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) 
 				} else {
 					logger.Debug("Periodic device sync from DB to Redis completed successfully")
 				}
+
+				if err := ds.SyncOrganisatiosFromDBToRedis(); err != nil {
+					logger.Error("Periodic organisation sync from DB to Redis failed", zap.Error(err))
+				} else {
+					logger.Debug("Periodic organisation sync from DB to Redis completed successfully")
+				}
 			}
 		}
 	}(ctx, appService)
@@ -212,6 +227,12 @@ func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) 
 					logger.Error("Periodic device sync from Redis to in-memory variable failed", zap.Error(err))
 				} else {
 					logger.Debug("Periodic device sync from Redis to in-memory variable completed successfully")
+				}
+
+				if err := ds.SyncOrganisationsFromRedisToVar(); err != nil {
+					logger.Error("Periodic organisation sync from Redis to in-memory variable failed", zap.Error(err))
+				} else {
+					logger.Debug("Periodic organisation sync from Redis to in-memory variable completed successfully")
 				}
 			}
 		}

@@ -30,6 +30,8 @@ files_to_decrypt=(
   teltonika.parser.go/.env.development.gpg  
   telemetry.db.writer.node.ts/.env.gpg
   telemetry.db.writer.node.ts/.env.development.gpg  
+  socketio.gateway.node.ts/.env.gpg
+  socketio.gateway.node.ts/.env.development.gpg  
 )
 
 # Find and decrypt the files

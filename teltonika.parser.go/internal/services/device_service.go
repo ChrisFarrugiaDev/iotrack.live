@@ -29,7 +29,7 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 	}
 
 	// Sync to Redis atomically
-	err = s.App.Cache.ReplaceDeviceHashWithLua("devices", devicesMap)
+	err = s.App.Cache.ReplaceDeviceHashWithLua("devices", devicesMap, "iotrack.live:")
 	if err != nil {
 		logger.Error("failed to replace devices hash in Redis", zap.Error(err))
 		return fmt.Errorf("failed to replace devices hash in Redis: %w", err)
@@ -39,7 +39,7 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 	logger.Debug("Synced devices from DB to Redis",
 		zap.Int("db_devices", len(devices)),
 		zap.Int("redis_devices", len(devicesMap)),
-		zap.String("redis_key", "devices"),
+		zap.String("redis_key", "iotrack.live:devices"),
 	)
 
 	return nil
@@ -52,7 +52,7 @@ func (s *Service) BuildDeviceTsMap() {
 }
 
 func (s *Service) SyncDevicesFromRedisToVar() error {
-	items, err := s.App.Cache.HGetAll("devices")
+	items, err := s.App.Cache.HGetAll("devices", "iotrack.live:")
 	if err != nil {
 		logger.Error("failed to fetch devices from Redis", zap.Error(err))
 		return fmt.Errorf("failed to fetch devices from Redis: %w", err)

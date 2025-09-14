@@ -132,7 +132,7 @@ export class AccessProfileController {
     static async buildOrganisationInfoMap(orgIds: string[]): Promise<Record<string, Partial<OrganisationType>>> {
         const organisationMap: Record<string, Partial<OrganisationType>> = {};
 
-        const orgs = await Promise.all(orgIds.map(id => redisUtils.hget('organisations', id)));
+        const orgs = await Promise.all(orgIds.map(id => redisUtils.hget('organisations', id, 'iotrack.live:')));
         orgs.forEach(org => {
             if (org) {
                 organisationMap[org.id] = {

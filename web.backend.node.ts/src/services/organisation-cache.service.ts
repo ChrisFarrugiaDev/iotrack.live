@@ -10,5 +10,5 @@ export async function cacheAllOrganisationsToRedis(): Promise<void> {
         return acc;
     }, {} as Record<string, any>);
 
-    await redisUtils.replaceHsetWithLua('organisations', orgMap);
+    await redisUtils.replaceHsetWithLua('organisations', orgMap, 'iotrack.live:');
 }

@@ -91,7 +91,7 @@ class App {
 
     // Run any startup logic before serving requests
     async runStartupTasks(): Promise<void> {
-        await cacheAllOrganisationsToRedis();
+        // await cacheAllOrganisationsToRedis();
         this.startIntervalTasks();
     }
 
@@ -99,9 +99,9 @@ class App {
 
     // startIntervalTasks - schedule regular background jobs (e.g. cache updates)
     startIntervalTasks(): void {
-        setInterval(async () => {
-            await cacheAllOrganisationsToRedis();
-        }, 1000 * 60 * 10);
+        // setInterval(async () => {
+        //     await cacheAllOrganisationsToRedis();
+        // }, 1000 * 60 * 10);
     }
 
     // -----------------------------------------------------------------

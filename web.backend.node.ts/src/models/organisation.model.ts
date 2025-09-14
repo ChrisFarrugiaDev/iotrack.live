@@ -111,7 +111,7 @@ export class Organisation {
     }
 
     static async getMapsApiKeyFromCache(orgId: string): Promise<string | null> {
-        let currentOrg = await redisUtils.hget('organisations', orgId)        
+        let currentOrg = await redisUtils.hget('organisations', orgId, 'iotrack.live:')        
 
         while (currentOrg) {
 
@@ -127,7 +127,7 @@ export class Organisation {
             if (!currentOrg.parent_org_id) return null;
 
             
-            const parentOrg = await  redisUtils.hget('organisations', currentOrg.parent_org_id)
+            const parentOrg = await  redisUtils.hget('organisations', currentOrg.parent_org_id, 'iotrack.live:')
 
             // Stop if parent doesn't exist 
             if (!parentOrg) return null;

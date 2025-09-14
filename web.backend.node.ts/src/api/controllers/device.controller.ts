@@ -157,7 +157,7 @@ class DeviceController {
             // Best-effort Redis cleanup (don’t fail request if this errors)
             (async () => {
                 try {
-                    await redisUtils.hdel("devices", external_ids, "teltonika.parser.go:");
+                    await redisUtils.hdel("devices", external_ids, "iotrack.live:");
                 } catch (e) {
                     logger.error({ err: e }, "Redis cleanup failed in DeviceController.destroy");
                 }
@@ -277,7 +277,7 @@ class DeviceController {
                         "devices",
                         result.external_id,
                         result,
-                        "teltonika.parser.go:"
+                        "iotrack.live:"
                     );
                 } catch (e) {
                     logger.error({ err: e }, "Redis hadd failed in DeviceController.store");
@@ -521,9 +521,9 @@ class DeviceController {
                     const newKey = updated.external_id;
 
                     if (oldKey && oldKey !== newKey) {
-                        await redisUtils.hdel("devices", [oldKey], "teltonika.parser.go:");
+                        await redisUtils.hdel("devices", [oldKey], "iotrack.live:");
                     }
-                    await redisUtils.hadd("devices", newKey, updated, "teltonika.parser.go:");
+                    await redisUtils.hadd("devices", newKey, updated, "iotrack.live:");
                 } catch (e) {
                     logger.error({ err: e }, "Redis cache refresh failed in DeviceController.update");
                 }

@@ -53,6 +53,11 @@ api-build:
 	npm run prisma-generate && \
 	npm run build
 
+socket-build:
+	cd socketio.gateway.node.ts && \
+	npm install && \
+	npm run build
+
 db-writer-build:
 	cd telemetry.db.writer.node.ts && \
 	npm install && \

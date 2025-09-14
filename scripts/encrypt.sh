@@ -29,6 +29,8 @@ files_to_encrypt=(
   teltonika.parser.go/.env.development  
   telemetry.db.writer.node.ts/.env
   telemetry.db.writer.node.ts/.env.development  
+  socketio.gateway.node.ts/.env
+  socketio.gateway.node.ts/.env.development  
 )
 
 # Find and encrypt the files
