@@ -14,11 +14,15 @@ func (h *VueHandler) ServerIndexWithVariables(w http.ResponseWriter, r *http.Req
 	data := struct {
 		GO_DOCKERIZED bool
 		GO_APP_URL    string
+		GO_APP_PORT   string
 		GO_API_PORT   string
+		GO_SIO_PORT   string
 	}{
 		GO_DOCKERIZED: true,
 		GO_APP_URL:    GO_APP_URL,
+		GO_APP_PORT:   GO_APP_PORT,
 		GO_API_PORT:   GO_API_PORT,
+		GO_SIO_PORT:   GO_SIO_PORT,
 	}
 
 	filePath := filepath.Join("dist", "index.html")

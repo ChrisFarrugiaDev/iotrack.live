@@ -17,6 +17,10 @@ RUN npm install --omit=dev
 
 # Copy production build artifacts and Prisma client
 COPY dist ./dist
+COPY generated ./generated
+
+# Expose the app port
+EXPOSE 4003
 
 # Start the app
 CMD ["node", "dist/server.js"]

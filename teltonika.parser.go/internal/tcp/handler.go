@@ -261,7 +261,8 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			}
 
 			record := map[string]any{
-				"device_id":       currentDevice.ID,
+				"device_id": currentDevice.ID,
+
 				"asset_id":        currentDevice.AssetID,
 				"organisation_id": currentDevice.OrganisationID,
 				"happened_at":     avl.Timestamp,
@@ -297,12 +298,6 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				// Only process if this is the first seen or the newest message
 				if !ok || incomingTs.After(lastTs) {
 					s.Service.UpdateLastTelemetry(currentDevice.ID, telemetry)
-
-					orgID := fmt.Sprintf("%d", currentDevice.OrganisationID)
-					org := s.App.Organisations[orgID]
-					path := org.Path
-					record["path"] = path
-					msg, _ := json.Marshal(record)
 
 					// Update the in-memory cache
 					s.App.LastTsMap[currentDevice.ID] = incomingTs

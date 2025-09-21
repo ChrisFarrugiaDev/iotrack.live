@@ -31,6 +31,7 @@ onActivated(async() => {
 
         // Clear keepalive when logged out
         authStore.updateLogCounter();
+        authStore.clearJwt();
 
         // Always clear local storage and session storage
         localStorage.clear();

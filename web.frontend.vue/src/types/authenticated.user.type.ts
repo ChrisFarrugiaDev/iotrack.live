@@ -10,5 +10,6 @@ export type AuthenticatedUser = {
     role: {
         id: number,
         name: string,
-    }
+    },
+    accessible_devices: string[]
 }

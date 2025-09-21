@@ -78,9 +78,9 @@ https://www.npmjs.com/package/uuidv7
 
 <!-- --------------------------------------------------------------- -->
 
-npm install @prisma/client
-npm install -D prisma
-npm install -D dotenv-cli
+npm install @prisma/client;
+npm install -D prisma;
+npm install -D dotenv-cli;
 
 <!-- --------------------------------------------------------------- -->
 

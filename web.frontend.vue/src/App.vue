@@ -19,6 +19,8 @@
             </RouterView>
         </section>
 
+        <SocketIo v-if="isAuthenticated"></SocketIo>
+
     </main>
 
 </template>
@@ -41,6 +43,9 @@ import { useAssetStore } from './stores/assetStore';
 import { useOrganisationStore } from './stores/organisationStore';
 import { useSettingsStore } from './stores/settingsStore';
 import type { AuthenticatedUser } from './types/authenticated.user.type';
+import SocketIo from './components/socketio/SocketIo.vue';
+import type { Organisation } from './types/organisation.type';
+import type { Asset } from './types/asset.type';
 
 // - Store -------------------------------------------------------------
 
@@ -60,6 +65,8 @@ const deviceStore = useDeviceStore();
 const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
 const settingsStore = useSettingsStore();
+
+const aaa = ref(false)
 
 // - Routes ------------------------------------------------------------
 
@@ -97,7 +104,10 @@ const showSideBar = computed(() => {
 
 // - Wachers -----------------------------------------------------------
 
-watch(isAuthenticated, async (newVal) => {
+watch(() => isAuthenticated.value, async (newVal) => {
+
+    
+    console.log(newVal)
 
     // If not authenticated, and already on an auth-related view, do nothing
     if (!newVal && ['login.view', 'forgot.password.view', 'reset.password.view'].includes(route.name as string)) {
@@ -115,6 +125,7 @@ watch(isAuthenticated, async (newVal) => {
     }
 }, {
     immediate: true,
+    deep: true,
 });
 
 
@@ -141,18 +152,22 @@ async function fetchAccessProfile() {
 
         if (response.status === 200) {
             const profile = response.data.data.access_profile; // controller returns { success, data: profile }
+            console.log(profile)
 
             deviceStore.setDevices(profile.devices);
             assetStore.setAssets(profile.assets);
             organisationStore.setOrganisation(profile.organisation);
             organisationStore.setOrganisationScope(profile.organisation_scope);
             settingsStore.setMapsApiKey(profile.settings?.maps_api_key);
+  
+
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,
                 last_name: profile.last_name,
                 email: profile.email,
                 role: profile.role,
                 organisation: profile.organisation,
+                accessible_devices: Object.values(profile.devices).map((d: any) => d.id),
             };
         
             settingsStore.setAuthenticatedUser(autUserPayload)

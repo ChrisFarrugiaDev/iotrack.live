@@ -7,7 +7,9 @@
     "build": "tsc",
     "watch": "tsc -w",
     "dev": "ts-node src/server.ts",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "prisma-pull": "npx prisma db pull --schema=prisma/schema.prisma",
+    "prisma-generate": "npx prisma generate --schema=prisma/schema.prisma"
   },
   "author": "Chris Farrugia",
   "license": "ISC",
@@ -21,8 +23,11 @@
     "microservice"
   ],
   "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "dotenv": "^16.5.0",
     "ioredis": "^5.6.1",
+    "jsonwebtoken": "^9.0.2",
     "pino": "^9.9.0",
     "pino-pretty": "^13.1.1",
     "socket.io": "^4.8.1"
@@ -31,7 +36,9 @@
     "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^8.56.0",
+    "prisma": "^6.16.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }

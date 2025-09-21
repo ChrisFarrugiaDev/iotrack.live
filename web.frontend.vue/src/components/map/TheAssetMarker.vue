@@ -72,7 +72,8 @@ const props = defineProps<{
 const center = reactive({ lat: props.telemetry.latitude, lng: props.telemetry.longitude })
 const markerOptions = ref<Record<string, any>>({ position: center, });
 
-const fillColor = ref('#6E7FD5')
+const fillColor = ref('#3754fa')
+// const fillColor = ref('#ffbf00')
 // const fillColor = ref('#15A773')
 
 

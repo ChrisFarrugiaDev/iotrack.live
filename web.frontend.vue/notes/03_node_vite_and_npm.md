@@ -70,6 +70,14 @@ https://www.npmjs.com/package/vue-loading-overlay
 https://vue3-select-component.vercel.app/getting-started.html
 
     $ npm add vue3-select-component
+<!-- --------------------------------------------------------------- -->
+
+## socket.io-client
+
+https://www.npmjs.com/package/socket.io-client
+https://socket.io/docs/v4/client-initialization/
+
+    $ npm i socket.io-client
 
 <!-- --------------------------------------------------------------- -->
 ___
