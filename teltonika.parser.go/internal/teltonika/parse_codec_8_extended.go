@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"iotrack.live/internal/apptypes"
@@ -48,7 +49,10 @@ func ParseCodec8Extended(data []byte) (*apptypes.Codec8AvlRecord, error) {
 		avl := apptypes.AvlData{}
 		// Timestamp (8 bytes, ms since epoch)
 		ts := util.BytesToUint64(data[offset:])
-		avl.Timestamp = time.UnixMilli(int64(ts)).UTC().Format(time.RFC3339Nano)
+		// avl.Timestamp = time.UnixMilli(int64(ts)).UTC().Format(time.RFC3339Nano)
+		avl.Timestamp = strconv.FormatInt(time.UnixMilli(int64(ts)).UTC().Unix(), 10)
+		avl.HappenedAt = time.UnixMilli(int64(ts)).UTC().Format(time.RFC3339Nano)
+
 		offset += 8
 
 		// --- Priority (1 byte)

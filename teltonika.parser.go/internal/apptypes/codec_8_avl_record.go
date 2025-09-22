@@ -18,7 +18,8 @@ type Content struct {
 }
 
 type AvlData struct {
-	Timestamp  string     `json:"timestamp"` // ISO 8601 format (e.g. 2025-06-04T09:51:58.010Z)
+	HappenedAt string     `json:"happened_at"` // ISO 8601 format (e.g. 2025-06-04T09:51:58.010Z)
+	Timestamp  string     `json:"timestamp"`
 	Priority   uint8      `json:"priority"`
 	GPSelement GPSelement `json:"gps_element"`
 	IOelement  IOelement  `json:"io_element"`

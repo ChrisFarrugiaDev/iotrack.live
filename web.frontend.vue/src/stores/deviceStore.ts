@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, toRaw } from 'vue'
 import { defineStore } from 'pinia'
 import type { Device } from '@/types/device.type';
 import axios from '@/axios';
@@ -16,6 +16,12 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     // ---- Getters ----------------------------------------------------
 
     const getDevices = computed(() => devices.value);
+
+    // Getter for a single device by id
+    function useDevice(id: string) {
+        return computed(() => devices.value?.[id] ?? null);
+    }
+
 
 
     const uuidToIdMap = computed<Record<string, string>>(() => {
@@ -57,9 +63,9 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         device.asset_id = assetID ?? null;
     }
 
-    function changeDeviceOrganisationID(deviceID: string, organisationID: string ) {
+    function changeDeviceOrganisationID(deviceID: string, organisationID: string) {
         const device = devices.value?.[deviceID];
-  
+
         if (!device) return;
         device.organisation_id = organisationID;
     }
@@ -75,6 +81,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
             throw err;
         }
     }
+
 
     async function deleteDevices(payload: { device_ids: string[] }) {
         try {
@@ -92,12 +99,12 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     }
 
     async function updatedDevice(deviceId: string | number, payload: Record<string, any>) {
-                try {
+        try {
             const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/device/${deviceId}`;
             return await axios.request({
                 method: 'patch',
                 url,
-                data: payload, 
+                data: payload,
 
             });
         } catch (err) {
@@ -107,6 +114,32 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     }
 
 
+
+    function updateWithLiveData(data: any) {
+        if (!devices.value) return;
+
+        const dev = devices.value[data.device_id];
+        if (!dev || !dev.last_telemetry) return;
+
+        console.log('Live data', data)
+
+        // Update main telemetry fields
+        dev.last_telemetry_ts = data.happened_at;
+        
+        const fields = [
+            "latitude", "longitude", "altitude", "angle",
+            "priority", "satellites", "speed", "timestamp"
+        ];
+        for (const f of fields) {
+            dev.last_telemetry[f] = data.telemetry[f];
+        }
+
+        // Merge .elements (data first, then previous, so new values win)
+        dev.last_telemetry.elements = {
+            ...dev.last_telemetry.elements,
+            ...data.telemetry.elements,
+        };
+    }
 
 
     // - Expose --------------------------------------------------------
@@ -118,10 +151,11 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         createDevice,
         deleteDevices,
         addDeviceToStore,
-        removeDeviceFromStore , 
+        removeDeviceFromStore,
         updatedDevice,
         changeDeviceAssetID,
         changeDeviceOrganisationID,
-
+        updateWithLiveData,
+        useDevice,
     };
 });

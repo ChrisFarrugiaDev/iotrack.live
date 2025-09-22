@@ -265,7 +265,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 
 				"asset_id":        currentDevice.AssetID,
 				"organisation_id": currentDevice.OrganisationID,
-				"happened_at":     avl.Timestamp,
+				"happened_at":     avl.HappenedAt,
 				"protocol":        currentDevice.Protocol,
 				"vendor":          currentDevice.Vendor,
 				"telemetry":       telemetry, // <- Assign struct, NOT string
@@ -285,11 +285,11 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				lastTs, ok := s.App.LastTsMap[currentDevice.ID]
 
 				// Parse the new telemetry timestamp from string to time.Time.
-				incomingTs, err := time.Parse(time.RFC3339, telemetry.Timestamp)
+				incomingTs, err := time.Parse(time.RFC3339, avl.HappenedAt)
 				if err != nil {
 					logger.Warn("invalid telemetry timestamp; skipping comparison",
 						zap.String("device_external_id", currentDevice.ExternalID),
-						zap.String("timestamp_raw", telemetry.Timestamp),
+						zap.String("income_ts", avl.HappenedAt),
 						zap.Error(err),
 					)
 					return // or continue

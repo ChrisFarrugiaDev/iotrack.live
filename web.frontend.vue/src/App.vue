@@ -104,10 +104,7 @@ const showSideBar = computed(() => {
 
 // - Wachers -----------------------------------------------------------
 
-watch(() => isAuthenticated.value, async (newVal) => {
-
-    
-    console.log(newVal)
+watch(() => isAuthenticated.value, async (newVal) => {   
 
     // If not authenticated, and already on an auth-related view, do nothing
     if (!newVal && ['login.view', 'forgot.password.view', 'reset.password.view'].includes(route.name as string)) {
@@ -152,7 +149,6 @@ async function fetchAccessProfile() {
 
         if (response.status === 200) {
             const profile = response.data.data.access_profile; // controller returns { success, data: profile }
-            console.log(profile)
 
             deviceStore.setDevices(profile.devices);
             assetStore.setAssets(profile.assets);

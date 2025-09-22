@@ -29,7 +29,7 @@ export async function updateAllDevicesLastTelemetryFromRedisService() {
                 telemetryUpdates.push({
                     device_id: id,
                     last_telemetry: telemetry,
-                    last_telemetry_ts: telemetry.timestamp
+                    last_telemetry_ts: new Date(Number(telemetry.timestamp) * 1000).toISOString()
                 });
             }
         }

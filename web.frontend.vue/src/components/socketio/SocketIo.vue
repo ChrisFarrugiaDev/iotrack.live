@@ -8,22 +8,26 @@ import { storeToRefs } from "pinia";
 import { io } from "socket.io-client";
 import { onDeactivated, onUnmounted, watch } from "vue";
 
-const devicesStore = useDeviceStore();
+
+// - Store -------------------------------------------------------------
+
 const authStore = useAuthStore();
-const settingsStore = useSettingsStore();
 const { isAuthenticated } = storeToRefs(authStore);
+
+const settingsStore = useSettingsStore();
 const { accessibleDevices } = storeToRefs(settingsStore);
+
+const devicesStore = useDeviceStore();
+
+
+// - Socket-io Setup ---------------------------------------------------
 
 // let url = `${import.meta.env.VITE_APP_URL}:${import.meta.env.VITE_SOCKET_SIO_PORT}`;
 let url = `${import.meta.env.VITE_APP_URL}`;
 if (window.GO_DOCKERIZED === true) {
     url = `${import.meta.env.GO_APP_URL}`;
 }
-console.log(url)
 
-
-
-// --- SOCKET.IO SETUP ---
 const socket = io(url, {
     path: "/socket.io/",
     auth: { token: authStore.getJwt },
@@ -34,23 +38,25 @@ const socket = io(url, {
 // Register listeners ONCE
 socket.on("connect", () => {
     // Optional: log
-    console.log("Socket connected", socket.id);
+    // console.log("Socket connected", socket.id);
 
     // If we have devices/auth, join immediately
     if (isAuthenticated.value && accessibleDevices.value) {
-        console.log( accessibleDevices.value)
+        // console.log( accessibleDevices.value)
         socket.emit("join-devices", accessibleDevices.value);
     }
 });
 
 socket.on("live-update", (msg) => {
-    console.log("Live update:", msg);
+    // console.log("Live update:", msg);
     // TODO: commit to store / update UI
+
+    devicesStore. updateWithLiveData(msg);
 });
 
 
+// - Watchers ----------------------------------------------------------
 
-// --- WATCHER ---
 // Only used to emit "join-devices" if user or accessibleDevices change
 watch([isAuthenticated, accessibleDevices], ([authed, devices]) => {
     if (socket.connected && authed && devices) {
@@ -58,14 +64,13 @@ watch([isAuthenticated, accessibleDevices], ([authed, devices]) => {
     }
 }, { immediate: true });
 
-
+// - Hooks -------------------------------------------------------------
 onUnmounted(() => {
-
     socket.disconnect();
 });
 
 onDeactivated(() => {
-
     socket.disconnect();
 })
+
 </script>
