@@ -157,7 +157,7 @@ watch(
 
         // 3) Your active/idle color timer
         if (activeTimeout.value) clearTimeout(activeTimeout.value);
-        fillColor.value = "#aecce4";
+        fillColor.value = "#22c65e";
         activeTimeout.value = setTimeout(() => {
             fillColor.value = "#ffbf00";
             direction.value = null;
