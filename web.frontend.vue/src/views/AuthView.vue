@@ -57,10 +57,12 @@ const currentFormComponent = computed(() => {
 
 .vview__main {
     position: relative; // Ensure .background and .ssign share the same stacking context
+    min-height: 100vh;
 
     @include respondDesktop(425) {
         padding: 01rem !important;
     }
+
 }
 
 .background {

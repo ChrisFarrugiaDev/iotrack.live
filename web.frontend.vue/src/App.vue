@@ -190,6 +190,7 @@ async function fetchAccessProfile() {
 <style lang="scss" scoped>
 .page {
     grid-column: 1/3;
+     
 }
 
 .sidebar {
@@ -206,6 +207,7 @@ async function fetchAccessProfile() {
     grid-template-columns: 4rem 1fr;
     min-height: 100vh;
     width: 100vw;
+    
 }
 
 .modal {
