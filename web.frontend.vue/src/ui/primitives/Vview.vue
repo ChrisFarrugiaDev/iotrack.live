@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
 }>(), {
     maxWidth: '90rem',
     pad: '3rem 1rem',
-    inset: '3.75rem 2rem 3.75rem 6rem',
+    inset: '4.5rem 2rem 3.75rem 6rem',
     bordered: true,
     elevated: false,
     background: 'var(--color-bg-hi)',
@@ -59,7 +59,7 @@ const sectionStyle = computed(() => ({
 .vview__section {
     margin-inline: auto;
     width: 100%;
-    border-radius: var(--radius-md, 6px);
+    border-radius: var(--radius-md, 500px);
     overflow: visible;
 
     /* modifiers */

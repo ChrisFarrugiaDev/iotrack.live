@@ -2,8 +2,7 @@
     <div>
 
         <CustomMarker :options="markerOptions">
-
-            <svg :style="{ 'opacity': .85, }" v-if="direction == null" class="marker" xmlns="http://www.w3.org/2000/svg"
+            <svg :style="{ 'opacity': .85, }" v-if="showStationary" class="marker" xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 32 32" :width="markerSize" :height="markerSize" aria-label="vehicle-stationary">
                 <defs>
                     <filter id="marker-shadow" x="-30%" y="-30%" width="160%" height="160%">
@@ -17,16 +16,10 @@
                 <!-- Shadow/glow circle (slightly bigger, blurred) -->
                 <circle cx="16" cy="16" r="8" :fill="'black'" filter="url(#marker-shadow)" />
                 <!-- Main outer dot, solid -->
-                <circle cx="16" cy="16" r="8" :fill="fillColor" stroke="#202020" stroke-width="1.2" />
+                <circle cx="16" cy="16" r="8" :fill="fillColor" :stroke="idleColorLine" stroke-width="1.2" />
                 <!-- Ignition badge -->
-                <circle cx="16" cy="16" r="3" fill="none" stroke="#202020" stroke-width="0" />
-
-
-
+                <circle cx="16" cy="16" r="3" fill="none" :stroke="idleColorLine" stroke-width="0" />
             </svg>
-
-
-
             <svg :style="{ 'opacity': .85, }" v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"
                 :width="markerSize * 1.2" :height="markerSize * 1.2" aria-label="vehicle-moving">
                 <defs>
@@ -43,7 +36,7 @@
                     <!-- shadow -->
                     <path d="M 20 5 L 33 34 L 20 29 L 7 34 Z" fill="black" filter="url(#marker-shadow)" />
                     <!-- triangle arrow pointing up (north) -->
-                    <path d="M 20 5 L 33 34 L 20 29 L 7 34 Z" :fill="fillColor" stroke="#202020" stroke-width="1.2"
+                    <path d="M 20 5 L 33 34 L 20 29 L 7 34 Z" :fill="fillColor" :stroke="activeColorLine" stroke-width="1.2"
                         stroke-linejoin="round" />
                     <!-- ignition badge -->
                     <circle cx="20" cy="22.5" r="3.8" fill="none" stroke="none" />
@@ -87,16 +80,6 @@ const markerOptions = shallowRef<Record<string, any>>({
     },
 });
 
-
-
-
-const fillColor = ref('#ffbf00');
-
-
-const activeTimeout = ref<number | null>(null);
-
-const direction = ref<number | null>(null); // degrees from North
-
 // - Computed ----------------------------------------------------------
 
 // (Optional) force-update fallback if needed
@@ -114,11 +97,32 @@ const markerSize = computed(() => {
     return size;
 });
 
-// --- helpers ----------------------------------------------------------
+const showStationary = computed(() => !isMoving.value || direction.value == null);
+
+// - Change color and Direction Loggic ---------------------------------
+
+// State
+const idleColor = ref("#ffbf00");
+const activeColor = ref("#3754fa");
+
+const idleColorLine = ref("#ffffff");
+const activeColorLine = ref("#ffffff");
+
+// fillColor.value = "#22c65e";
+// fillColor.value = "#cc8899";    
+// fillColor.value = "#3754fa";
+// fillColor.value = "#15A773";
+
+
+const fillColor = ref(idleColor.value);
+const idleColorTimeout = ref<number | null>(null);
+const direction = ref<number | null>(null); // degrees from North
+
+// Helpers 
 function toRad(d: number) { return (d * Math.PI) / 180; }
 function toDeg(r: number) { return (r * 180) / Math.PI; }
 
-/** Initial bearing from (lat1,lng1) -> (lat2,lng2) in degrees from North */
+// Initial bearing from (lat1,lng1) -> (lat2,lng2) in degrees from North 
 function bearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const φ1 = toRad(lat1), φ2 = toRad(lat2);
     const Δλ = toRad(lng2 - lng1);
@@ -127,8 +131,6 @@ function bearing(lat1: number, lng1: number, lat2: number, lng2: number): number
         Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
-
-// - Watchers ----------------------------------------------------------
 
 //  NOTE:   Watch ONLY what matters and REPLACE the position object
 watch(
@@ -156,15 +158,51 @@ watch(
         }
 
         // 3) Your active/idle color timer
-        if (activeTimeout.value) clearTimeout(activeTimeout.value);
-        fillColor.value = "#22c65e";
-        activeTimeout.value = setTimeout(() => {
-            fillColor.value = "#ffbf00";
+        if (idleColorTimeout.value) clearTimeout(idleColorTimeout.value);
+        fillColor.value = activeColor.value;
+
+        idleColorTimeout.value = setTimeout(() => {
+            fillColor.value = idleColor.value;
             direction.value = null;
+            isMoving.value = false;
         }, 120_000);
     }
     // { immediate: true }
 );
+
+// - Is Moving Loggic --------------------------------------------------
+
+// Tunables
+const SPEED_THRESHOLD = 0.5;   // treat <= 0.5 as "stopped" to avoid jitter
+const ZERO_STREAK_TO_STOP = 3; // need 3 consecutive zeros to mark stopped
+
+// State
+const isMoving = ref(false);
+const zeroStreak = ref(0);
+
+watch(
+    () => device.value?.last_telemetry?.speed,
+    (raw) => {
+        // Normalize: null/undefined/NaN -> 0
+        const speed = Number.isFinite(Number(raw)) ? Number(raw) : 0;
+
+        if (speed > SPEED_THRESHOLD) {
+            // any non-zero reading => moving immediately
+            isMoving.value = true;
+            zeroStreak.value = 0;
+        } else {
+            // zero (or tiny) reading => increase streak; stop after N in a row
+            zeroStreak.value += 1;
+            if (zeroStreak.value >= ZERO_STREAK_TO_STOP) {
+                isMoving.value = false;
+            }
+        }
+    },
+    { immediate: true }
+);
+
+// ---------------------------------------------------------------------
+
 
 </script>
 

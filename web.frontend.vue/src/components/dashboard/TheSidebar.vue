@@ -199,7 +199,7 @@ onMounted(() => {
     right: 0;
     top: 0;
 
-    @include respondMinHeight(760) {
+    @include respondMinHeight(630) {
         top: -4px;
     }
 }
@@ -212,6 +212,8 @@ onMounted(() => {
     display: flex;
     flex-direction: column; 
     background-color: transparent;
+
+
 
 
     @include respondMinHeight(760) {
@@ -227,15 +229,13 @@ onMounted(() => {
     // ===== Sidebar Spacers =====
     &__space {
         flex: 1;
-        max-height: 0;
+        max-height: 4.4rem;
 
         @include respondMinHeight(760) {
-            max-height: 3.7rem;
+            // max-height: 3.7rem;
         }
 
-        &--2 {
-            flex: 2;
-        }
+
     }
 
     // ===== Sidebar Group (menu + dropdown) =====
@@ -284,7 +284,7 @@ onMounted(() => {
         
 
         // Rounded corners for first/last items (only on tall screens)
-        @include respondMinHeight(760) {
+        @include respondMinHeight(630) {
             &--first {
                 border-top-right-radius: $border-radius;
 
