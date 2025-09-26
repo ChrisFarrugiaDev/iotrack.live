@@ -57,6 +57,22 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         }
     }
 
+    function addAssetToDeviceInStore(deviceId: string | number, assetId: string | number) {
+        if (!devices.value) return;
+        const device = devices.value[deviceId];
+        if (device) {
+            device.asset_id = String(assetId);
+        }
+    }
+
+    function removeAssetToDeviceInStore(deviceId: string | number) {
+        if (!devices.value) return;
+        const device = devices.value[deviceId];
+        if (device) {
+            device.asset_id = null;
+        }
+    }
+
     function changeDeviceAssetID(deviceID: string, assetID: string | null) {
         const device = devices.value?.[deviceID];
         if (!device) return;
@@ -121,7 +137,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         const dev = devices.value[data.device_id];
         if (!dev || !dev.last_telemetry) return;
 
-        console.log('Live data', data)
+        // console.log('Live data', data)
 
         // Update main telemetry fields
         dev.last_telemetry_ts = data.happened_at;
@@ -157,5 +173,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         changeDeviceOrganisationID,
         updateWithLiveData,
         useDevice,
+        addAssetToDeviceInStore,
+        removeAssetToDeviceInStore,
     };
 });

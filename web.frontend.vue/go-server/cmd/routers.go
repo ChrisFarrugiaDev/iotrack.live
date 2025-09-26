@@ -32,8 +32,10 @@ func Routes() http.Handler {
 	// Serve index.html for the root route, can inject variables for the SPA
 	mux.Get("/", vueHandler.ServerIndexWithVariables)
 	mux.Get("/login", vueHandler.ServerIndexWithVariables)
-	mux.Get("/assets/", vueHandler.ServerIndexWithVariables)
-	mux.Get("/devices/", vueHandler.ServerIndexWithVariables)
+	mux.Get("/assets", vueHandler.ServerIndexWithVariables)
+	mux.Get("/assets/new", vueHandler.ServerIndexWithVariables)
+	mux.Get("/devices", vueHandler.ServerIndexWithVariables)
+	mux.Get("/devices/new", vueHandler.ServerIndexWithVariables)
 
 	// Build absolute path to the 'dist' directory (Vue build output)
 	workDir, _ := filepath.Abs(".")

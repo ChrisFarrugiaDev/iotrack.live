@@ -201,6 +201,8 @@ async function deleteAssets() {
 
         const r = await assetStore.deleteAssets(payload);
 
+        selectedKeys.value = [];
+
         for(let id of r.data.data.asset_ids) {
             assetStore.removeAssetFromStore(id);
         }
@@ -210,6 +212,8 @@ async function deleteAssets() {
             [r.data.message || "Asset(s) deleted successfully."],
             "flash-message--blue"
         );
+
+        
 
 
     } catch (err: any) {        

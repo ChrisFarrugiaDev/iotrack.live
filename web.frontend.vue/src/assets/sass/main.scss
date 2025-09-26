@@ -9,3 +9,21 @@
 
 
 @use 'layouts/views';
+
+
+.filepond--drop-label {
+
+
+    font-family: "Montserrat", sans-serif;
+    color: var(--color-lime-500)
+}
+
+
+.filepond--list {
+    display: flex !important;
+    flex-direction: row;
+    gap: 1rem;
+}
+.filepond--item {
+    max-width: 11rem;
+}

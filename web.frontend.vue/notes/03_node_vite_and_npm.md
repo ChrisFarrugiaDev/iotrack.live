@@ -80,6 +80,24 @@ https://socket.io/docs/v4/client-initialization/
     $ npm i socket.io-client
 
 <!-- --------------------------------------------------------------- -->
+## vue FilePond
+
+https://pqina.nl/filepond/docs/getting-started/installation/vue/
+https://github.com/pqina/vue-filepond?tab=readme-ov-file
+
+    $ npm install vue-filepond filepond --save
+
+
+https://pqina.nl/filepond/docs/api/plugins/file-validate-type/
+
+    $ npm i filepond-plugin-file-validate-type --save
+
+https://pqina.nl/filepond/docs/api/plugins/image-preview/
+
+    $ npm i filepond-plugin-image-preview --save
+
+
+<!-- --------------------------------------------------------------- -->
 ___
 <!-- --------------------------------------------------------------- -->
 

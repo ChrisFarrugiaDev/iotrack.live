@@ -54,6 +54,12 @@
 
 		</div>
 
+	
+			
+		<AssetImage class="mt-6"></AssetImage>
+
+
+
 		<div class="vform__row mt-12 ">
             <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="initCreateAsset">Register Asset</button>
             <button v-if="confirmOn" class="vbtn vbtn--zinc-lt" @click.prevent="confirmOn = false">Cancel</button>
@@ -61,6 +67,7 @@
         </div>
 
 	</form>
+	
 </template>
 
 
@@ -74,6 +81,9 @@ import { useDeviceStore } from "@/stores/deviceStore";
 import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useMessageStore } from "@/stores/messageStore";
 import { useAssetStore } from "@/stores/assetStore";
+import AssetImage from "@/components/asset/AssetImage.vue";
+
+
 
 
 const vueSelectStyles = useVueSelectStyles();
@@ -189,7 +199,7 @@ async function createAsset() {
 			attributes,
 		};
 
-		if (device_id) { payload.devoce_id = device_id }
+		if (device_id) { payload.device_id = device_id }
 
 		// Send request
         const r = await assetStore.createAsset(payload);
@@ -197,6 +207,9 @@ async function createAsset() {
 
         // Success message
         messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+		form.name = "";
+		form.device_id = "";
 
 
 	} catch (err: any) {

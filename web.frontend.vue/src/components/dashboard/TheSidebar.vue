@@ -1,7 +1,7 @@
 <template>
     <section id="the-sidebar" class="sidebar v-ui" :data-theme="getSidebarTheme" :class="{ 'sidebar__open': getIsUserMenuOpen }">
 
-        <div class="sidebar__space"></div>
+        <div class="sidebar__space sidebar__space--top"></div>
 
         <div class="sidebar__group">
             <div id="menu-btn" class="sidebar__item sidebar__item--first" @click="toggleUserMenu">
@@ -199,7 +199,7 @@ onMounted(() => {
     right: 0;
     top: 0;
 
-    @include respondMinHeight(630) {
+    @include respondMinHeight(649) {
         top: -4px;
     }
 }
@@ -216,7 +216,7 @@ onMounted(() => {
 
 
 
-    @include respondMinHeight(760) {
+    @include respondMinHeight(688) {
         background-color: transparent;
     }
 
@@ -231,8 +231,17 @@ onMounted(() => {
         flex: 1;
         max-height: 4.4rem;
 
-        @include respondMinHeight(760) {
-            // max-height: 3.7rem;
+        &--top {
+            min-height: 4.4rem !important;
+        }
+        @include respondHeight(688) {
+            max-height: 1.5rem;
+            &--top { min-height: 1.5rem !important; }
+        }
+
+        @include respondHeight(649) {
+            max-height: 0rem;
+            &--top { min-height: 0rem !important; }
         }
 
 
@@ -284,24 +293,22 @@ onMounted(() => {
         
 
         // Rounded corners for first/last items (only on tall screens)
-        @include respondMinHeight(630) {
-            &--first {
-                border-top-right-radius: $border-radius;
 
-                &:hover {
-                    border-top: none;
-                }
+        @include respondMinHeight(649) {
+        &--first {
+                border-top-right-radius: $border-radius;         
             }
-
             &--last {
                 border-bottom-right-radius: $border-radius;
                 border-bottom: 1px solid var(--color-zinc-300);
 
-                &:hover {
-                    border-bottom: none;
-                }
             }
         }
+
+
+   
+
+  
 
         // Hover styles
         &:hover {
@@ -330,7 +337,7 @@ onMounted(() => {
         &--expand {
             transform: translateX(-7px);
 
-            @include respondMobile(760) {
+            @include respondMobile(688) {
                 transform: translateX(0px);
             }
         }

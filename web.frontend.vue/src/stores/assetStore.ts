@@ -3,10 +3,12 @@ import { defineStore } from 'pinia'
 import type { Asset } from '@/types/asset.type'
 import { useAppStore } from './appStore';
 import axios from '@/axios';
+import { useDeviceStore } from './deviceStore';
 
 export const useAssetStore = defineStore('assetStore', () => {
 
     const appStore = useAppStore();
+    const deviceStore = useDeviceStore();
 
     // ---- State ------------------------------------------------------
     const assets = ref<Record<string, Asset> | null>(null);
@@ -41,11 +43,22 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     function addAssetToStore(a: Asset) {
         if (!assets.value) assets.value = {};
+
+        if (a.devices.length) {
+            deviceStore.removeAssetToDeviceInStore(a.devices[0].id);
+            deviceStore.addAssetToDeviceInStore(a.devices[0].id, a.id)
+        }
         assets.value[a.id] = a
     }
 
     function removeAssetFromStore(assetId: string | number) {
         if (!assets.value) return;
+
+        if (assets.value[assetId].devices.length) {
+            const device = deviceStore.useDevice(assets.value[assetId].devices[0].id);
+            deviceStore.removeAssetToDeviceInStore(assets.value[assetId].devices[0].id);
+        }
+
         if (assets.value[assetId]) {
             delete assets.value[assetId];
         }
@@ -65,6 +78,7 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     async function deleteAssets(payload: { asset_ids: string[] }) {
         try {
+
             const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/asset`;
             return await axios.request({
                 method: 'DELETE',

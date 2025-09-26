@@ -1,5 +1,5 @@
 <template>
-    <main class="vview"   :style="rootStyle">
+    <main class="vview" :style="rootStyle">
         <section class="vview__section" :class="sectionClass" :style="sectionStyle">
             <slot />
         </section>
@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
 }>(), {
     maxWidth: '90rem',
     pad: '3rem 1rem',
-    inset: '4.5rem 2rem 3.75rem 6rem',
+    inset: '4.4rem 2rem 0rem 6rem',
     bordered: true,
     elevated: false,
     background: 'var(--color-bg-hi)',
@@ -31,7 +31,7 @@ const props = withDefaults(defineProps<{
 
 const rootStyle = computed(() => ({
     background: props.background,
-    padding: props.inset,
+    // padding: props.inset, // This have been comment and is handled from the style block to have some screen response
 }));
 
 const sectionClass = computed(() => ({
@@ -47,13 +47,18 @@ const sectionStyle = computed(() => ({
 </script>
 
 <!-- --------------------------------------------------------------- -->
- 
+
 <style scoped lang="scss">
 @use "../index.scss";
 
 .vview {
     width: 100%;
     min-height: 100%;
+    padding: 4.4rem 2rem 0rem 6rem;
+
+    @include respondHeight(688) {
+        padding: 1.5rem 2rem 0rem 6rem;
+    }
 }
 
 .vview__section {
@@ -71,18 +76,6 @@ const sectionStyle = computed(() => ({
         box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
     }
 }
-/*
-  --color-zinc-50:  #09090b;
-  --color-zinc-100: #18181b;
-  --color-zinc-200: #27272a;
-  --color-zinc-300: #3f3f46;
-  --color-zinc-400: #52525b;
-  --color-zinc-500: #71717a;
-  --color-zinc-600: #a1a1aa;
-  --color-zinc-700: #d4d4d8;
-  --color-zinc-800: #e4e4e7;
-  --color-zinc-900: #f4f4f5;
-  --color-zinc-950: #fafafa;
 
-*/
+
 </style>
