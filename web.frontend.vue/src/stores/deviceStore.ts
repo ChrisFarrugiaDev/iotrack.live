@@ -88,7 +88,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
     async function createDevice(payload: Record<string, any>) {
         try {
-            const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/device`;
+            const url = `${appStore.getAppUrl}/api/device`;
             const result = await axios.post(url, payload);
             return result;
 
@@ -101,7 +101,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
     async function deleteDevices(payload: { device_ids: string[] }) {
         try {
-            const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/device`;
+            const url = `${appStore.getAppUrl}/api/device`;
             return await axios.request({
                 method: 'DELETE',
                 url,
@@ -116,7 +116,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
     async function updatedDevice(deviceId: string | number, payload: Record<string, any>) {
         try {
-            const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/device/${deviceId}`;
+            const url = `${appStore.getAppUrl}/api/device/${deviceId}`;
             return await axios.request({
                 method: 'patch',
                 url,

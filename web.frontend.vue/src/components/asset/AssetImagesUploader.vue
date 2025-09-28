@@ -1,21 +1,22 @@
 <template>
 	<div class="uploader">
-		<FilePond 
-			ref="pond" 
-			name="assetImages" 
-			:allowImagePreview="true"
-			class-name="my-pond" 
-			max-files="8" 
-			:allow-multiple="true"
-			:allow-reorder="true" 
-			:credits="''" 
-			:accepted-file-types="['image/jpeg', 'image/png', 'image/webp']"
-			:image-preview-height="140"
-			label-idle="Drop files here or <span class='filepond--label-action'>Browse</span>" :files="files"
-			@init="onInit" 
-			@reorderfiles="onAnyChange" 
-			@updatefiles="onAnyChange"
-			/>
+		<FilePond ref="pond"
+		name="assetImages"
+		:allowImagePreview="true"
+		class-name="my-pond"
+		max-files="8"
+		:allow-multiple="true"
+		:allow-reorder="true"
+		:credits="''"
+		:accepted-file-types="['image/jpeg',
+		'image/png', 'image/webp']"
+		:image-preview-height="140"
+		label-idle="Drop files here or
+		<span
+		class='filepond--label-action'>Browse</span>"
+		:files="files" @init="onInit"
+		@reorderfiles="onAnyChange"
+		@updatefiles="onAnyChange" />
 	</div>
 </template>
 
@@ -37,57 +38,58 @@ import { ref, watch } from 'vue';
 // Create FilePond component
 const FilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
-
-const pond = ref<any>(null)
-
-const files = ref<any[]>([]);
+// - Types -------------------------------------------------------------
 
 export type UploaderItem = {
-  id: string;
-  file: File;          // native File (ready for FormData)
-  name: string;
-  type: string;
-  size: number;
-  sortOrder: number;   // current order in the pond
+	id: string;
+	file: File;          // native File (ready for FormData)
+	name: string;
+	type: string;
+	size: number;
+	sortOrder: number;   // current order in the pond
 };
 
-watch(files, (val) => {
-	console.log(val)
-}, {
-	deep: true
-}
-)
+// - Emit --------------------------------------------------------------
 
 const emit = defineEmits<{
-  (e: 'files-change', items: UploaderItem[]): void;
+	(e: 'files-change', items: UploaderItem[]): void;
 }>();
 
+// - Data --------------------------------------------------------------
+
+
+const pond = ref<any>(null);
+const files = ref<any[]>([]);
+
+// - Methodes ----------------------------------------------------------
+
 function onInit() {
-  // console.log(pond.value);
+	// console.log(pond.value);
 }
 
-
 function onAnyChange() {
-  const items = (pond.value?.getFiles?.() ?? []).map((item: any, idx: number) => ({
-    id: item?.id,
-    file: item?.file,            // File object
-    name: item?.file?.name ?? '',
-    type: item?.file?.type ?? '',
-    size: item?.file?.size ?? 0,
-    sortOrder: idx
-  })) as UploaderItem[];
+	const items = (pond.value?.getFiles?.() ?? []).map((item: any, idx: number) => ({
+		id: item?.id,
+		file: item?.file,            // File object
+		name: item?.file?.name ?? '',
+		type: item?.file?.type ?? '',
+		size: item?.file?.size ?? 0,
+		sortOrder: idx
+	})) as UploaderItem[];
 
-  console.log(items)
-  emit('files-change', items);
+	console.log(items)
+	emit('files-change', items);
 }
 </script>
 
 <!-- --------------------------------------------------------------- -->
 
 <style lang="css">
-.filepond--root, .filepond--drop-label {
-min-height: 12rem !important;
+.filepond--root,
+.filepond--drop-label {
+	min-height: 8rem !important;
 }
+
 .filepond--drop-label {
 
 	font-family: "Montserrat", sans-serif;
@@ -99,7 +101,7 @@ min-height: 12rem !important;
 	font-weight: 400;
 	border: 1px solid var(--color-zinc-300);
 	border-radius: var(--radius-md, 0.375rem);
-	
+
 }
 
 .filepond--list {

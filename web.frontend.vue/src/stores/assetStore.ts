@@ -66,7 +66,7 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     async function createAsset(payload: Record<string, any>) {
         try {
-            const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/asset`;
+            const url = `${appStore.getAppUrl}/api/asset`;
             const result = await axios.post(url, payload);
             return result;
 
@@ -79,7 +79,7 @@ export const useAssetStore = defineStore('assetStore', () => {
     async function deleteAssets(payload: { asset_ids: string[] }) {
         try {
 
-            const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/asset`;
+            const url = `${appStore.getAppUrl}/api/asset`;
             return await axios.request({
                 method: 'DELETE',
                 url,
@@ -95,7 +95,7 @@ export const useAssetStore = defineStore('assetStore', () => {
     async function updatedAsset(assetId: string | number, payload: Record<string, any>) {
 
         try {
-            const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/asset/${assetId}`;
+            const url = `${appStore.getAppUrl}/api/asset/${assetId}`;
             return await axios.request({
                 method: 'patch',
                 url,

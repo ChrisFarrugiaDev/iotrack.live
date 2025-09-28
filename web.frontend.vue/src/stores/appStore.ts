@@ -7,6 +7,8 @@ declare global {
         GO_DOCKERIZED: boolean | undefined;
         GO_APP_URL: string;
         GO_API_PORT: string;
+        GO_FILE_PORT: string;
+        GO_SIO_PORT: string;
     }
 }
 
@@ -20,10 +22,24 @@ export const useAppStore = defineStore('appStore', () => {
         : import.meta.env.VITE_APP_URL
     );
 
-    const apiPort = ref(window.GO_DOCKERIZED === true
-        ? window.GO_API_PORT
-        : import.meta.env.VITE_API_PORT
-    );
+    // const apiPort = ref(window.GO_DOCKERIZED === true
+    //     ? window.GO_API_PORT
+    //     : import.meta.env.VITE_API_PORT
+    // );
+
+    // const filePort = ref(window.GO_DOCKERIZED === true
+    //     ? window.GO_FILE_PORT
+    //     : import.meta.env.VITE_FILE_PORT
+    // );
+
+    // const socketioPort = ref(window.GO_DOCKERIZED === true
+    //     ? window.GO_SIO_PORT
+    //     : import.meta.env.VITE_SIO_PORT
+    // );
+
+
+
+
 
     const shouldFetchAccessProfile = ref<boolean>(true);
 
@@ -31,7 +47,7 @@ export const useAppStore = defineStore('appStore', () => {
     // ---- Getters ----------------------------------------------------
 
     const getAppUrl = computed(() => appUrl.value);
-    const getApiPort = computed(() => apiPort.value);
+
     const getShouldFetchAccessProfile = computed(() => shouldFetchAccessProfile.value);
 
 
@@ -42,5 +58,11 @@ export const useAppStore = defineStore('appStore', () => {
     }
 
     // - Expose --------------------------------------------------------
-    return { getAppUrl, getApiPort, getShouldFetchAccessProfile, setShouldFetchAccessProfile };
+    return {
+        getAppUrl,
+
+        getShouldFetchAccessProfile,
+        setShouldFetchAccessProfile,
+
+    };
 });

@@ -143,7 +143,7 @@ async function fetchAccessProfile() {
 
     try {
         // Prefer an axios baseURL; otherwise build it cleanly:
-        const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/access-profile`;
+        const url = `${appStore.getAppUrl}/api/access-profile`;
 
         const response = await axios.get(url); // JWT via interceptor
 

@@ -120,10 +120,10 @@
 
         </div>
 
-        <div class="vform__row mt-12 ">
-            <button v-if="!confirmOn" class="vbtn vbtn--sky" @click.prevent="initCreateDevice">Register Device</button>
-            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt" @click.prevent="confirmOn = false">Cancel</button>
-            <button v-if="confirmOn" class="vbtn vbtn--sky" @click.prevent="createDevice">Confirm</button>
+        <div class="vform__row mt-9 ">
+            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initCreateDevice">Register Device</button>
+            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false">Cancel</button>
+            <button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="createDevice">Confirm</button>
         </div>
     </form>
 </template>

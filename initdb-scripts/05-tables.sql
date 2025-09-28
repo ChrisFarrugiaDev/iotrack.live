@@ -226,3 +226,65 @@ ORDER BY
     u.email, d.external_id;
 
 -- ---------------------------------------------------------------------
+
+CREATE TABLE app.images (
+    id               BIGSERIAL PRIMARY KEY,
+    uuid             UUID UNIQUE DEFAULT gen_random_uuid(),
+
+    -- Polymorphic association (entity_type + entity_id)
+    entity_type      VARCHAR(32) NOT NULL,
+    entity_id        BIGINT      NOT NULL,
+
+    -- File metadata
+    filename         VARCHAR(255) NOT NULL,        -- original filename
+    storage_path     TEXT         NOT NULL,        -- e.g. uploads/images/asset/123/uuid.jpg
+    url              TEXT,                        -- if you expose via web
+
+    mime_type        VARCHAR(64)  NOT NULL DEFAULT 'image/jpeg',
+    width_px         INT,
+    height_px        INT,
+    size_bytes       BIGINT,
+
+    -- Image processing info
+    compressed       BOOLEAN      NOT NULL DEFAULT FALSE,
+    encrypted        BOOLEAN      NOT NULL DEFAULT FALSE,
+    checksum_sha256  VARCHAR(64),                  -- integrity or dedup
+    is_primary       BOOLEAN      NOT NULL DEFAULT FALSE,
+    tags             TEXT[],
+    attributes       JSONB        NOT NULL DEFAULT '{}',
+
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    uploaded_by      BIGINT                      -- user_id, FK if you want
+  
+);
+
+CREATE INDEX ix_images_entity ON app.images (entity_type, entity_id);
+
+
+CREATE TABLE app.files (
+    id               BIGSERIAL PRIMARY KEY,
+    uuid             UUID UNIQUE DEFAULT gen_random_uuid(),
+
+    entity_type      VARCHAR(32) NOT NULL,
+    entity_id        BIGINT      NOT NULL,
+
+    filename         VARCHAR(255) NOT NULL,        -- original filename
+    storage_path     TEXT         NOT NULL,        -- e.g. uploads/files/asset/123/uuid.pdf
+    url              TEXT,                        -- if exposed via web
+
+    mime_type        VARCHAR(64)  NOT NULL,
+    size_bytes       BIGINT,
+
+    compressed       BOOLEAN      NOT NULL DEFAULT FALSE,
+    encrypted        BOOLEAN      NOT NULL DEFAULT FALSE,
+    checksum_sha256  VARCHAR(64),
+
+    -- FOTA/config specific
+    file_type         VARCHAR(32),                  -- e.g. 'fota', 'config', 'manual'
+    attributes       JSONB        NOT NULL DEFAULT '{}',
+
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    uploaded_by      BIGINT                      -- user_id, FK if needed
+
+);
+CREATE INDEX ix_files_entity ON app.files (entity_type, entity_id);

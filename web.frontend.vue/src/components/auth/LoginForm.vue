@@ -92,7 +92,7 @@ async function submitForm() {
             return
         }
 
-        const url = `${appStore.getAppUrl}:${appStore.getApiPort}/api/auth/login`;
+        const url = `${appStore.getAppUrl}/api/auth/login`;
 
         const response = await axios.post(url, {
             email: email.value,
