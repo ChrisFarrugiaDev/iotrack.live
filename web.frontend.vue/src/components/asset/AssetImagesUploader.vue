@@ -55,11 +55,25 @@ const emit = defineEmits<{
 	(e: 'files-change', items: UploaderItem[]): void;
 }>();
 
+// - Props -------------------------------------------------------------
+
+const props = defineProps<{
+	reset: number
+}>();
+
 // - Data --------------------------------------------------------------
 
 
 const pond = ref<any>(null);
 const files = ref<any[]>([]);
+
+
+// - Watch -------------------------------------------------------------
+
+watch(()=>props.reset, (v:number) => {
+	files.value = [];
+});
+
 
 // - Methodes ----------------------------------------------------------
 
@@ -77,7 +91,6 @@ function onAnyChange() {
 		sortOrder: idx
 	})) as UploaderItem[];
 
-	console.log(items)
 	emit('files-change', items);
 }
 </script>

@@ -51,7 +51,7 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Add user_id to the request context so it can be accessed in handlers
-		ctx := context.WithValue(r.Context(), "user_id", claims["id"])
+		ctx := context.WithValue(r.Context(), "userID", claims["id"])
 		r = r.WithContext(ctx)
 
 		// Continue to the next handler

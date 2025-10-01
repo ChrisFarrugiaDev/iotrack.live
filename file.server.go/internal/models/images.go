@@ -64,3 +64,62 @@ func (img *Image) GetByEntity(entityType string, entityId int64) ([]*Image, erro
 
 	return images, nil
 }
+
+func (img *Image) GetByEntityLimitOffset(entityType string, entityId int64, limit, offset int) ([]*Image, error) {
+	images := []*Image{}
+	collection := upperSession.Collection(img.TableName())
+
+	err := collection.Find("entity_type", entityType).And("entity_id", entityId).Limit(limit).Offset(offset).All(&images)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve images from database: %w", err)
+	}
+
+	return images, nil
+}
+
+func (img *Image) CountByEntity(entityType string, entityId int64) (int64, error) {
+	collection := upperSession.Collection(img.TableName())
+
+	countUint64, err := collection.Find("entity_type", entityType).And("entity_id", entityId).Count()
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve images from database: %w", err)
+	}
+
+	return int64(countUint64), nil
+}
+
+func (img *Image) DeleteByEntity(entityType string, entityId int64) (int64, error) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE entity_type = $1 AND entity_id = $2", img.TableName())
+
+	res, err := upperSession.SQL().Exec(query, entityType, entityId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rows, _ := res.RowsAffected()
+	return rows, nil
+}
+
+func (img *Image) DeleteById(id int64) (int64, error) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", img.TableName())
+	res, err := upperSession.SQL().Exec(query, id)
+	if err != nil {
+		return 0, err
+	}
+	count, _ := res.RowsAffected()
+	return count, nil
+}
+
+func (img *Image) GetById(id int64) (*Image, error) {
+
+	image := &Image{}
+	collection := upperSession.Collection(img.TableName())
+
+	err := collection.Find("id", id).One(image)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve image from database: %w", err)
+	}
+
+	return image, nil
+}

@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import type { Device } from '@/types/device.type';
 import axios from '@/axios';
 import { useAppStore } from './appStore';
+import * as util from "@/util";
 
 export const useDeviceStore = defineStore('deviceStore', () => {
 
@@ -129,7 +130,9 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         }
     }
 
-
+    // -----------------------------------------------------------------------------------------------------------------
+    // Animation toggle
+    const enableAnimation = true; // set false to disable smooth animation
 
     function updateWithLiveData(data: any) {
         if (!devices.value) return;
@@ -137,26 +140,113 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         const dev = devices.value[data.device_id];
         if (!dev || !dev.last_telemetry) return;
 
-        // console.log('Live data', data)
+        const curLat = dev.last_telemetry.latitude;
+        const curLng = dev.last_telemetry.longitude;
 
-        // Update main telemetry fields
+        const newLat = data.telemetry.latitude;
+        const newLng = data.telemetry.longitude;
+
+        // Optional: skip if no movement
+        if (curLat === newLat && curLng === newLng) return;
+
+        // Update non-position fields immediately
         dev.last_telemetry_ts = data.happened_at;
-        
-        const fields = [
-            "latitude", "longitude", "altitude", "angle",
-            "priority", "satellites", "speed", "timestamp"
-        ];
-        for (const f of fields) {
-            dev.last_telemetry[f] = data.telemetry[f];
-        }
-
-        // Merge .elements (data first, then previous, so new values win)
+        const fields = ["altitude", "angle", "priority", "satellites", "speed", "timestamp"];
+        for (const f of fields) dev.last_telemetry[f] = data.telemetry[f];
         dev.last_telemetry.elements = {
             ...dev.last_telemetry.elements,
             ...data.telemetry.elements,
         };
+
+        if (enableAnimation) {
+            // Smooth movement
+            const path = util.divideLine([curLat, curLng], [newLat, newLng], 40);
+            queueMovement(data.device_id, dev, path, 25);
+        } else {
+            // Snap instantly to new position
+            dev.last_telemetry.latitude = newLat;
+            dev.last_telemetry.longitude = newLng;
+        }
     }
 
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Global animator 
+    interface AnimationState {
+        dev: any;             // reference to the device object in your store
+        path: number[][];     // points to traverse
+        index: number;        // current index in path
+        stepMs: number;       // how often to advance to the next point
+        accMs: number;        // time accumulator
+    }
+
+    const activeAnimations = new Map<string | number, AnimationState>();
+
+    let animatorRunning = false;
+    let lastTs = 0;
+
+    function startGlobalAnimator() {
+        if (animatorRunning) return;
+        animatorRunning = true;
+
+        function loop(ts: number) {
+            if (!lastTs) lastTs = ts;
+            const delta = ts - lastTs;
+            lastTs = ts;
+
+            // Step all animations
+            activeAnimations.forEach((anim, deviceId) => {
+                anim.accMs += delta;
+
+                // advance by as many steps as needed (handles frame drops)
+                let steps = 0;
+                while (anim.accMs >= anim.stepMs) {
+                    anim.accMs -= anim.stepMs;
+                    steps++;
+                }
+
+                if (steps === 0) return;
+
+                anim.index = Math.min(anim.index + steps, anim.path.length - 1);
+                const [lat, lng] = anim.path[anim.index];
+
+                if (!anim.dev?.last_telemetry) anim.dev.last_telemetry = {};
+                anim.dev.last_telemetry.latitude = lat;
+                anim.dev.last_telemetry.longitude = lng;
+
+                // done? remove from map
+                if (anim.index >= anim.path.length - 1) {
+                    activeAnimations.delete(deviceId);
+                }
+            });
+
+            requestAnimationFrame(loop);
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    // Call once on store/init (or first usage)
+    startGlobalAnimator();
+
+    // Enqueue/replace an animation for a device.
+    function queueMovement(
+        deviceId: string | number,
+        dev: any,
+        path: number[][],
+        stepMs = 100
+    ) {
+        if (!path?.length) return;
+        activeAnimations.set(deviceId, {
+            dev,
+            path,
+            index: 0,
+            stepMs,
+            accMs: 0,
+        });
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     // - Expose --------------------------------------------------------
     return {

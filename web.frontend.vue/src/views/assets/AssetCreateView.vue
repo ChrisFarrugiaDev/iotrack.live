@@ -43,7 +43,7 @@
 
 		</div>
 
-		<AssetImagesUploader class="mt-6" @files-change="onFilesChange"></AssetImagesUploader>
+		<AssetImagesUploader class="mt-6" @files-change="onFilesChange" :reset="reset"></AssetImagesUploader>
 
 		<div class="vform__row mt-9 ">
 			<button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initCreateAsset">Register
@@ -70,6 +70,7 @@ import { useAssetStore } from "@/stores/assetStore";
 import AssetImagesUploader, { type UploaderItem } from "@/components/asset/AssetImagesUploader.vue";
 import axios from "@/axios";
 import { useAppStore } from "@/stores/appStore";
+import type { Asset } from "@/types/asset.type";
 
 const vueSelectStyles = useVueSelectStyles();
 
@@ -100,6 +101,7 @@ const errors = ref<Record<string, string>>({
 	device_id: '',
 });
 
+const reset = ref<number>(0);
 
 // - Computed ----------------------------------------------------------
 const getOrganisations = computed(() => {
@@ -196,7 +198,7 @@ async function createAsset() {
 		assetStore.addAssetToStore(r.data.data.asset);
 
 		const newAsset = r.data.data.asset;
-		await uploadImages(newAsset.id);
+		await uploadImages(newAsset);
 
 		// create images
 
@@ -248,10 +250,12 @@ async function createAsset() {
 	}
 }
 
-async function uploadImages(assetID: string) {
+async function uploadImages(newAsset: Asset) {
+	if (images.value.length == 0) return;
+
 	const formData = new FormData();
 	formData.append("entity_type", "asset");
-	formData.append("entity_id", assetID);
+	formData.append("entity_id", newAsset.id);
 
 	// Attach each file
 	for (const item of images.value) {
@@ -259,16 +263,26 @@ async function uploadImages(assetID: string) {
 	}
 
 	try {
-		const url = `${appStore.getAppUrl}/img/uploads`;
-
-		console.log(assetID)
-		console.log(url)
+		const url = `${appStore.getAppUrl}/img/upload`;
 		const response = await axios.post(url, formData);
 
-		console.log(response)
+		if (!response.data.data.uploaded || !response.data.data.uploaded.length) return;
+
+		const attributes = {
+			...newAsset.attributes,
+			primary_image: response.data.data.uploaded[0],
+		}
+
+		const payload = {attributes}
+
+		await assetStore.updatedAsset(newAsset.id, payload);
+
+
+		images.value = [];
+		reset.value += 1;
 
 	} catch (err) {
-		console.error("! AssetCreateView uploadImages !\n",err);
+		console.error("! AssetCreateView uploadImages !\n", err);
 	}
 }
 
@@ -277,5 +291,4 @@ async function uploadImages(assetID: string) {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly
-</style>
+// Placeholder comment to ensure global styles are imported correctly</style>

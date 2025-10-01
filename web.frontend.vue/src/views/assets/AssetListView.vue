@@ -6,12 +6,22 @@
             <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteAssetModal" />
         </div>
 
-        <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
-            v-model:page="currentPage" row-key="id" :selectable="true" :searchTerm="searchTerm"
-            @update:page="currentPage = Number($emit)" @update:selectedKeys="selectedKeys = ($event as any)">
+        <VTable class="mt-4"
+            :table-col="tableCol"
+            :table-data="tableData"
+            :search="searchTerm" :per-page="25"
+            v-model:page="currentPage"
+            row-key="id" :selectable="true"
+            :searchTerm="searchTerm"
+            :clearSelected="clearSelected"
+            @update:page="currentPage = Number($emit)"
+            @update:selectedKeys="selectedKeys = ($event as any)">
             <template #actions="{ row }">          
-                <VIconButton icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
+                <VIconButton
+                icon="icon-view-more"
+                @click="showUpdateAssetModal(row.uuid)"/>
             </template>
+            
         </VTable>
 
     </div>
@@ -62,6 +72,8 @@ import { VSearch, ThePager, VTable, VIconButton, VModal } from '@/ui';
 import { useDeviceStore } from '@/stores/deviceStore';
 import AssetUpdateView from './AssetUpdateView.vue';
 import { useRoute, useRouter } from 'vue-router';
+import axios from '@/axios';
+import { useAppStore } from '@/stores/appStore';
 
 
 // - Store -------------------------------------------------------------
@@ -75,6 +87,7 @@ const deviceStore = useDeviceStore();
 const { getDevices } = storeToRefs(deviceStore);
 
 const messageStore = useMessageStore();
+const appStore = useAppStore();
 
 
 // --- Router -------------------------------------------------------
@@ -139,6 +152,7 @@ const tableCol = ref<TableColumn[]>([
 
 ]);
 
+const clearSelected = ref<number>(0)
 
 
 // - Computed ----------------------------------------------------------
@@ -197,24 +211,36 @@ function showDeleteAssetModal() {
 async function deleteAssets() {
 
     try {        
-        var payload = { 'asset_ids': selectedKeys.value };
+        var payload = { 'asset_ids': selectedKeys.value };        
 
         const r = await assetStore.deleteAssets(payload);
 
         selectedKeys.value = [];
+        clearSelected.value += 1;
+
+        const url = appStore.getAppUrl + "/img/delete";
 
         for(let id of r.data.data.asset_ids) {
-            assetStore.removeAssetFromStore(id);
-        }
+
+            assetStore.removeAssetFromStore(id);       
+
+            const payload = {
+                entity_type: "asset",
+                entity_id: Number(id)
+            }
+            const r = await axios.request({
+                url,
+                method: "DELETE",
+                data: payload
+            });     
+        }    
+      
 
         // success → show confirmation
         messageStore.setFlashMessagesList(
             [r.data.message || "Asset(s) deleted successfully."],
             "flash-message--blue"
-        );
-
-        
-
+        );       
 
     } catch (err: any) {        
 

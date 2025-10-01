@@ -141,12 +141,14 @@ const props = defineProps<{
 	perPage?: number;                // Page size (default 25)
 	selectable?: boolean;            // Row selection enabled
 	selectedKeys?: Array<string | number>;
+	clearSelected?: number;
 }>();
 
 const emit = defineEmits<{
 	(e: "update:page", value: number): void;
 	(e: "update:selectedKeys", value: Array<string | number>): void;
 }>();
+
 
 
 // - Reactive State & Derived Values -----------------------------------
@@ -255,6 +257,10 @@ const selectedSet = ref(new Set<string | number>(props.selectedKeys ?? []));
 
 watch(() => props.selectedKeys, (arr) => {
 	if (arr) selectedSet.value = new Set(arr);
+});
+
+watch(() => props.clearSelected, () => {
+	selectedSet.value = new Set([]);
 });
 
 function isChecked(row: any) {
