@@ -136,6 +136,7 @@ import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/authStore";
 import { useMessageStore } from "@/stores/messageStore";
 import TheFlashMessage from "@/components/commen/TheFlashMessage.vue";
+import { useDashboardStore } from "@/stores/dashboardStore";
 
 
 const vueSelectStyles = useVueSelectStyles();
@@ -151,7 +152,7 @@ const props = defineProps<{
 const organisationStore = useOrganisationStore();
 const deviceStore = useDeviceStore();
 const messageStore = useMessageStore();
-
+const dashboardStore = useDashboardStore();
 
 const { getDevices, uuidToIdMap } = storeToRefs(deviceStore);
 
@@ -287,6 +288,8 @@ async function updateDevice() {
 
     if (!device.value) return;
 
+    dashboardStore.setIsLoading(true);
+
     const payload = buildUpdatePayload(form, device.value);
 
 
@@ -345,8 +348,10 @@ async function updateDevice() {
 
         // Always log error for developer debugging
         console.error("! DeviceUpdateView updateDevice !", err);
+        
     } finally {
         confirmOn.value = false;
+        dashboardStore.setIsLoading(false);
     }
 
 }

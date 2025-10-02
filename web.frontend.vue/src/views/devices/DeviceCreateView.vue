@@ -140,6 +140,8 @@ import { useOrganisationStore } from "@/stores/organisationStore";
 import { useDeviceStore } from "@/stores/deviceStore";
 import { useMessageStore } from "@/stores/messageStore";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { useDashboardStore } from "@/stores/dashboardStore";
+
 
 // - Composable --------------------------------------------------------
 
@@ -151,6 +153,8 @@ const organisationStore = useOrganisationStore();
 const deviceStore = useDeviceStore();
 const messageStore = useMessageStore();
 const settingsStore = useSettingsStore();
+
+const dashboardStore = useDashboardStore();
 
 
 const confirmOn = ref(false)
@@ -213,6 +217,9 @@ function initCreateDevice() {
 }
 
 async function createDevice() {
+
+    dashboardStore.setIsLoading(true);
+
     try {
         // Create payload, omitting iccid/msisdn from top-level if you only want them in attributes
         // (If backend expects iccid/msisdn both top-level & in attributes, spread as needed)
@@ -290,6 +297,7 @@ async function createDevice() {
     } finally {
         // Always reset confirm flag, success or error
         confirmOn.value = false;
+        dashboardStore.setIsLoading(false);
     }
 }
 

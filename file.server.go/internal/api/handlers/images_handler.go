@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"mime"
 	"net/http"
 	"os"
@@ -34,9 +35,9 @@ type ImageDTO struct {
 const (
 	UploadsImageRoot = "uploads/img"
 	BaseImageUrl     = "img"
-	MaxImageW        = 1600
-	MaxImageH        = 1600
-	JPEGQuality      = 82
+	MaxImageW        = 800
+	MaxImageH        = 800
+	JPEGQuality      = 100
 	MaxImageSizeMB   = 8
 	MaxPageLimit     = 100
 	DefaultPageLimit = 20
@@ -151,9 +152,9 @@ func (h *ImagesHandler) UploadMany(w http.ResponseWriter, r *http.Request) {
 
 		// Auto-convert to JPEG
 		opts := bimg.Options{
-			Quality:       JPEGQuality,
-			Type:          bimg.JPEG,
-			Compression:   1,
+			Quality: JPEGQuality,
+			Type:    bimg.JPEG,
+			// Compression:   1,
 			StripMetadata: true,
 			Interlace:     true,
 		}
@@ -163,9 +164,19 @@ func (h *ImagesHandler) UploadMany(w http.ResponseWriter, r *http.Request) {
 		// Resize if too big
 		size, _ := img.Size()
 		if size.Width > MaxImageW || size.Height > MaxImageH {
-			opts.Width = MaxImageW
-			opts.Height = MaxImageH
-			opts.Force = false // keep aspect
+			// Calculate resize while maintaining aspect ratio
+			scaleW := float64(MaxImageW) / float64(size.Width)
+			scaleH := float64(MaxImageH) / float64(size.Height)
+			scale := math.Min(scaleW, scaleH)
+
+			newW := int(float64(size.Width) * scale)
+			newH := int(float64(size.Height) * scale)
+
+			opts.Width = newW
+			opts.Height = newH
+			opts.Force = false
+			opts.Crop = false
+			opts.Enlarge = false
 		}
 
 		// ---------------------------------

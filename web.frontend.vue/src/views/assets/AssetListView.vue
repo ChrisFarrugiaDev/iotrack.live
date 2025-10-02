@@ -17,9 +17,8 @@
             @update:page="currentPage = Number($emit)"
             @update:selectedKeys="selectedKeys = ($event as any)">
             <template #actions="{ row }">          
-                <VIconButton
-                icon="icon-view-more"
-                @click="showUpdateAssetModal(row.uuid)"/>
+                <VIconButton icon="icon-image" @click="showUpdateImageModalOpen(row.id)"/>
+                <VIconButton icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
             </template>
             
         </VTable>
@@ -56,6 +55,8 @@
             <button class="vbtn vbtn--red" @click="deleteAssets">Delete</button>
         </template>
     </VModal>
+    
+    <UpdateImagesModal v-model="isUpdateImageModalOpen" :selectedAssetID="selectedAssetID"></UpdateImagesModal>
 
 </template>
 
@@ -74,6 +75,8 @@ import AssetUpdateView from './AssetUpdateView.vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/axios';
 import { useAppStore } from '@/stores/appStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
+import UpdateImagesModal from '@/components/images/UpdateImagesModal.vue';
 
 
 // - Store -------------------------------------------------------------
@@ -89,6 +92,7 @@ const { getDevices } = storeToRefs(deviceStore);
 const messageStore = useMessageStore();
 const appStore = useAppStore();
 
+const dashboardStore = useDashboardStore();
 
 // --- Router -------------------------------------------------------
 const route = useRoute();
@@ -105,6 +109,10 @@ const selectedKeys = ref<string[]>([])
 const isUpdateModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const selectedAssetUUID = ref<string | null>(null);
+
+const isUpdateImageModalOpen = ref(false);
+const selectedAssetID = ref<string | null>(null);
+
 
 const tableCol = ref<TableColumn[]>([
     {
@@ -152,7 +160,7 @@ const tableCol = ref<TableColumn[]>([
 
 ]);
 
-const clearSelected = ref<number>(0)
+const clearSelected = ref<number>(0);
 
 
 // - Computed ----------------------------------------------------------
@@ -194,6 +202,11 @@ function showUpdateAssetModal(id: string) {
     selectedAssetUUID.value = id;
 }
 
+function showUpdateImageModalOpen (id: string) {
+    isUpdateImageModalOpen.value = true;
+    selectedAssetID.value = id;
+}
+
 
 // Show delete modal if selection exists, else flash warning
 function showDeleteAssetModal() {
@@ -209,6 +222,7 @@ function showDeleteAssetModal() {
 
 // Called on delete modal confirm
 async function deleteAssets() {
+    dashboardStore.setIsLoading(true);
 
     try {        
         var payload = { 'asset_ids': selectedKeys.value };        
@@ -261,6 +275,7 @@ async function deleteAssets() {
         );
     } finally {
         isDeleteModalOpen.value = false;
+        dashboardStore.setIsLoading(false);
     }
 }
 

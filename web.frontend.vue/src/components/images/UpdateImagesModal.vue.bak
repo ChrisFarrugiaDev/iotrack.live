@@ -1,0 +1,292 @@
+<template>
+  <VModal v-model="isUpdateImageModalOpen" size="xl">
+    <div class="imgm">
+
+      <!-- LEFT: Cropper + simple actions -->
+      <section class="imgm__stage">
+        <header class="imgm__actions">
+          <button class="btn" :disabled="!selected" @click="saveCrop">💾 Save</button>
+          <button class="btn" :disabled="!selected" @click="setPrimary">⭐ Primary</button>
+          <button class="btn btn--danger" :disabled="!selected" @click="removeSelected">🗑 Delete</button>
+
+          <label class="btn btn--ghost">
+            ⬆️ Upload
+            <input type="file" accept="image/*" multiple class="sr-only" @change="uploadNew" />
+          </label>
+        </header>
+
+        <Cropper
+          v-if="selected"
+          :key="selected.imageId"
+          ref="cropperRef"
+          :src="`${getAppUrl}/${selected.url}`"
+          class="imgm__cropper"
+          image-restriction="stencil"
+          @ready="fitToView"
+        />
+        <div v-else class="imgm__empty">Select an image to edit</div>
+      </section>
+
+      <!-- RIGHT: Thumbnails -->
+      <aside class="imgm__side">
+        <div class="imgm__side-head">
+          <span class="imgm__title">Images</span>
+          <span class="imgm__count">{{ images.length }}</span>
+        </div>
+
+        <div class="thumbs">
+          <button
+            v-for="img in images"
+            :key="img.imageId"
+            class="thumbs__item"
+            :class="{
+              'thumbs__item--active': selected?.imageId === img.imageId,
+              'thumbs__item--primary': img.imageId === primaryId
+            }"
+            @click="select(img)"
+          >
+            <img :src="`${getAppUrl}/${img.url}`" alt="" class="thumbs__img" />
+            <span v-if="img.imageId === primaryId" class="thumbs__badge">Primary</span>
+          </button>
+        </div>
+      </aside>
+
+    </div>
+  </VModal>
+</template>
+
+<script setup lang="ts">
+import VModal from '@/ui/primitives/VModal.vue';
+import { Cropper } from 'vue-advanced-cropper';
+import 'vue-advanced-cropper/dist/style.css';
+
+import { useAppStore } from '@/stores/appStore';
+import { useImageStore } from '@/stores/imageStore';
+import { storeToRefs } from 'pinia';
+import { ref, watch, nextTick } from 'vue';
+
+type Img = { filename: string; imageId: string; url: string };
+
+const props = withDefaults(defineProps<{ selectedAssetID: string | null }>(), {
+  selectedAssetID: null,
+});
+
+const { getAppUrl } = storeToRefs(useAppStore());
+const imageStore = useImageStore();
+
+const isUpdateImageModalOpen = ref(false);
+const images = ref<Img[]>([]);
+const selected = ref<Img | null>(null);
+const primaryId = ref<string | null>(null);
+
+const cropperRef = ref<any>(null);
+
+/* Load on asset change */
+watch(
+  () => props.selectedAssetID,
+  async () => {
+    images.value = [];
+    selected.value = null;
+    primaryId.value = null;
+
+    const r = await imageStore.fetchImages('asset', Number(props.selectedAssetID));
+    images.value = r?.data?.data?.images ?? [];
+
+    // Optional: set from backend flag if you have it
+    // primaryId.value = images.value.find(i => i.is_primary)?.imageId ?? null;
+
+    if (images.value.length) selected.value = images.value[0];
+  },
+  { immediate: true }
+);
+
+/* Keep image fully visible on select */
+watch(
+  () => selected.value?.imageId,
+  async () => {
+    await nextTick();
+    try { cropperRef.value?.reset?.(); } catch {}
+    fitToView();
+  }
+);
+
+/* ---- Actions ---- */
+function select(img: Img) {
+  if (!img || selected.value?.imageId === img.imageId) return;
+  selected.value = img;
+}
+
+async function setPrimary() {
+  if (!selected.value) return;
+  primaryId.value = selected.value.imageId;
+  // await imageStore.setPrimary('asset', Number(props.selectedAssetID), primaryId.value)
+}
+
+async function removeSelected() {
+  if (!selected.value) return;
+  const id = selected.value.imageId;
+  // await imageStore.delete('image', id)
+  images.value = images.value.filter(x => x.imageId !== id);
+  if (primaryId.value === id) primaryId.value = null;
+  selected.value = images.value[0] ?? null;
+}
+
+async function uploadNew(e: Event) {
+  const files = (e.target as HTMLInputElement).files;
+  if (!files || !files.length) return;
+
+  // const uploaded: Img[] = await imageStore.upload('asset', Number(props.selectedAssetID), files)
+  // images.value.unshift(...uploaded);
+  // if (!selected.value && images.value[0]) selected.value = images.value[0];
+
+  (e.target as HTMLInputElement).value = '';
+}
+
+async function saveCrop() {
+  if (!selected.value) return;
+  // const result = cropperRef.value?.getResult?.(); // blob/canvas/etc depending on lib version
+  // await imageStore.saveEdits(selected.value.imageId, result)
+}
+
+/* Fit whole image inside stage deterministically */
+function fitToView() {
+  const api = cropperRef.value;
+  if (!api?.getInfo) return;
+
+  const info = api.getInfo();
+  const img = info?.imageSize;
+  if (!img) return;
+
+  try {
+    api.setCoordinates({
+      left: 0,
+      top: 0,
+      width: img.width,
+      height: img.height,
+    });
+  } catch {}
+}
+</script>
+
+<style scoped lang="scss">
+/* Layout */
+.imgm {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1rem;
+  min-height: 760px;
+  max-height: 78vh;
+
+  &__stage {
+    position: relative;
+    background: #000;
+    border: 1px solid var(--color-zinc-300, #e5e7eb);
+    border-radius: .5rem;
+    overflow: hidden;
+    min-height: 380px;
+  }
+
+  &__actions {
+    position: absolute;
+    z-index: 2;
+    top: .5rem;
+    left: .5rem;
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+
+  &__cropper { width: 100%; height: 100%; }
+
+  &__empty {
+    color: var(--color-zinc-400, #9ca3af);
+    display: grid;
+    place-items: center;
+    height: 100%;
+  }
+
+  &__side {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-zinc-300, #e5e7eb);
+    border-radius: .5rem;
+    background: #fff;
+    max-height: 78vh;
+    overflow: hidden;
+    min-width: 300px;
+  }
+
+  &__side-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: .6rem .8rem;
+    border-bottom: 1px solid var(--color-zinc-200, #eee);
+    background: var(--color-zinc-50, #fafafa);
+  }
+
+  &__title { font-weight: 600; }
+  &__count { font-size: .85rem; color: var(--color-zinc-500, #6b7280); }
+}
+
+/* Buttons */
+.btn {
+  appearance: none;
+  border: 1px solid var(--color-zinc-300, #e5e7eb);
+  background: #fff; color: #111;
+  padding: .35rem .6rem; line-height: 1;
+  border-radius: .45rem; font-size: .9rem;
+  cursor: pointer;
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+.btn--danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+.btn--ghost { background: transparent; }
+
+/* Thumbs */
+.thumbs {
+  padding: .8rem;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 158px);
+  gap: .75rem;
+
+  &__item {
+    position: relative;
+    width: 158px;
+    height: 137px;
+    border: 1px solid var(--color-zinc-300, #e5e7eb);
+    border-radius: .5rem;
+    overflow: hidden;
+    background: #111;
+    cursor: pointer;
+    padding: 0;
+  }
+  &__item--active { outline: 2px solid #3b82f6; }
+  &__item--primary::after { content: "★"; position: absolute; top: 6px; right: 6px; color: #f59e0b; }
+
+  &__img { width: 100%; height: 100%; display: block; object-fit: cover; background: #111; }
+
+  &__badge {
+    position: absolute; bottom: 6px; left: 6px;
+    font-size: .7rem; background: #fde68a; color: #111;
+    padding: .15rem .35rem; border-radius: .35rem;
+  }
+}
+
+/* Cropper visuals: keep full image visible */
+.imgm__cropper :deep(.vue-advanced-cropper__image) {
+  width: 100%; height: 100%; object-fit: contain; background: #000;
+}
+.imgm__cropper :deep(.vue-advanced-cropper__background) { background: #000; }
+
+/* a11y helper */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Mobile: stack */
+@media (max-width: 920px) {
+  .imgm { grid-template-columns: 1fr; max-height: none; }
+  .imgm__side { max-height: 40vh; }
+}
+</style>

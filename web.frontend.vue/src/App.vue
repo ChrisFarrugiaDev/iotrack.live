@@ -66,7 +66,6 @@ const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
 const settingsStore = useSettingsStore();
 
-const aaa = ref(false)
 
 // - Routes ------------------------------------------------------------
 
