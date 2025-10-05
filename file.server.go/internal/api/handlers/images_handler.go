@@ -35,8 +35,8 @@ type ImageDTO struct {
 const (
 	UploadsImageRoot = "uploads/img"
 	BaseImageUrl     = "img"
-	MaxImageW        = 800
-	MaxImageH        = 800
+	MaxImageW        = 1600
+	MaxImageH        = 1600
 	JPEGQuality      = 100
 	MaxImageSizeMB   = 8
 	MaxPageLimit     = 100

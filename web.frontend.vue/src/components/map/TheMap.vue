@@ -2,16 +2,28 @@
 	<div class="the-map">
 		<GoogleMap v-if="apiKey" :api-key="apiKey" :center="center" :zoom="15" style="width: 100%; height: 100vh"
 			:mapId="'9e8ca8994cbac798'"  ref="mapRef" @zoom_changed="handleZoomChanged">
-			<TheAssetMarker v-for="asset in getAssetsWithDevice" 
-				:asset="asset"
-				:map-zoom="mapZoom"
-				:telemetry="asset.devices[0].last_telemetry"
-				></TheAssetMarker>
+			<div v-for="asset in getAssetsWithDevice">
+				<MarkerVehicle v-if="asset.asset_type == 'vehicle'" 
+					:asset="asset" 
+					:map-zoom="mapZoom" 
+					:telemetry="asset.devices[0].last_telemetry">					
+				</MarkerVehicle>
+				<MarkerPersonal v-else-if="asset.asset_type == 'personal'"
+					:asset="asset" 
+					:map-zoom="mapZoom" 
+					:telemetry="asset.devices[0].last_telemetry" >
+				</MarkerPersonal>
+				<MarkerAsset v-else
+					:asset="asset" 
+					:map-zoom="mapZoom" 
+					:telemetry="asset.devices[0].last_telemetry" >
+				</MarkerAsset>
+			</div>
 		</GoogleMap>
 		<div v-else>Loading map...</div>
 	</div>
 </template>
-
+<!-- v-if="asset.asset_type == 'vehicle'" -->
 <!-- --------------------------------------------------------------- -->
 <script setup lang="ts">
 
@@ -20,7 +32,9 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { storeToRefs } from "pinia";
 import { onBeforeMount, onMounted, ref, watch } from "vue";
 import { GoogleMap } from "vue3-google-map";
-import TheAssetMarker from "./TheAssetMarker.vue";
+import MarkerVehicle from "./MarkerVehicle.vue";
+import MarkerPersonal from "./MarkerPersonal.vue";
+import MarkerAsset from "./MarkerAsset.vue";
 
 // -- store ------------------------------------------------------------
 const settingsStore = useSettingsStore();

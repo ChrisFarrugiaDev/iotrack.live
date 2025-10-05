@@ -172,6 +172,15 @@
             <path d="m 2 6.007812 c -1.105469 0 -2 0.894532 -2 2 c 0 1.101563 0.894531 2 2 2 s 2 -0.898437 2 -2 c 0 -1.105468 -0.894531 -2 -2 -2 z m 6 0 c -1.105469 0 -2 0.894532 -2 2 c 0 1.101563 0.894531 2 2 2 s 2 -0.898437 2 -2 c 0 -1.105468 -0.894531 -2 -2 -2 z m 6 0 c -1.105469 0 -2 0.894532 -2 2 c 0 1.101563 0.894531 2 2 2 s 2 -0.898437 2 -2 c 0 -1.105468 -0.894531 -2 -2 -2 z m 0 0" />
         </symbol>
 
+<symbol version="1.1" id="icon-crop" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 32 32" xml:space="preserve">
 
+<circle class="st0" cx="13" cy="13" r="1"/>
+<polyline class="st0" points="7,21 16,16 20,19 25,16 "/>
+<polyline class="st0" points="30,25 7,25 7,2 "/>
+<polyline class="st0" points="7,7 25,7 25,25 "/>
+<line class="st0" x1="7" y1="7" x2="2" y2="7"/>
+<line class="st0" x1="25" y1="30" x2="25" y2="25"/>
+</symbol>
     </defs>
 </svg>

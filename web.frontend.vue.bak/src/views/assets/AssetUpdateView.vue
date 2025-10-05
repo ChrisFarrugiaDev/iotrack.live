@@ -71,6 +71,7 @@ import { useOrganisationStore } from '@/stores/organisationStore';
 import { useMessageStore } from '@/stores/messageStore';
 import type { Asset } from '@/types/asset.type';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
+import { useDashboardStore } from '@/stores/dashboardStore';
 
 
 const vueSelectStyles = useVueSelectStyles();
@@ -85,6 +86,7 @@ const assetStore = useAssetStore();
 const deviceStore = useDeviceStore();
 const organisationStore = useOrganisationStore();
 const messageStore = useMessageStore();
+const dashboardStore = useDashboardStore();
 
 const { getAssets, uuidToIdMap } = storeToRefs(assetStore);
 
@@ -325,6 +327,7 @@ function buildUpdatePayload(form: Form, current: Asset) {
 
 async function updateAsset() {
     if (!asset.value) return;
+    dashboardStore.setIsLoading(true);
 
     const payload = buildUpdatePayload(form, asset.value);
 
@@ -406,6 +409,7 @@ async function updateAsset() {
         console.error("! AssetUpdateView updateAsset !", err);
     } finally {
         confirmOn.value = false;
+        dashboardStore.setIsLoading(false);
     }
 }
 

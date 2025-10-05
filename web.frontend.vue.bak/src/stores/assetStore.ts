@@ -100,7 +100,6 @@ export const useAssetStore = defineStore('assetStore', () => {
                 method: 'patch',
                 url,
                 data: payload,
-
             });
         } catch (err) {
             console.error('! assetStore updatedAsset !\n', err);

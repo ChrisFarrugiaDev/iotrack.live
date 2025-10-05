@@ -6,12 +6,21 @@
             <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteAssetModal" />
         </div>
 
-        <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
-            v-model:page="currentPage" row-key="id" :selectable="true" :searchTerm="searchTerm"
-            @update:page="currentPage = Number($emit)" @update:selectedKeys="selectedKeys = ($event as any)">
+        <VTable class="mt-4"
+            :table-col="tableCol"
+            :table-data="tableData"
+            :search="searchTerm" :per-page="25"
+            v-model:page="currentPage"
+            row-key="id" :selectable="true"
+            :searchTerm="searchTerm"
+            :clearSelected="clearSelected"
+            @update:page="currentPage = Number($emit)"
+            @update:selectedKeys="selectedKeys = ($event as any)">
             <template #actions="{ row }">          
+                <VIconButton icon="icon-image" @click="showUpdateImageModalOpen(row.id)"/>
                 <VIconButton icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
             </template>
+            
         </VTable>
 
     </div>
@@ -46,6 +55,8 @@
             <button class="vbtn vbtn--red" @click="deleteAssets">Delete</button>
         </template>
     </VModal>
+    
+    <UpdateImagesModal v-model="isUpdateImageModalOpen" :selectedAssetID="selectedAssetID"></UpdateImagesModal>
 
 </template>
 
@@ -62,6 +73,10 @@ import { VSearch, ThePager, VTable, VIconButton, VModal } from '@/ui';
 import { useDeviceStore } from '@/stores/deviceStore';
 import AssetUpdateView from './AssetUpdateView.vue';
 import { useRoute, useRouter } from 'vue-router';
+import axios from '@/axios';
+import { useAppStore } from '@/stores/appStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
+import UpdateImagesModal from '@/components/images/UpdateImagesModal.vue';
 
 
 // - Store -------------------------------------------------------------
@@ -75,7 +90,9 @@ const deviceStore = useDeviceStore();
 const { getDevices } = storeToRefs(deviceStore);
 
 const messageStore = useMessageStore();
+const appStore = useAppStore();
 
+const dashboardStore = useDashboardStore();
 
 // --- Router -------------------------------------------------------
 const route = useRoute();
@@ -92,6 +109,10 @@ const selectedKeys = ref<string[]>([])
 const isUpdateModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const selectedAssetUUID = ref<string | null>(null);
+
+const isUpdateImageModalOpen = ref(false);
+const selectedAssetID = ref<string | null>(null);
+
 
 const tableCol = ref<TableColumn[]>([
     {
@@ -139,6 +160,7 @@ const tableCol = ref<TableColumn[]>([
 
 ]);
 
+const clearSelected = ref<number>(0);
 
 
 // - Computed ----------------------------------------------------------
@@ -180,6 +202,11 @@ function showUpdateAssetModal(id: string) {
     selectedAssetUUID.value = id;
 }
 
+function showUpdateImageModalOpen (id: string) {
+    isUpdateImageModalOpen.value = true;
+    selectedAssetID.value = id;
+}
+
 
 // Show delete modal if selection exists, else flash warning
 function showDeleteAssetModal() {
@@ -195,26 +222,39 @@ function showDeleteAssetModal() {
 
 // Called on delete modal confirm
 async function deleteAssets() {
+    dashboardStore.setIsLoading(true);
 
     try {        
-        var payload = { 'asset_ids': selectedKeys.value };
+        var payload = { 'asset_ids': selectedKeys.value };        
 
         const r = await assetStore.deleteAssets(payload);
 
         selectedKeys.value = [];
+        clearSelected.value += 1;
+
+        const url = appStore.getAppUrl + "/img/delete";
 
         for(let id of r.data.data.asset_ids) {
-            assetStore.removeAssetFromStore(id);
-        }
+
+            assetStore.removeAssetFromStore(id);       
+
+            const payload = {
+                entity_type: "asset",
+                entity_id: Number(id)
+            }
+            const r = await axios.request({
+                url,
+                method: "DELETE",
+                data: payload
+            });     
+        }    
+      
 
         // success → show confirmation
         messageStore.setFlashMessagesList(
             [r.data.message || "Asset(s) deleted successfully."],
             "flash-message--blue"
-        );
-
-        
-
+        );       
 
     } catch (err: any) {        
 
@@ -235,6 +275,7 @@ async function deleteAssets() {
         );
     } finally {
         isDeleteModalOpen.value = false;
+        dashboardStore.setIsLoading(false);
     }
 }
 

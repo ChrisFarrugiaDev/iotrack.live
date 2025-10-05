@@ -81,6 +81,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import DeviceUpdateView from './DeviceUpdateView.vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { useRoute, useRouter } from 'vue-router';
+import { useDashboardStore } from '@/stores/dashboardStore';
 
 // --- Router -------------------------------------------------------
 const route = useRoute();
@@ -97,6 +98,8 @@ const organisationStore = useOrganisationStore();
 const { getOrganisationScope } = storeToRefs(organisationStore);
 
 const messageStore = useMessageStore();
+
+const dashboardStore = useDashboardStore();
 
 // --- Reactive State -----------------------------------------------
 // Search/filter/pagination UI state
@@ -232,6 +235,9 @@ async function deleteDevices() {
 
     try {
         isDeleteModalOpen.value = false;
+
+        dashboardStore.setIsLoading(true);
+
         var payload = { 'device_ids': selectedKeys.value };
 
         const r = await deviceStore.deleteDevices(payload);
@@ -265,7 +271,7 @@ async function deleteDevices() {
             "flash-message--orange"
         );
     } finally {
-
+        dashboardStore.setIsLoading(false);
     }
 }
 

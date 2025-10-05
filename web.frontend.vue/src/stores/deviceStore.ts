@@ -158,11 +158,11 @@ export const useDeviceStore = defineStore('deviceStore', () => {
             ...data.telemetry.elements,
         };
 
-        if (enableAnimation) {
+        if (enableAnimation && ( newLat + newLng )) {
             // Smooth movement
             const path = util.divideLine([curLat, curLng], [newLat, newLng], 40);
             queueMovement(data.device_id, dev, path, 25);
-        } else {
+        } else if ( newLat + newLng ) {
             // Snap instantly to new position
             dev.last_telemetry.latitude = newLat;
             dev.last_telemetry.longitude = newLng;
