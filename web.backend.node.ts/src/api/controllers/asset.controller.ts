@@ -43,7 +43,9 @@ class AssetController {
     // Create new asset, optionally with attached device
     static async store(request: FastifyRequest, reply: FastifyReply) {
         try {
-            const { name, asset_type, organisation_id, device_id } = (request as any).body;
+            const { name, asset_type, organisation_id, device_id, attributes } = (request as any).body;
+
+            console.log(">>",{attributes})
 
             // Organisation access check
             const accessibleOrgsByUser = await AccessProfileController.computeAccessibleOrganisationIds(
@@ -110,8 +112,10 @@ class AssetController {
             const assetData: any = {
                 name,
                 asset_type,
+                attributes,
                 organisations: { connect: { id: BigInt(organisation_id) } },
             };
+
             if (device_id) {
                 assetData.devices = { connect: { id: BigInt(device_id) } };
             }

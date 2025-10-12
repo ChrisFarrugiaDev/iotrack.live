@@ -66,6 +66,8 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     async function createAsset(payload: Record<string, any>) {
         try {
+            console.log(payload)
+            
             const url = `${appStore.getAppUrl}/api/asset`;
             const result = await axios.post(url, payload);
             return result;

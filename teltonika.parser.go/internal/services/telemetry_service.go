@@ -28,30 +28,19 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 	merged := old
 
 	// Only update fields if the new value is non-zero/non-empty
-	if telemetry.Timestamp != "" {
-		merged.Timestamp = telemetry.Timestamp
-	}
-	if telemetry.Priority != 0 {
-		merged.Priority = telemetry.Priority
-	}
-	if telemetry.Longitude != 0 {
+	merged.Timestamp = telemetry.Timestamp
+	merged.Priority = telemetry.Priority
+
+	if telemetry.Longitude > 0 {
 		merged.Longitude = telemetry.Longitude
 	}
-	if telemetry.Latitude != 0 {
+	if telemetry.Latitude > 0 {
 		merged.Latitude = telemetry.Latitude
 	}
-	if telemetry.Altitude != 0 {
-		merged.Altitude = telemetry.Altitude
-	}
-	if telemetry.Angle != 0 {
-		merged.Angle = telemetry.Angle
-	}
-	if telemetry.Satellites != 0 {
-		merged.Satellites = telemetry.Satellites
-	}
-	if telemetry.Speed != 0 {
-		merged.Speed = telemetry.Speed
-	}
+	merged.Altitude = telemetry.Altitude
+	merged.Angle = telemetry.Angle
+	merged.Satellites = telemetry.Satellites
+	merged.Speed = telemetry.Speed
 
 	// Merge 'Elements' map key-by-key; initialize if needed
 	if merged.Elements == nil {

@@ -1,23 +1,18 @@
 <template>
-    <form class="vform mt-16" autocomplete="off" >
+    <form class="vform mt-16" autocomplete="off">
         <TheFlashMessage></TheFlashMessage>
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }" @click="clearMessage">
             <div class="vform__group mt-7">
                 <label class="vform__label" for="device_id">Asset Name<span class="vform__required">*</span></label>
-                <input v-model.trim="form.name" 
-                    :class="{ 'vform__input--error': errors.name }" class="vform__input" 
-                    id="device_id" type="text"
-                    placeholder="Enter asset name" :disabled="confirmOn">
+                <input v-model.trim="form.name" :class="{ 'vform__input--error': errors.name }" class="vform__input"
+                    id="device_id" type="text" placeholder="Enter asset name" :disabled="confirmOn">
                 <p class="vform__error">{{ errors.name }}</p>
             </div>
             <div class="vform__group mt-7">
                 <label class="vform__label">Asset Type<span class="vform__required">*</span></label>
-                <VueSelect v-model="form.asset_type" 
-                    :shouldAutofocusOption="false" 
-                    :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.asset_type)]" class="vform__group"
-                    :options="[
+                <VueSelect v-model="form.asset_type" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.asset_type)]" class="vform__group" :options="[
                         { label: 'Vehicle', value: 'vehicle' },
                         { label: 'Equipment / Asset', value: 'asset' },
                         { label: 'Personal', value: 'personal' },
@@ -29,27 +24,102 @@
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }" @click="clearMessage">
             <div class="vform__group mt-7">
                 <label class="vform__label">Organisation<span class="vform__required">*</span></label>
-                <VueSelect v-model="form.organisation_id" 
-                    :shouldAutofocusOption="false" 
-                    :isDisabled="confirmOn"
+                <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
                     :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]" class="vform__group"
-                    :options="getOrganisations" 
-                    placeholder="" />
+                    :options="getOrganisations" placeholder="" />
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>
             <div class="vform__group mt-7">
                 <label class="vform__label">Device</label>
-                <VueSelect v-model="form.device_id" 
-                    :shouldAutofocusOption="false" 
-                    :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.device_id)]" class="vform__group" 
+                <VueSelect v-model="form.device_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.device_id)]" class="vform__group"
                     :options="getDevices" placeholder="" />
                 <p class="vform__error">{{ errors.device_id }}</p>
             </div>
         </div>
 
+        <!-- Vehicle fields -->
+        <div v-if="form.asset_type == 'vehicle'">
+            <div class="vheading--4 mt-12 mb-2">Vehicle</div>
+
+            <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Registration No.</label>
+                    <input v-model="form.vehicle.registration_number" class="vform__input" type="text"
+                        placeholder="e.g. ABC-123" :disabled="confirmOn">
+                </div>
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Make</label>
+                    <input v-model="form.vehicle.make" class="vform__input" type="text" placeholder="Enter make"
+                        :disabled="confirmOn">
+                </div>
+            </div>
+
+            <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Model</label>
+                    <input v-model="form.vehicle.model" class="vform__input" type="text" placeholder="Enter model"
+                        :disabled="confirmOn">
+                </div>
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Year</label>
+                    <input v-model="form.vehicle.year" class="vform__input" type="number" placeholder="Enter year"
+                        :disabled="confirmOn">
+                </div>
+            </div>
+
+            <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Color</label>
+                    <input v-model="form.vehicle.color" class="vform__input" type="text" placeholder="Enter color"
+                        :disabled="confirmOn">
+                </div>
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Fuel Type</label>
+                    <input v-model="form.vehicle.fuel_type" class="vform__input" type="text"
+                        placeholder="Enter fuel type" :disabled="confirmOn">
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Personal fields -->
+        <div v-if="form.asset_type == 'personal'">
+            <div class="vheading--4 mt-12 mb-2">Personal</div>
+
+            <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Full Name</label>
+                    <input v-model="form.personal.full_name" class="vform__input" type="text"
+                        placeholder="Enter full name" :disabled="confirmOn">
+                </div>
+                <div class="vform__group mt-7">
+                    <label class="vform__label">Phone Number</label>
+                    <input v-model="form.personal.phone_number" class="vform__input" type="text"
+                        placeholder="e.g. +356 9999 9999" :disabled="confirmOn">
+                </div>
+            </div>
+
+            <div class="vform__group--textarea mt-7 w-full">
+                <label class="vform__label">Info</label>
+                <textarea v-model="form.personal.info" class="vform__input vform__input--textarea"
+                    placeholder="Additional information" rows="3" :disabled="confirmOn"></textarea>
+            </div>
+        </div>
+
+        <!-- Asset fields -->
+        <div v-if="form.asset_type == 'asset'">
+            <div class="vheading--4 mt-12 mb-2">Equipment / Asset</div>
+            <div class="vform__group--textarea mt-7 w-full">
+                <label class="vform__label">Info</label>
+                <textarea v-model="form.asset.info" class="vform__input vform__input--textarea"
+                    placeholder="Additional information" rows="3" :disabled="confirmOn"></textarea>
+            </div>
+        </div>
+
         <div class="vform__row mt-9 ">
-            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateAsset">Register Asset</button>
+            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateAsset">Register
+                Asset</button>
             <button v-if="confirmOn" class="vbtn vbtn--zinc-lt  mt-3" @click.prevent="confirmOn = false">Cancel</button>
             <button v-if="confirmOn" class="vbtn vbtn--sky  mt-3" @click.prevent="updateAsset">Confirm</button>
         </div>
@@ -105,15 +175,29 @@ const confirmOn = ref(false);
 const asset = ref<null | Asset>(null);
 
 const form = reactive({
-    id: null as null | string,
     name: null as null | string,
     asset_type: 'vehicle' as string,      // default
     organisation_id: null as null | string,
     device_id: null as null | string,     // optional: attach a device
+    _device_id: null as null | string,
+
+    vehicle: {
+        registration_number: null as string | null,
+        make: null as string | null,
+        model: null as string | null,
+        year: null as number | null,
+        color: null as string | null,
+        fuel_type: null as string | null,
+    },
+    personal: {
+        full_name: null as string | null,
+        phone_number: null as string | null,
+        info: null as string | null,
+    },
+    asset: {
+        info: null as string | null,
+    }
 });
-
-
-
 
 
 // Single sentinel representing "no device linked"
@@ -163,8 +247,8 @@ const getDevices = computed(() => {
         }));
 
     // If the asset has a device attached, always show it at the top, marked as Linked
-    if (form.id && devices[form.id]) {
-        const d = devices[form.id];
+    if (form._device_id && devices[form._device_id]) {
+        const d = devices[form._device_id];
         availableDevices.unshift({
             label: d.model
                 ? `${d.model} ${d.external_id} — Linked`
@@ -199,7 +283,7 @@ const getDevices = computed(() => {
                 value: NO_DEVICE,
                 disabled: true,
             },
-            
+
         ];
     }
 
@@ -212,27 +296,54 @@ const getDevices = computed(() => {
 watch(
     [() => props.assetUuid, getAssets, uuidToIdMap],
     ([assetUuid, assets, idMap]) => {
-        if (assets && assetUuid) {
 
-            const a: any = assets[idMap[assetUuid]];
+        if (!assetUuid || !assets || !idMap) return;
 
-            if (a) {
-                form.name = a.name ?? null;
-                form.asset_type = a.asset_type ?? null;
-               form.organisation_id = a.organisation_id != null ? String(a.organisation_id) : null;
 
-                let loadedDeviceId = NO_DEVICE;
+        const assetId = idMap[assetUuid];
+        const a: any = assets[assetId];
 
-                if (Array.isArray(a.devices) && a.devices.length > 0 && a.devices[0].id) {
-                    loadedDeviceId = String(a.devices[0].id);
-                }
+        if (!a) return;
 
-                form.device_id = loadedDeviceId;
-                form.id = loadedDeviceId;
+        // Top-level fields
+        form.name = a.name ?? null;
+        form.asset_type = a.asset_type ?? 'vehicle';
+        form.organisation_id = a.organisation_id != null ? String(a.organisation_id) : null;
 
-                asset.value = a;
-            }
+        // Devices
+        let loadedDeviceId = NO_DEVICE;
+        if (Array.isArray(a.devices) && a.devices.length > 0 && a.devices[0].id) {
+            loadedDeviceId = String(a.devices[0].id);
         }
+
+        form.device_id = loadedDeviceId;
+        form._device_id = loadedDeviceId;
+
+
+        // Attributes - load safely with fallback for missing keys
+        const attrs = a.attributes ?? {};
+
+        Object.assign(form.vehicle, {
+            registration_number: attrs.vehicle?.registration_number ?? null,
+            make: attrs.vehicle?.make ?? null,
+            model: attrs.vehicle?.model ?? null,
+            year: attrs.vehicle?.year ?? null,
+            color: attrs.vehicle?.color ?? null,
+            fuel_type: attrs.vehicle?.fuel_type ?? null,
+        });
+
+        Object.assign(form.personal, {
+            full_name: attrs.personal?.full_name ?? null,
+            phone_number: attrs.personal?.phone_number ?? null,
+            info: attrs.personal?.info ?? null,
+        });
+
+        Object.assign(form.asset, {
+            info: attrs.asset?.info ?? null,
+        });
+
+        asset.value = a;
+
     },
     { immediate: true }
 );
@@ -264,7 +375,7 @@ function buildUpdatePayload(form: Form, current: Asset) {
 
     // 1) Top-level fields (excluding id + attributes-related inputs)
     const {
-        id: _omitId,
+        _device_id: _omitId,
         ...coreFields
     } = toRaw(form);
 
@@ -286,7 +397,7 @@ function buildUpdatePayload(form: Form, current: Asset) {
     }
 
     // - Device ID update logic ------------------------
-  
+
     if (asset.value?.devices.length) {
         // Asset currently has a device linked
         const currentDeviceId = String(asset.value.devices[0].id);
@@ -299,7 +410,7 @@ function buildUpdatePayload(form: Form, current: Asset) {
             // User chose a different device (not detaching and not the same)
             payload["device_id"] = form.device_id;
         }
-    } else { 
+    } else {
         // If no device, attach if user picks valid device
         const isAttach = ![null, "-1", 0, "0"].includes(form.device_id);
         if (isAttach) {
@@ -312,8 +423,14 @@ function buildUpdatePayload(form: Form, current: Asset) {
     // 2) Attributes merge/diff (preserve unknown attrs, update/remove iccid/msisdn)
     const curAttrs = { ...(current.attributes ?? {}) };
 
-    // placeholder for asset att - see update device
-    // ...
+    if (form.asset_type === 'vehicle') {
+        curAttrs.vehicle = { ...form.vehicle };
+    } else if (form.asset_type === 'personal') {
+        curAttrs.personal = { ...form.personal };
+    } else if (form.asset_type === 'asset') {
+        curAttrs.asset = { ...form.asset };
+    }
+
 
     // only include attributes if they actually changed
     const prevAttrsJson = JSON.stringify(current.attributes ?? {});
@@ -333,7 +450,7 @@ async function updateAsset() {
 
 
     if (Object.keys(payload).length == 0) {
-        
+
         messageStore.setFlashMessagesList(
             ['No changes detected.'],
             'flash-message--orange'
@@ -371,11 +488,11 @@ async function updateAsset() {
         messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
 
     } catch (err: any) {
-    
+
         // Try to extract server-side validation errors
         const fieldErrors = err?.response?.data?.error?.details?.fieldErrors;
 
-  
+
         if (fieldErrors && typeof fieldErrors === "object") {
             for (const key in fieldErrors) {
                 if (Object.prototype.hasOwnProperty.call(errors.value, key)) {
@@ -401,7 +518,7 @@ async function updateAsset() {
 
         // Fallback for totally unexpected errors
         messageStore.setFlashMessagesList(
-            [ message ?? "An unexpected error occurred. Please try again later."],
+            [message ?? "An unexpected error occurred. Please try again later."],
             'flash-message--orange'
         );
 

@@ -15,12 +15,14 @@
     letter-spacing: 1px;
 }
 
-.vheading--4{
-    font-size: .9rem;
-    font-weight: 400;
+.vheading--4 {
+    font-size: 0.85rem;
+    font-weight: 500;
     text-transform: uppercase;
     color: var(--color-text-2);
     font-family: var(--font-display);
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--color-text-4);
+    letter-spacing: 0.08em;
+    padding-bottom: 0.4rem;
+
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text-4) 60%, transparent);
 }

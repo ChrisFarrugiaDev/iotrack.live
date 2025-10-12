@@ -1,7 +1,8 @@
 <template>
-    <div>
-        <CustomMarker :options="markerOptions">
-            <svg :style="{ 'opacity': .85, }" v-if="showStationary" class="marker" xmlns="http://www.w3.org/2000/svg"
+    <div >
+        <CustomMarker :options="markerOptions" >
+            <svg v-if="showStationary" @click="setActiveInfoWindow!(asset.id)" 
+                class="cursor-pointer" :style="{ 'opacity': .85, }"   xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 32 32" :width="markerSize" :height="markerSize" aria-label="vehicle-stationary">
                 <defs>
                     <filter id="marker-shadow" x="-30%" y="-30%" width="160%" height="160%">
@@ -19,7 +20,8 @@
                 <!-- Ignition badge -->
                 <circle cx="16" cy="16" r="3" fill="none" :stroke="lineColor" stroke-width="0" />
             </svg>
-            <svg :style="{ 'opacity': .85, }" v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"
+            <svg v-else @click="setActiveInfoWindow!(asset.id)"
+                 class="cursor-pointer" :style="{ 'opacity': .85, }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"
                 :width="markerSize * 1.2" :height="markerSize * 1.2" aria-label="vehicle-moving">
                 <defs>
                     <filter id="marker-shadow" x="-30%" y="-30%" width="300%" height="300%">
@@ -43,7 +45,7 @@
             </svg>
 
         </CustomMarker>
-        <InfoWindow :asset="asset" :markerOptions="markerOptions" :telemetry="telemetry" ></InfoWindow>
+        
 
         <!-- <AdvancedMarker :options="markerOptions"></AdvancedMarker> -->
     </div>
@@ -54,10 +56,10 @@
 <script setup lang="ts">
 
 import { CustomMarker, AdvancedMarker } from 'vue3-google-map'
-import { computed, ref, shallowRef, watch } from "vue";
+import { computed, inject, ref, shallowRef, watch } from "vue";
 import { useDeviceStore } from "@/stores/deviceStore";
 import type { Asset } from "@/types/asset.type";
-import InfoWindow from './InfoWindow.vue';
+
 
 
 // - Props -------------------------------------------------------------
@@ -66,6 +68,10 @@ const props = defineProps<{
     telemetry: any,
     mapZoom: number
 }>();
+
+// - provide & inject --------------------------------------------------
+
+const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow')
 
 // - Store -------------------------------------------------------------
 
@@ -229,4 +235,5 @@ watch(
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly</style>
+// Placeholder comment to ensure global styles are imported correctly
+</style>

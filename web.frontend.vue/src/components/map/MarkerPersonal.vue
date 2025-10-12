@@ -1,7 +1,8 @@
 <template>
     <div>
-        <CustomMarker :options="markerOptions">
-            <svg :style="{ opacity: 0.85 }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" 
+        <CustomMarker :options="markerOptions" >
+            <svg @click="setActiveInfoWindow!(asset.id)"  
+                class="cursor-pointer" :style="{ opacity: 0.85 }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" 
                 :width="markerSize * 1" :height="markerSize * 1" aria-label="personal-marker">
                 <defs>
                     <!-- Shadow filter -->
@@ -28,7 +29,7 @@
 <script setup lang="ts">
 import { useDeviceStore } from '@/stores/deviceStore';
 import type { Asset } from '@/types/asset.type';
-import { ref, watch } from 'vue';
+import { inject, ref, watch } from 'vue';
 import { computed, shallowRef } from 'vue';
 import { CustomMarker, AdvancedMarker } from 'vue3-google-map';
 
@@ -38,6 +39,10 @@ const props = defineProps<{
     telemetry: any,
     mapZoom: number
 }>();
+
+// - provide & inject --------------------------------------------------
+
+const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow')
 
 // - Store -------------------------------------------------------------
 
@@ -131,4 +136,7 @@ watch(
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly</style>
+// .cursor-pointer {
+//     cursor: pointer !important;
+// }
+</style>

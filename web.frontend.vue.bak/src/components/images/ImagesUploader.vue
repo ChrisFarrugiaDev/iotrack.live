@@ -3,7 +3,7 @@
 		<FilePond ref="pond"
 		name="assetImages"
 		:allowImagePreview="true"
-		class-name="my-pond"
+	
 		max-files="8"
 		:allow-multiple="true"
 		:allow-reorder="true"
@@ -96,64 +96,56 @@ function onAnyChange() {
 </script>
 
 <!-- --------------------------------------------------------------- -->
-
-<style lang="css">
-.filepond--root,
-.filepond--drop-label {
-	min-height: 8rem !important;
+<style scoped>
+/* scope anchor: either your wrapper or the class-name on FilePond */
+.uploader :deep(.filepond--root),
+.uploader :deep(.filepond--drop-label) {
+  min-height: 8rem !important; /* FilePond can override height, so force it */
 }
 
-.filepond--drop-label {
-
-	font-family: "Montserrat", sans-serif;
-	color: var(--color-blue-500);
-	background-color: var(--color-bg-hi);
-	color: var(--color-text-1);
-	font-family: var(--font-mono);
-	font-size: .95rem;
-	font-weight: 400;
-	border: 1px solid var(--color-zinc-300);
-	border-radius: var(--radius-md, 0.375rem);
-
+/* Drop label (the visible “Drop files here” area) */
+.uploader :deep(.filepond--drop-label) {
+  font-family: var(--font-mono) !important;
+  color: var(--color-text-1) !important;
+  background-color: var(--color-bg-hi) !important;
+  font-size: .95rem !important;
+  font-weight: 400 !important;
+  border: 1px solid var(--color-zinc-300) !important;
+  border-radius: var(--radius-md, 0.375rem) !important;
 }
 
-.filepond--list {
-	display: flex !important;
-	flex-direction: column;
-
+/* List & items */
+.uploader :deep(.filepond--list) {
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.filepond--item {
-	max-width: 10rem;
-
-	top: 2rem;
-	left: -1rem;
-	right: -1rem;
-
-	border: 1px solid var(--color-zinc-300);
-	border-radius: var(--radius-lg, 0.375rem);
-	overflow: hidden;
+.uploader :deep(.filepond--item) {
+  max-width: 10rem !important;
+  top: 2rem !important;
+  left: -1rem !important;
+  right: -1rem !important;
+  border: 1px solid var(--color-zinc-300) !important;
+  border-radius: var(--radius-lg, 0.375rem) !important;
+  overflow: hidden !important;
 }
 
-.filepond--drip {
-	background-color: transparent;
+/* Panels / backgrounds */
+.uploader :deep(.filepond--drip),
+.uploader :deep(.filepond--panel-root) {
+  background-color: transparent !important;
 }
 
-.filepond--panel-root {
-	background-color: transparent;
-}
-
+/* Mobile tweaks */
 @media (max-width: 640px) {
-	.filepond--item {
-		max-width: 100%;
-
-		top: 2rem;
-		left: auto;
-		right: auto;
-
-		border: 1px solid var(--color-zinc-300);
-		border-radius: var(--radius-lg, 0.375rem);
-		overflow: hidden;
-	}
+  .uploader :deep(.filepond--item) {
+    max-width: 100% !important;
+    top: 2rem !important;
+    left: auto !important;
+    right: auto !important;
+    border: 1px solid var(--color-zinc-300) !important;
+    border-radius: var(--radius-lg, 0.375rem) !important;
+    overflow: hidden !important;
+  }
 }
 </style>

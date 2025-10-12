@@ -212,10 +212,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column; 
     background-color: transparent;
-
-
-
-
+    
     @include respondMinHeight(688) {
         background-color: transparent;
     }
@@ -296,19 +293,14 @@ onMounted(() => {
 
         @include respondMinHeight(649) {
         &--first {
-                border-top-right-radius: $border-radius;         
+                border-top-right-radius: var(--radius-sm);         
             }
             &--last {
-                border-bottom-right-radius: $border-radius;
+                border-bottom-right-radius: var(--radius-sm);
                 border-bottom: 1px solid var(--color-zinc-300);
 
             }
-        }
-
-
-   
-
-  
+        } 
 
         // Hover styles
         &:hover {

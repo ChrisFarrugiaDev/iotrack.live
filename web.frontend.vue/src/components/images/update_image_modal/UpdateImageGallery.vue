@@ -11,7 +11,7 @@
                 
                     <img :src="`${getAppUrl}/${image.url}`"  alt="Preview"  class="image-grid__img" />
                     
-                    <button v-if="getPrimaryImg.imageId !== image.imageId" class="image-grid__remove" :data-id="image.imageId" @click="deleteImage">×</button>
+                    <button v-if="getPrimaryImg?.imageId !== image?.imageId" class="image-grid__remove" :data-id="image.imageId" @click="deleteImage">×</button>
             </div>
         </div>
         

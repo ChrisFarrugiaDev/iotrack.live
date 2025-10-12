@@ -178,6 +178,8 @@ function initCreateAsset() {
 }
 
 async function createAsset() {
+	
+	dashboardStore.setIsLoading(true);
 
 	try {
 		const {
@@ -200,6 +202,7 @@ async function createAsset() {
 		assetStore.addAssetToStore(r.data.data.asset);
 
 		const newAsset = r.data.data.asset;
+
 		await uploadImages(newAsset);
 
 		// create images
@@ -249,6 +252,7 @@ async function createAsset() {
 
 	} finally {
 		confirmOn.value = false;
+		dashboardStore.setIsLoading(false);
 	}
 }
 
@@ -256,7 +260,10 @@ async function uploadImages(newAsset: Asset) {
 
 	dashboardStore.setIsLoading(true);
 
-	if (images.value.length == 0) return;
+	if (images.value.length == 0) {
+		dashboardStore.setIsLoading(false);
+		return
+	};
 
 	const formData = new FormData();
 	formData.append("entity_type", "asset");

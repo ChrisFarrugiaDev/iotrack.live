@@ -56,7 +56,7 @@
         </template>
     </VModal>
     
-    <UpdateImagesModal v-model="isUpdateImageModalOpen" :selectedAssetID="selectedAssetID"></UpdateImagesModal>
+    <UpdateImagesModal v-model="isUpdateImageModalOpen" :selectedAssetID="selectedAssetID" size="lg"></UpdateImagesModal>
 
 </template>
 
@@ -76,7 +76,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from '@/axios';
 import { useAppStore } from '@/stores/appStore';
 import { useDashboardStore } from '@/stores/dashboardStore';
-import UpdateImagesModal from '@/components/images/UpdateImagesModal.vue';
+import UpdateImagesModal from '@/components/images/update_image_modal/UpdateImagesModal.vue';
 
 
 // - Store -------------------------------------------------------------

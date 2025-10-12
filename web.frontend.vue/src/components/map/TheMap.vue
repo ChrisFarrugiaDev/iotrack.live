@@ -3,21 +3,31 @@
 		<GoogleMap v-if="apiKey" :api-key="apiKey" :center="center" :zoom="15" style="width: 100%; height: 100vh"
 			:mapId="'9e8ca8994cbac798'"  ref="mapRef" @zoom_changed="handleZoomChanged">
 			<div v-for="asset in getAssetsWithDevice">
+
 				<MarkerVehicle v-if="asset.asset_type == 'vehicle'" 
 					:asset="asset" 
 					:map-zoom="mapZoom" 
-					:telemetry="asset.devices[0].last_telemetry">					
+					:telemetry="asset.devices[0].last_telemetry"
+					
+					>					
 				</MarkerVehicle>
+
 				<MarkerPersonal v-else-if="asset.asset_type == 'personal'"
 					:asset="asset" 
 					:map-zoom="mapZoom" 
-					:telemetry="asset.devices[0].last_telemetry" >
+					:telemetry="asset.devices[0].last_telemetry"
+					 >
 				</MarkerPersonal>
+
 				<MarkerAsset v-else
 					:asset="asset" 
 					:map-zoom="mapZoom" 
-					:telemetry="asset.devices[0].last_telemetry" >
+					:telemetry="asset.devices[0].last_telemetry"
+					 >
 				</MarkerAsset>
+
+				<InfoWindow v-if="getActiveInfoWindow == asset.id" :asset="asset" :telemetry="asset.devices[0].last_telemetry" ></InfoWindow>
+
 			</div>
 		</GoogleMap>
 		<div v-else>Loading map...</div>
@@ -30,11 +40,13 @@
 import { useAssetStore } from "@/stores/assetStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { storeToRefs } from "pinia";
-import { onBeforeMount, onMounted, ref, watch } from "vue";
+import { onBeforeMount, onMounted, provide, ref, watch } from "vue";
 import { GoogleMap } from "vue3-google-map";
 import MarkerVehicle from "./MarkerVehicle.vue";
 import MarkerPersonal from "./MarkerPersonal.vue";
 import MarkerAsset from "./MarkerAsset.vue";
+import InfoWindow from "./InfoWindow.vue";
+import { useMapStore } from "@/stores/mapStore";
 
 // -- store ------------------------------------------------------------
 const settingsStore = useSettingsStore();
@@ -42,6 +54,9 @@ const { getMapsApiKey } = storeToRefs(settingsStore);
 
 const assetStore = useAssetStore();
 const { getAssetsWithDevice } = storeToRefs(assetStore)
+
+const mapStore = useMapStore();
+const { getActiveInfoWindow } = storeToRefs(mapStore);
 
 
 // -- data -------------------------------------------------------------
@@ -55,7 +70,6 @@ const mapZoom = ref<number>(15)
 // This will run if getMapsApiKey is a computed ref or a getter that updates reactively
 watch(getMapsApiKey, (newKey) => {
 	apiKey.value = newKey;
-
 
 }, { immediate: true }); // Run right away
 
@@ -101,6 +115,14 @@ function extendsMapToMarkers() {
 	if (!bounds.isEmpty()) mapRef.value.map.fitBounds(bounds);
 }
 
+function setActiveInfoWindow(id: string | null) {
+
+	mapStore.setActiveInfoWindow(id);
+}
+
+// - provide & inject --------------------------------------------------
+
+provide('setActiveInfoWindow', setActiveInfoWindow);
 
 </script>
 <!-- --------------------------------------------------------------- -->

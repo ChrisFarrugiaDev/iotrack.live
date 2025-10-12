@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import type { Device } from '@/types/device.type';
 import axios from '@/axios';
 import { useAppStore } from './appStore';
-import * as util from "@/util";
+import * as util from "@/utils/utils";
 
 export const useDeviceStore = defineStore('deviceStore', () => {
 

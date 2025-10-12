@@ -3,31 +3,24 @@
         <!-- Toolbar -->
         <div v-if="selectedImage">
 
-            <div  class="image-editor__toolbar" >
-                <button class="image-editor__btn"  :disabled="!selectedImage" @click="updatePrimaryImage">
+            <div class="image-editor__toolbar">
+                <button class="image-editor__btn" :disabled="!selectedImage" @click="updatePrimaryImage">
                     <svg class="image-editor__svg">
                         <use xlink:href="@/ui/svg/sprite.svg#icon-crop"></use>
                     </svg>
                     <span>Set Primary IMG</span>
                 </button>
             </div>
-    
-            <Cropper  ref="cropperRef" :src="`${getAppUrl}/${selectedImage.url}`"
-                class="image-editor__cropper" 
-                :key="selectedImage.imageId"
-                :stencil-props="{
+
+            <Cropper ref="cropperRef" :src="`${getAppUrl}/${selectedImage.url}`" @ready="onReady"
+                class="image-editor__cropper" :key="selectedImage.imageId" :stencil-props="{
                     // handlers: {},
                     // movable: false,
                     // resizable: false,
                     aspectRatio: 1,
                 }" 
-                :areaClass="'mycropper__area'" 
-                :backgroundClass="'mycropper__bg'" 
-                image-restriction="stencil" 
-                v-bind="primaryProps"  
-                priority="visible-area" 
-                :transitions="false"
-            />
+                image-restriction="stencil"
+                v-bind="primaryProps" priority="visible-area" :transitions="false" />
 
         </div>
 
@@ -47,10 +40,10 @@ import { storeToRefs } from 'pinia';
 import { useAssetStore } from '@/stores/assetStore';
 
 const initialCoordinates = {
-  left: 0,
-  top: 0,
-  width: 20,
-  height: 20,
+    left: 0,
+    top: 0,
+    width: 20,
+    height: 20,
 }
 
 // - Types -------------------------------------------------------------
@@ -68,14 +61,14 @@ const assetStore = useAssetStore();
 // - Props & Emits -----------------------------------------------------
 
 const props = defineProps<{
-    selectedImage: Img | null, 
+    selectedImage: Img | null,
     selectedAssetID: string | null,
 }>();
 
 const emit = defineEmits<{
 
     (e: 'update-primary-image'): void
-   
+
 }>();
 
 // - Store -------------------------------------------------------------
@@ -88,35 +81,41 @@ const cropperRef = ref<any>(null);
 // - Computed ----------------------------------------------------------
 
 const getPrimaryImg = computed(() => {
-  if (!props.selectedAssetID) return null
-  const currentAsset = assetStore.getAssets?.[props.selectedAssetID]
-  return currentAsset?.attributes?.primary_image || null
+    if (!props.selectedAssetID) return null
+    const currentAsset = assetStore.getAssets?.[props.selectedAssetID]
+    return currentAsset?.attributes?.primary_image || null
 })
 
 const getCoordinates = computed(() => {
-  if (!props.selectedAssetID) return null
-  const currentAsset = assetStore.getAssets?.[props.selectedAssetID]
-  return currentAsset?.attributes?.primary_image?.coordinates || null
+    if (!props.selectedAssetID) return null
+    const currentAsset = assetStore.getAssets?.[props.selectedAssetID]
+    return currentAsset?.attributes?.primary_image?.coordinates || null
 })
 
 const isPrimary = computed(() =>
-  getPrimaryImg.value &&
-  props.selectedImage &&
-  props.selectedImage.imageId === getPrimaryImg.value.imageId
+    getPrimaryImg.value &&
+    props.selectedImage &&
+    props.selectedImage.imageId === getPrimaryImg.value.imageId
 )
 
 const primaryProps = computed(() => {
-  const coords = getCoordinates.value
+    const coords = getCoordinates.value
 
-  if (isPrimary.value && coords) {
-    return {
-      defaultSize: { width: coords.width, height: coords.height },
-      defaultPosition: { left: coords.left, top: coords.top },
+    if (isPrimary.value && coords) {
+        return {
+            defaultSize: { width: coords.width, height: coords.height },
+            defaultPosition: { left: coords.left, top: coords.top },
+        }
     }
-  }
 
-  return {}
+    return {}
 })
+
+function onReady() {
+    const inst = cropperRef.value
+    if (!inst) return
+    const { width, height } = inst.imageSize // provided by the instance 
+}
 
 
 // - Methods -----------------------------------------------------------
@@ -154,6 +153,7 @@ async function updatePrimaryImage() {
 <style scoped lang="scss">
 .image-editor {
     position: relative;
+
     &__stage {
         position: relative;
         background: black;
@@ -208,8 +208,14 @@ async function updatePrimaryImage() {
         justify-content: center;
         gap: .5rem;
         opacity: .75;
-        &:hover { opacity: 1; };
-        &:active  {
+
+        &:hover {
+            opacity: 1;
+        }
+
+        ;
+
+        &:active {
             color: var(--color-lime-500);
         }
     }
@@ -259,6 +265,4 @@ async function updatePrimaryImage() {
     min-height: 60vh;
     max-height: 77vh;
 }
-
-
 </style>
