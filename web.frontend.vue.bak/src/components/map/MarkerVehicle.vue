@@ -59,6 +59,7 @@ import { CustomMarker, AdvancedMarker } from 'vue3-google-map'
 import { computed, inject, ref, shallowRef, watch } from "vue";
 import { useDeviceStore } from "@/stores/deviceStore";
 import type { Asset } from "@/types/asset.type";
+import { useMapStore } from '@/stores/mapStore';
 
 
 
@@ -71,11 +72,16 @@ const props = defineProps<{
 
 // - provide & inject --------------------------------------------------
 
-const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow')
+const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow');
+
+const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
 
 // - Store -------------------------------------------------------------
 
 const deviceStore = useDeviceStore();
+
+const mapStore = useMapStore();
+
 const device = deviceStore.useDevice(props.asset.devices[0].id);
 
 // - Data --------------------------------------------------------------
@@ -192,6 +198,22 @@ watch(
         ) {
             const brng = bearing(prev.lat, prev.lng, pos.lat, pos.lng);
             direction.value = brng; // 0..360, 0 = North, 90 = East
+        }
+    }
+    // { immediate: true }
+);
+
+// - Map Center Panning Loggic --------------------------------------------------
+watch(
+    () => ({
+        lat: device.value?.last_telemetry?._latitude ?? null,
+        lng: device.value?.last_telemetry?._longitude ?? null,
+    }),
+    (pos, prev) => {
+        if (pos.lat == null || pos.lng == null) return;
+
+        if (mapStore.getFollow == props.asset.id) {            
+            updateMapCenter!(pos.lat, pos.lng)       
         }
     }
     // { immediate: true }

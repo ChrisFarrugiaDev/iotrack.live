@@ -43,6 +43,91 @@
 
 		</div>
 
+		<div v-if="form.asset_type == 'vehicle'">
+			<div class="vheading--4 mt-12 mb-2">Vehicle</div>
+
+			<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+				<div class="vform__group mt-7">
+					<label class="vform__label" for="registration_number">Registration No.</label>
+					<input v-model.trim="form.vehicle.registration_number" class="vform__input" id="registration_number"
+						type="text" placeholder="e.g. ABC-123" :disabled="confirmOn">
+				</div>
+
+				<div class="vform__group mt-7">
+					<label class="vform__label">Make</label>
+					<input v-model="form.vehicle.make" type="text" class="vform__input" :disabled="confirmOn"
+						placeholder="Enter make" />
+				</div>
+			</div>
+
+			<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+				<div class="vform__group mt-7">
+					<label class="vform__label">Model</label>
+					<input v-model="form.vehicle.model" type="text" class="vform__input" :disabled="confirmOn"
+						placeholder="Enter model" />
+				</div>
+
+				<div class="vform__group mt-7">
+					<label class="vform__label">Year</label>
+					<input v-model="form.vehicle.year" type="number" class="vform__input" :disabled="confirmOn"
+						placeholder="Enter year" />
+				</div>
+			</div>
+
+			<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+				<div class="vform__group mt-7">
+					<label class="vform__label">Color</label>
+					<input v-model="form.vehicle.color" type="text" class="vform__input" :disabled="confirmOn"
+						placeholder="Enter color" />
+				</div>
+
+				<div class="vform__group mt-7">
+					<label class="vform__label">Fuel Type</label>
+					<input v-model="form.vehicle.fuel_type" type="text" class="vform__input" :disabled="confirmOn"
+						placeholder="Enter fuel type" />
+				</div>
+			</div>
+
+		</div>
+
+		<div v-if="form.asset_type == 'personal'">
+			<div class="vheading--4 mt-12 mb-2">Personal</div>
+
+			<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+				<div class="vform__group mt-7">
+					<label class="vform__label">Full Name</label>
+					<input v-model="form.personal.full_name" class="vform__input" type="text"
+						placeholder="Enter full name" :disabled="confirmOn" />
+				</div>
+
+				<div class="vform__group mt-7">
+					<label class="vform__label">Phone Number</label>
+					<input v-model="form.personal.phone_number" class="vform__input" type="text"
+						placeholder="e.g. +356 9999 9999" :disabled="confirmOn" />
+				</div>
+			</div>
+
+
+			<div class="vform__group--textarea mt-7 w-full">
+				<label class="vform__label">Info</label>
+				<textarea v-model="form.personal.info" class="vform__input vform__input--textarea"
+					placeholder="Additional information" rows="3" :disabled="confirmOn"></textarea>
+			</div>
+
+		</div>
+
+		<div v-if="form.asset_type == 'asset'">
+			<div class="vheading--4 mt-12 mb-2">Equipment / Asset</div>
+
+			<div class="vform__group--textarea mt-7 w-full">
+				<label class="vform__label">Info</label>
+				<textarea v-model="form.asset.info" class="vform__input vform__input--textarea"
+					placeholder="Additional information" rows="3" :disabled="confirmOn"></textarea>
+			</div>
+		</div>
+
+		<div class="vheading--4 mt-12 mb-10">Photos</div>
+
 		<ImagesUploader class="mt-6" @files-change="onFilesChange" :reset="reset"></ImagesUploader>
 
 		<div class="vform__row mt-9 ">
@@ -92,6 +177,22 @@ const form = reactive({
 	asset_type: 'vehicle' as string,      // default
 	organisation_id: null as null | string,
 	device_id: null as null | string,     // optional: attach a device
+	vehicle: {
+		registration_number: null as string | null,
+		make: null as string | null,
+		model: null as string | null,
+		year: null as number | null,
+		color: null as string | null,
+		fuel_type: null as string | null,
+	},
+	personal: {
+		full_name: null as string | null,
+		phone_number: null as string | null,
+		info: null as string | null,
+	},
+	asset: {
+		info: null as string | null,
+	}
 });
 
 const images = ref<UploaderItem[]>([]);
@@ -178,17 +279,32 @@ function initCreateAsset() {
 }
 
 async function createAsset() {
-	
+
 	dashboardStore.setIsLoading(true);
 
 	try {
 		const {
 			device_id,
+			vehicle,
+			personal,
+			asset,
 			...coreFields
 		} = form;
 
 		// Build 'attributes' only if fields are present 
 		const attributes: Record<string, any> = {};
+
+		switch (form.asset_type) {
+			case 'vehicle':
+				attributes.vehicle = vehicle
+				break;
+			case 'personal':
+				attributes.personal = personal
+				break;
+			case 'asset':
+				attributes.asset = asset
+				break;
+		}
 
 		const payload: Record<string, any> = {
 			...coreFields,
@@ -212,6 +328,23 @@ async function createAsset() {
 
 		form.name = "";
 		form.device_id = "";
+
+		Object.assign(form.vehicle, {
+			registration_number: null,
+			make: null,
+			model: null,
+			year: null,
+			color: null,
+			fuel_type: null,
+		});
+		Object.assign(form.personal, {
+			full_name: null,
+			phone_number: null,
+			info: null,
+		});
+		Object.assign(form.asset, {
+			info: null,
+		});
 
 
 	} catch (err: any) {
@@ -286,7 +419,7 @@ async function uploadImages(newAsset: Asset) {
 			primary_image
 		}
 
-		const payload = {attributes}
+		const payload = { attributes }
 
 		await assetStore.updatedAsset(newAsset.id, payload);
 
@@ -296,7 +429,7 @@ async function uploadImages(newAsset: Asset) {
 		}
 
 		assetStore.addAssetToStore(newAsset)
-	
+
 
 		images.value = [];
 		reset.value += 1;

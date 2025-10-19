@@ -38,7 +38,7 @@ import type { Asset } from '@/types/asset.type';
 import { inject, ref, watch } from 'vue';
 import { computed, shallowRef } from 'vue';
 import { CustomMarker, AdvancedMarker } from 'vue3-google-map';
-import InfoWindow from './InfoWindow.vue';
+import InfoWindow from './info_window/InfoWindow.vue';
 
 // - Props -------------------------------------------------------------
 const props = defineProps<{

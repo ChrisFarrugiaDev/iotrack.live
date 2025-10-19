@@ -1,8 +1,9 @@
 <template>
     <div >
         <CustomMarker :options="markerOptions" >
+    
             <svg v-if="showStationary" @click="setActiveInfoWindow!(asset.id)" 
-                class="cursor-pointer" :style="{ 'opacity': .85, }"   xmlns="http://www.w3.org/2000/svg"
+                class="cursor-pointer " :style="{ 'opacity': .85, }"   xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 32 32" :width="markerSize" :height="markerSize" aria-label="vehicle-stationary">
                 <defs>
                     <filter id="marker-shadow" x="-30%" y="-30%" width="160%" height="160%">
@@ -21,7 +22,7 @@
                 <circle cx="16" cy="16" r="3" fill="none" :stroke="lineColor" stroke-width="0" />
             </svg>
             <svg v-else @click="setActiveInfoWindow!(asset.id)"
-                 class="cursor-pointer" :style="{ 'opacity': .85, }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"
+                 class="cursor-pointer"  :style="{ 'opacity': .85, }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"
                 :width="markerSize * 1.2" :height="markerSize * 1.2" aria-label="vehicle-moving">
                 <defs>
                     <filter id="marker-shadow" x="-30%" y="-30%" width="300%" height="300%">
@@ -41,6 +42,7 @@
                         stroke-linejoin="round" />
                     <!-- ignition badge -->
                     <circle cx="20" cy="22.5" r="3.8" fill="none" stroke="none" />
+
                 </g>
             </svg>
 
@@ -59,6 +61,7 @@ import { CustomMarker, AdvancedMarker } from 'vue3-google-map'
 import { computed, inject, ref, shallowRef, watch } from "vue";
 import { useDeviceStore } from "@/stores/deviceStore";
 import type { Asset } from "@/types/asset.type";
+import { useMapStore } from '@/stores/mapStore';
 
 
 
@@ -71,11 +74,16 @@ const props = defineProps<{
 
 // - provide & inject --------------------------------------------------
 
-const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow')
+const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow');
+
+const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
 
 // - Store -------------------------------------------------------------
 
 const deviceStore = useDeviceStore();
+
+const mapStore = useMapStore();
+
 const device = deviceStore.useDevice(props.asset.devices[0].id);
 
 // - Data --------------------------------------------------------------
@@ -88,7 +96,10 @@ const markerOptions = shallowRef<Record<string, any>>({
     },
 });
 
+
 // - Computed ----------------------------------------------------------
+
+
 
 // (Optional) force-update fallback if needed
 // const markerKey = computed(() => device.value?.last_telemetry?.timestamp ?? 0);
@@ -197,6 +208,22 @@ watch(
     // { immediate: true }
 );
 
+// - Map Center Panning Loggic --------------------------------------------------
+watch(
+    () => ({
+        lat: device.value?.last_telemetry?._latitude ?? null,
+        lng: device.value?.last_telemetry?._longitude ?? null,
+    }),
+    (pos, prev) => {
+        if (pos.lat == null || pos.lng == null) return;
+
+        if (mapStore.getFollow == props.asset.id) {            
+            updateMapCenter!(pos.lat, pos.lng)       
+        }
+    }
+    // { immediate: true }
+);
+
 // - Is Moving Loggic --------------------------------------------------
 
 // Tunables
@@ -228,12 +255,56 @@ watch(
     { immediate: true }
 );
 
+
+
+const isFollowed = computed(()=>{
+    return mapStore.getFollow == props.asset.id;
+});
+
 // ---------------------------------------------------------------------
 
+watch(isFollowed, (v) => {
+ 
+    if (v) {
+        idleColor.value = "#22c65e";
+        activeColor.value = "#22c65e";
+        fillColor.value = '#22c65e';
+    } else {
+        idleColor.value = "#ffbf00";
+        activeColor.value = "#3754fa";
+        fillColor.value = idleColorTimeout.value ? activeColor.value : idleColor.value;
+    }
+});
+// ---------------------------------------------------------------------
+// fillColor.value = "#22c65e";
+// fillColor.value = "#cc8899";    
+// fillColor.value = "#3754fa";
+// fillColor.value = "#15A773";
 </script>
 
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly
+
+.pulse {
+    display: inline-block;
+    background-color: inherit; // Choose a color that stands out
+    //   padding: 10px;
+    border-radius: 50%;
+    animation: pulse-animation 2s infinite;
+
+    @keyframes pulse-animation {
+        0% {
+            box-shadow: 0 0 0 0 currentColor;
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(52, 152, 219, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+        }
+    }
+}
 </style>

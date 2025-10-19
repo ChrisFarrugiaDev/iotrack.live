@@ -11,7 +11,7 @@
                 </svg>
 
                 <div class="info-window__body">
-                    <div class="info-window__title">Be Like Pluto</div>
+                    <div class="info-window__title">{{ asset.name }}</div>
 
                     <img v-if="false" class="info-window__img"
                         :src="`${getAppUrl}/${getPrimaryImg.url}`"
@@ -19,18 +19,36 @@
 
                     <SmartImage v-if="getPrimaryImg" :image="getPrimaryImg"></SmartImage>
 
-                    <div class="info-window__data">
-                        <div class="info-window__data-row">
+                    <div class="info-window__data" >
+
+                        <div class="info-window__data-row" v-if="getRegNum">
+                            <span class="info-window__key">Reg Num</span>
+                            <span class="info-window__value">
+                                <span>{{ getRegNum }}</span>
+                            </span>
+                        </div>
+
+                        <div class="info-window__data-row" v-if="getDevice">
                             <span class="info-window__key">Device ID</span>
-                            <span class="info-window__value">863266050665457</span>
+                            <span class="info-window__value">
+                                <div>id: &nbsp; {{getDevice.id}}</div>
+                                <div>{{getDevice.external_id_type}}:  &nbsp;  {{getDevice.external_id}}</div> 
+                            </span>
                         </div>
-                        <div class="info-window__data-row">
+
+                        <div class="info-window__data-row" v-if="getLastEventTimeElapsed">
                             <span class="info-window__key">Last Event</span>
-                            <span class="info-window__value">22 hours, 6 minutes ago</span>
+                            <span class="info-window__value" v-if="getDevice?.last_telemetry_ts">
+                                <div>{{ getLastEventTimeElapsed }}</div>
+                                <div>{{ formatDateTime(getDevice?.last_telemetry_ts, tz ) }}</div>
+                            </span>
                         </div>
-                        <div class="info-window__data-row">
-                            <span class="info-window__key"></span>
-                            <span class="info-window__value">October 5, 2025 5:26 PM</span>
+
+                        <div class="info-window__data-row" v-if="getSpeed != null">
+                            <span class="info-window__key">Speed</span>
+                            <span class="info-window__value">
+                                <span>{{ getSpeed }} km/hr</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -51,12 +69,21 @@ import { storeToRefs } from 'pinia'
 import type { Asset } from '@/types/asset.type'
 import { useAppStore } from '@/stores/appStore'
 import SmartImage from './SmartImage.vue'
+import type { Device } from '@/types/device.type'
+import { formatDateTime, timeElapsed } from '@/utils/dateTimeUtils'
+
+import { useNowTick } from '@/composables/useNowTick'
+
+
 
 // - store -------------------------------------------------------------
 const { getTheme } = storeToRefs(useDashboardStore());
 
 const appStore = useAppStore();
 const { getAppUrl } = storeToRefs(appStore);
+
+const deviceStore = useDeviceStore();
+
 
 // - props -------------------------------------------------------------
 const props = defineProps<{
@@ -66,11 +93,15 @@ const props = defineProps<{
 
 // - provide & inject --------------------------------------------------
 
-const setActiveInfoWindow = inject<(id: string | null) => void>('setActiveInfoWindow')
+const setActiveInfoWindow = inject<(id: string | null) => void>('setActiveInfoWindow');
+
+const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
 
 
 // - Data --------------------------------------------------------------
-const markerAnchor = ref<any>(null)
+const markerAnchor = ref<any>(null);
+const now = useNowTick(1000);
+const tz = ref<string>("Europe/Malta");
 
 // - computed ----------------------------------------------------------
 
@@ -90,18 +121,50 @@ const markerOptions = computed(() => {
         // @ts-ignore
         collisionBehavior: 'REQUIRED',
     }
+});
+
+const getPrimaryImg = computed(() => { return props.asset?.attributes?.primary_image; });
+
+const getDevice = computed(() => {
+    const dd = props.asset?.devices;
+    if (!dd || dd.length == 0) return null;
+    const deviceID = dd[0].id;
+
+    const devices = deviceStore.getDevices;
+    if (!devices) return null;
+
+    return devices[deviceID] as Device;
+});
+
+const getLastEventTimeElapsed = computed(() => {
+    const ts = getDevice.value?.last_telemetry_ts
+    if (!ts) return null
+    void now.value
+    return timeElapsed(ts, now.value)
 })
 
-const getPrimaryImg = computed(() => {
-    const primaryImg = props.asset?.attributes?.primary_image;
-    return primaryImg;
+
+const getSpeed = computed(() => {
+    return getDevice.value?.last_telemetry?.speed
 })
+
+
+const getRegNum = computed(() => {
+    return props.asset?.attributes?.vehicle?.registration_number;
+});
+
+// ---------------------------------------------------------------------
 
 onMounted(()=> {
     
     setTimeout(()=>{
-        markerAnchor.value.classList.add('marker-anchor__show')
-    }, 200)
+        markerAnchor.value.classList.add('marker-anchor__show');
+
+        const {lat, lng} = markerOptions.value.position;
+        updateMapCenter!(lat, lng);
+
+        // console.log(getDevice.value)
+    }, 200);
 })
 </script>
 
@@ -134,8 +197,6 @@ onMounted(()=> {
     transform: translate(-50%, calc(-100% - 32px));
     pointer-events: auto;    
 }
-
-
 
 .info-window {
     overflow: visible;
@@ -186,6 +247,7 @@ onMounted(()=> {
         display: grid;
         grid-template-columns: 1fr 2fr;
         gap: .5rem;
+        margin-bottom: 6px;
     }
 
     &__key {
@@ -195,6 +257,10 @@ onMounted(()=> {
     &__value {
         font-family: var(--font-action);
         font-weight: 300;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        
     }
 }
 

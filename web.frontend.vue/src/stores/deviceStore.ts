@@ -167,6 +167,10 @@ export const useDeviceStore = defineStore('deviceStore', () => {
             dev.last_telemetry.latitude = newLat;
             dev.last_telemetry.longitude = newLng;
         }
+
+        // these are used to pan map to these coordinates
+        dev.last_telemetry._latitude = newLat;
+        dev.last_telemetry._longitude = newLng;
     }
 
 

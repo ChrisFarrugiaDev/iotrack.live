@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import type { Device } from '@/types/device.type';
 import axios from '@/axios';
 import { useAppStore } from './appStore';
-import * as util from "@/util";
+import * as util from "@/utils/utils";
 
 export const useDeviceStore = defineStore('deviceStore', () => {
 
@@ -167,6 +167,10 @@ export const useDeviceStore = defineStore('deviceStore', () => {
             dev.last_telemetry.latitude = newLat;
             dev.last_telemetry.longitude = newLng;
         }
+
+        // these are used to pan map to these coordinates
+        dev.last_telemetry._latitude = newLat;
+        dev.last_telemetry._longitude = newLng;
     }
 
 
