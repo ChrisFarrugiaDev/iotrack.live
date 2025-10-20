@@ -8,15 +8,29 @@ import { useMessageStore } from '@/stores/messageStore'
 import { storeToRefs } from 'pinia'
 import LogoutView from '@/views/LogoutView.vue'
 
+// Devices
 import DeviceView from '@/views/devices/DeviceView.vue'
 import DeviceListView from '@/views/devices/DeviceListView.vue'
 import DeviceCreateView from '@/views/devices/DeviceCreateView.vue'
 import DeviceUpdateView from '@/views/devices/DeviceUpdateView.vue'
 
+// Assets
 import AssetView from '@/views/assets/AssetView.vue'
 import AssetListView from '@/views/assets/AssetListView.vue'
 import AssetCreateView from '@/views/assets/AssetCreateView.vue'
 import AssetEditView from '@/views/assets/AssetUpdateView.vue'
+
+// Organisations
+import OrgView from '@/views/organisations/OrgView.vue'
+import OrgListView from '@/views/organisations/OrgListView.vue'
+import OrgCreateView from '@/views/organisations/OrgCreateView.vue'
+import OrgUpdateView from '@/views/organisations/OrgUpdateView.vue'
+
+// Users
+import UserView from '@/views/users/UserView.vue'
+import UserListView from '@/views/users/UserListView.vue'
+import UserCreateView from '@/views/users/UserCreateView.vue'
+import UserUpdateView from '@/views/users/UserUpdateView.vue'
 
 
 const router = createRouter({
@@ -29,30 +43,57 @@ const router = createRouter({
 		{ path: '/forgot-password', name: 'forgot.password.view', component: AuthView, meta: { requiresAuth: false } },
 		{ path: '/reset-password', name: 'reset.password.view', component: AuthView, meta: { requiresAuth: false } },
 
-		{ path: '/organisations', name: 'organisationsView', component: OrganisationView, meta: { requiresAuth: true } },
-
+		// Devices
 		{
 			path: '/devices',
 			name: 'devices.view',
 			component: DeviceView,
 			meta: { requiresAuth: true },
 			children: [
-				{ path: '', name: 'devices.list', component: DeviceListView},
+				{ path: '', name: 'devices.list', component: DeviceListView },
 				{ path: 'new', name: 'devices.create', component: DeviceCreateView },
 				// { path: ':id', name: 'devices.detail', component: DeviceDetailView, props: true },
 				{ path: ':id/update', name: 'devices.update', component: DeviceUpdateView, props: true },
 			],
 		},
+
+		// Assets
 		{
 			path: '/assets',
 			name: 'assets.view',
 			component: AssetView,
 			meta: { requiresAuth: true },
 			children: [
-				{ path: '', name: 'assets.list', component: AssetListView},
+				{ path: '', name: 'assets.list', component: AssetListView },
 				{ path: 'new', name: 'assets.create', component: AssetCreateView },
 				// { path: ':id', name: 'Assets.detail', component: AssetDetailView, props: true },
 				{ path: ':id/edit', name: 'assets.edit', component: AssetEditView, props: true },
+			],
+		},
+
+		// Organisations
+		{
+			path: '/organisations',
+			name: 'organisations.view',
+			component: OrgView,
+			meta: { requiresAuth: true },
+			children: [
+				{ path: '', name: 'organisations.list', component: OrgListView },
+				{ path: 'new', name: 'organisations.create', component: OrgCreateView },
+				{ path: ':id/edit', name: 'organisations.edit', component: OrgUpdateView, props: true },
+			],
+		},
+
+		// Users
+		{
+			path: '/users',
+			name: 'users.view',
+			component: UserView,
+			meta: { requiresAuth: true },
+			children: [
+				{ path: '', name: 'users.list', component: UserListView },
+				{ path: 'new', name: 'users.create', component: UserCreateView },
+				{ path: ':id/edit', name: 'users.edit', component: UserUpdateView, props: true },
 			],
 		},
 

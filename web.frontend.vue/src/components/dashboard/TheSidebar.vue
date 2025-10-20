@@ -32,7 +32,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('organisationsView')">
+        <div class="sidebar__item" @click="goToView('organisations.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-company"></use>
             </svg>
@@ -43,7 +43,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item">
+        <div class="sidebar__item" @click="goToView('users.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-users"></use>
             </svg>
