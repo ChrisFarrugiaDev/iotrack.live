@@ -189,13 +189,18 @@ watch(
     (pos, prev) => {
         if (pos.lat == null || pos.lng == null) return;
 
-        // 1) Move the marker (new object -> re-render)
+        // 1) Update map center
+        if (mapStore.getFollow == props.asset.id) {            
+            updateMapCenter!(pos.lat, pos.lng)       
+        }
+
+        // 2) Move the marker (new object -> re-render)
         markerOptions.value = {
             ...markerOptions.value,
             position: { lat: pos.lat, lng: pos.lng },
         };
 
-        // 2) Compute bearing if we have a previous point
+        // 3) Compute bearing if we have a previous point
         if (
             prev?.lat != null &&
             prev?.lng != null &&
@@ -211,8 +216,8 @@ watch(
 // - Map Center Panning Loggic --------------------------------------------------
 watch(
     () => ({
-        lat: device.value?.last_telemetry?._latitude ?? null,
-        lng: device.value?.last_telemetry?._longitude ?? null,
+        lat: device.value?.last_telemetry?.latitude ?? null,
+        lng: device.value?.last_telemetry?.longitude ?? null,
     }),
     (pos, prev) => {
         if (pos.lat == null || pos.lng == null) return;

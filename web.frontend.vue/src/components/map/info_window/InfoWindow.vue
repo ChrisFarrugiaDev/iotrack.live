@@ -63,11 +63,11 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
 import { CustomMarker } from 'vue3-google-map'
 import { useDeviceStore } from '@/stores/deviceStore'
 import { useDashboardStore } from '@/stores/dashboardStore'
-import { storeToRefs } from 'pinia'
+import { mapState, mapStores, storeToRefs } from 'pinia'
 import type { Asset } from '@/types/asset.type'
 import { useAppStore } from '@/stores/appStore'
 import type { Device } from '@/types/device.type'
@@ -77,6 +77,7 @@ import { useNowTick } from '@/composables/useNowTick'
 
 import ActionButtons from './ActionButtons.vue'
 import SmartImage from './SmartImage.vue'
+import { useMapStore } from '@/stores/mapStore'
 
 
 // - store -------------------------------------------------------------
@@ -86,6 +87,8 @@ const appStore = useAppStore();
 const { getAppUrl } = storeToRefs(appStore);
 
 const deviceStore = useDeviceStore();
+
+const mapStore = useMapStore();
 
 
 // - props -------------------------------------------------------------
@@ -98,7 +101,7 @@ const props = defineProps<{
 
 const setActiveInfoWindow = inject<(id: string | null) => void>('setActiveInfoWindow');
 
-const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
+const smoothPanTo = inject<(target:{lat:number, lng:number}, duration:number) => void>('smoothPanTo');
 
 
 // - Data --------------------------------------------------------------
@@ -164,11 +167,20 @@ onMounted(()=> {
         markerAnchor.value.classList.add('marker-anchor__show');
 
         const {lat, lng} = markerOptions.value.position;
-        updateMapCenter!(lat, lng);
+        // updateMapCenter!(lat, lng);
+        smoothPanTo!({lat, lng}, 1000);
 
         // console.log(getDevice.value)
     }, 200);
-})
+});
+
+onUnmounted(() => {
+    // if asset is followed, set asset to center of map when info wind closes.
+    if (mapStore.getFollow == null) return;
+    const { lat, lng } = markerOptions.value.position;
+    smoothPanTo!({ lat, lng }, 1000);
+});
+
 </script>
 
 <!-- --------------------------------------------------------------- -->

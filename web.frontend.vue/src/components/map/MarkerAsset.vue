@@ -39,6 +39,7 @@ import { inject, ref, watch } from 'vue';
 import { computed, shallowRef } from 'vue';
 import { CustomMarker, AdvancedMarker } from 'vue3-google-map';
 import InfoWindow from './info_window/InfoWindow.vue';
+import { useMapStore } from '@/stores/mapStore';
 
 // - Props -------------------------------------------------------------
 const props = defineProps<{
@@ -49,12 +50,16 @@ const props = defineProps<{
 
 // - provide & inject --------------------------------------------------
 
-const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow')
+const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow');
+
+const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
 
 // - Store -------------------------------------------------------------
 
 const deviceStore = useDeviceStore();
 const device = deviceStore.useDevice(props.asset.devices[0].id);
+
+const mapStore = useMapStore();
 
 // - Data --------------------------------------------------------------
 
@@ -125,7 +130,12 @@ watch(
     (pos, prev) => {
         if (pos.lat == null || pos.lng == null) return;
 
-        // 1) Move the marker (new object -> re-render)
+        // 1) Update map center
+        if (mapStore.getFollow == props.asset.id) {            
+            updateMapCenter!(pos.lat, pos.lng)       
+        }
+
+        // 2) Move the marker (new object -> re-render)
         markerOptions.value = {
             ...markerOptions.value,
             position: { lat: pos.lat, lng: pos.lng },

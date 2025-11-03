@@ -260,6 +260,8 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				Elements:   avl.IOelement.Elements,
 			}
 
+			fmt.Println("-> ->", currentDevice.Model)
+
 			record := map[string]any{
 				"device_id": currentDevice.ID,
 
@@ -268,7 +270,8 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				"happened_at":     avl.HappenedAt,
 				"protocol":        currentDevice.Protocol,
 				"vendor":          currentDevice.Vendor,
-				"telemetry":       telemetry, // <- Assign struct, NOT string
+
+				"telemetry": telemetry, // <- Assign struct, NOT string
 			}
 
 			msg, _ := json.Marshal(record)

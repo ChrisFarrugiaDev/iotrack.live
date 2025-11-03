@@ -58,6 +58,8 @@ const mapRef = ref<any>(null);
 const initMapZoom = ref<number>(15);
 const initMapCenter = ref<MapCenterType>({ lat: 35.900, lng: 14.517 });
 
+const mapZoomLevel = ref<number|null>(null);
+
 
 // -- watchers ---------------------------------------------------------
 // This will run if getMapsApiKey is a computed ref or a getter that updates reactively
@@ -89,8 +91,8 @@ watch(() => mapRef.value?.ready, (ready) => {
 
 function handleZoomChanged() {
 	if (mapRef.value?.map) {
-		const mapZoomLevel: number = mapRef.value.map.getZoom();
-		mapStore.setMapZoomLevel(mapZoomLevel);
+		mapZoomLevel.value = mapRef.value.map.getZoom();	
+		mapStore.setMapZoomLevel(mapZoomLevel.value ?? 12);
 	}
 }
 
@@ -133,26 +135,35 @@ function setActiveInfoWindow(id: string | null) {
 }
 
 function updateMapCenter(lat: number, lng: number) {
-	const center: MapCenterType = { lat, lng };
+	// this function is used when following asset moves (similar to smoothPanTo func).
 
-	if (mapRef.value?.map) {
+	if (mapStore.getFollowIsDisabled) return;
+	
+	const map = mapRef.value?.map;
 
-		smoothPanTo(center);
+	if (map) {
 
-		mapStore.setMapCenter(lat, lng);
+		const offset = getLatOffsetForZoom()
+
+
+		map.setCenter({lat: lat + offset , lng });
+		mapStore.setMapCenter(lat + offset, lng);
 	}
 }
 
 
 function smoothPanTo(target: { lat: number; lng: number }, duration = 1000) {
-	if (!mapRef.value?.map) return;
+	// this function is used when open the info window (similar to updateMapCenter func).
+	if (!mapRef.value?.map) return;		
+
+	const offset = getLatOffsetForZoom();
 
 	const map = mapRef.value.map;
 	const start = map.getCenter();
 	const startLat = start.lat();
 	const startLng = start.lng();
 
-	const deltaLat = target.lat - startLat;
+	const deltaLat = target.lat - startLat + offset;
 	const deltaLng = target.lng - startLng;
 
 	const startTime = performance.now();
@@ -167,7 +178,9 @@ function smoothPanTo(target: { lat: number; lng: number }, duration = 1000) {
 		const newLat = startLat + deltaLat * ease;
 		const newLng = startLng + deltaLng * ease;
 
-		map.setCenter({ lat: newLat, lng: newLng });
+		
+
+		map.setCenter({ lat: newLat , lng: newLng  });
 
 		if (t < 1) requestAnimationFrame(animate);
 	}
@@ -175,10 +188,60 @@ function smoothPanTo(target: { lat: number; lng: number }, duration = 1000) {
 	requestAnimationFrame(animate);
 }
 
+// Linear interpolation helper
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+function getLatOffsetForZoom(): number {
+  const map = mapRef.value?.map;
+  if (!map) return 0;
+
+  if (mapZoomLevel.value == null) {
+    mapZoomLevel.value = map.getZoom();
+  }
+  const z = mapZoomLevel.value!;
+
+  // Below 3 → no offset
+  if (z < 3) return 0;
+
+  if (mapStore.getActiveInfoWindow == null) return 0;
+
+  
+
+  // Exact targets at integer zooms
+  const targets = {
+    3: 24.3,
+    4: 13.6,
+    5: 7.2,
+    6: 3.7,
+  };
+
+  // 6..20: exact powers of two (doubling per level down from 6)
+  if (z >= 6) {
+    // Match 6 → 3.7, then halve per +1 zoom (or double per -1)
+    // offset(z) = 3.7 * 2^(6 - z)
+    return 3.7 * Math.pow(2, 6 - z);
+  }
+
+  // Smooth, piecewise-linear for 3..6 (hits your exact targets at z=3,4,5,6)
+  if (z >= 5 && z < 6) {
+    const t = z - 5; // 0→1
+    return lerp(targets[5], targets[6], t);
+  }
+  if (z >= 4 && z < 5) {
+    const t = z - 4; // 0→1
+    return lerp(targets[4], targets[5], t);
+  }
+  // z in [3, 4)
+  const t = z - 3; // 0→1
+  return lerp(targets[3], targets[4], t);
+}
+
+
 // - provide & inject --------------------------------------------------
 
 provide('setActiveInfoWindow', setActiveInfoWindow);
 provide('updateMapCenter', updateMapCenter);
+provide('smoothPanTo', smoothPanTo);
 
 </script>
 <!-- --------------------------------------------------------------- -->

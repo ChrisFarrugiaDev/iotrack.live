@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" aria-label="vehicle-moving">
-  <!-- Triangle arrow pointing up (north) -->
-  <path d="M16 3 L28 29 L16 24 L4 29 Z" fill="blue" stroke="#ffffff" stroke-width="1.2"></path>
-  <!-- Ignition badge (center). Use fill='#ffffff' for ON, 'none' for OFF -->
-  <circle cx="16" cy="18" r="3" fill="none" stroke="none" stroke-width="1"></circle>
-</svg>

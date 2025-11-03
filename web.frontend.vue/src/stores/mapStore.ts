@@ -13,6 +13,8 @@ export const useMapStore = defineStore('mapStore', () => {
     // ---- State ------------------------------------------------------
     const activeInfoWindow = ref<string | null>(null);
     const follow = ref<string | null>(null);
+    const followIsDisabled = ref<boolean>(false);
+
     const mapZoomLevel = useSessionStorage<number | null>("map-zoom-level", null);
     const mapLat = useSessionStorage<number | null>("map-lat", null);
     const mapLng = useSessionStorage<number | null>("map-lng", null);
@@ -35,6 +37,9 @@ export const useMapStore = defineStore('mapStore', () => {
 
     const getFollow = computed(() => follow.value );
 
+  
+    const getFollowIsDisabled = computed(() => followIsDisabled.value);
+
 
     // ---- Actions ----------------------------------------------------
     function setActiveInfoWindow (id: string | null)  {
@@ -43,8 +48,15 @@ export const useMapStore = defineStore('mapStore', () => {
             // follow.value = null;
         } else {
             activeInfoWindow.value = id;
-            // follow.value = id;
+            // follow.value = id;  
         }
+
+        if (id && follow.value && id != follow.value) {
+            follow.value = null;
+        } 
+
+        followIsDisabled.value = true;
+        setTimeout(()=>{ followIsDisabled.value = false; }, 1_200);
     }
 
     function followAsset(id: string | null) {
@@ -82,5 +94,6 @@ export const useMapStore = defineStore('mapStore', () => {
         setMapCenter,
         getFollow,
        followAsset,
+       getFollowIsDisabled,
     };
 });

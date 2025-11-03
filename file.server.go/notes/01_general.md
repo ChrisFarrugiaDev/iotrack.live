@@ -15,7 +15,7 @@ curl -X POST -F "entity_type=asset" \
      -F "images=@img2.jpg" \
      -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjMwMiwiaWF0IjoxNzU5MzEyMTg0LCJleHAiOjE3NTkzNTUzODR9.U-sTs2AqT5Esgxj-2kEk-ytsjzciFuzqgfxapmdFHKY" \
      http://iotrack.live/img/upload
-
+npm run de
 # 2) Delete single image (no body)
 curl -X DELETE \
      -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjMwMiwiaWF0IjoxNzU5MzEyMTg0LCJleHAiOjE3NTkzNTUzODR9.U-sTs2AqT5Esgxj-2kEk-ytsjzciFuzqgfxapmdFHKY" \
