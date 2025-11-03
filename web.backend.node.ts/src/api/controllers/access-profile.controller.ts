@@ -141,6 +141,7 @@ export class AccessProfileController {
                     name: org.name,
                     parent_org_id: org.parent_org_id,
                     path: org.path,
+                    can_inherit_key: org.can_inherit_key,
                     attributes: org.attributes,
                     created_at: org.created_at
                 };
