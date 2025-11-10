@@ -10,6 +10,7 @@ import { Asset, AssetType } from "../../models/asset.model";
 import { UserDeviceAccess } from "../../models/user-device-access.model";
 import { Device, DeviceType } from "../../models/device.model";
 import { AccessProfile } from "../../types/access-profile.type";
+import { Role } from "../../models/role.model";
 
 // -------------------------------------------------------------------------
 
@@ -57,7 +58,13 @@ export class AccessProfileController {
             const devices = await AccessProfileController.getAccessibleDevicesForUser(user.id, accessibleOrgIds);
             const settings = await AccessProfileController.getUserSettings(user);
 
-            // 6. Construct the access profile object
+            // 6 fetch permissoins
+            const roles = await Role.getAll();
+            const permissoins: Record<string, any> = {
+                roles,
+            };  
+
+            // 7. Construct the access profile object
             const profile: AccessProfile = {
                 first_name: user.first_name,
                 last_name: user.last_name,
@@ -68,6 +75,7 @@ export class AccessProfileController {
                 },
                 organisation: {
                     id: user.organisations.id,
+                    path: user.organisations.path,
                     uuid: user.organisations.uuid,
                     name: user.organisations.name,
                 },
@@ -75,9 +83,11 @@ export class AccessProfileController {
                 assets,
                 devices,
                 settings,
-            };
+                permissoins,
+            };        
 
-            // 7. Respond with the profile
+
+            // 8. Respond with the profile
             return reply.send({
                 success: true,
                 message: 'Access profile fetched successfully',
@@ -129,10 +139,34 @@ export class AccessProfileController {
      * Given an array of organisation IDs, fetch their details from Redis
      * and return a map of organisation ID to partial OrganisationType.
      */
-    static async buildOrganisationInfoMap(orgIds: string[]): Promise<Record<string, Partial<OrganisationType>>> {
+    static async buildOrganisationInfoMap(orgIds: string[]): Promise<Record<string, Partial<OrganisationType>  > > {
         const organisationMap: Record<string, Partial<OrganisationType>> = {};
 
+        // 1. Fetch all orgs in parallel
         const orgs = await Promise.all(orgIds.map(id => redisUtils.hget('organisations', id, 'iotrack.live:')));
+
+        // 2. Collect all parent_org_ids that are non-null/undefined and not in orgIds (avoid refetching self)
+        const parentOrgIds = Array.from(
+            new Set(
+                orgs
+                    .map(org => org?.parent_org_id)
+                    .filter(pid => pid && Number(pid))
+                    // .filter(pid => pid && !orgIds.includes(pid))
+            )
+        );
+
+        // 3. Fetch all parent orgs needed (batched)
+        const parentOrgs = parentOrgIds.length
+            ? await Promise.all(parentOrgIds.map(id => redisUtils.hget('organisations', id, 'iotrack.live:')))
+            : [];
+
+        // 4. Create a map from parent_org_id to parent_org_name
+        const parentOrgNameMap: Record<string, string> = {};
+        parentOrgs.forEach(parent => {
+            if (parent) parentOrgNameMap[parent.id] = parent.name;
+        });
+
+        // 5. Build organisationMap with parent_org_name attached
         orgs.forEach(org => {
             if (org) {
                 organisationMap[org.id] = {
@@ -140,6 +174,7 @@ export class AccessProfileController {
                     uuid: org.uuid,
                     name: org.name,
                     parent_org_id: org.parent_org_id,
+                    parent_org_name: org.parent_org_id ? parentOrgNameMap[org.parent_org_id] || null : null,
                     path: org.path,
                     can_inherit_key: org.can_inherit_key,
                     attributes: org.attributes,

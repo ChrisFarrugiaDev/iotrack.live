@@ -17,8 +17,6 @@
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm.vue';
 import LoginForm from '@/components/auth/LoginForm.vue';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm.vue';
-import { useAuthStore } from '@/stores/authStore';
-import { storeToRefs } from 'pinia';
 import { computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -27,7 +25,6 @@ import { useRoute, useRouter } from 'vue-router';
 
 // -- router -----------------------------------------------------------
 const route = useRoute();
-const router = useRouter();
 
 // -- computed ---------------------------------------------------------
 

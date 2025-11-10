@@ -38,7 +38,7 @@
 				<!--  Table Body (Rows) ---------------------------- -->
 				<tbody class="vtable__body">
 					<tr v-for="row in pagedRows" :key="props.rowKey ? row[props.rowKey] : (row.uuid ?? row.id)"
-						class="vtable__row">
+						class="vtable__row" :class="[typeof props.rowClass === 'function' ? props.rowClass(row) : props.rowClass]">
 						<!-- Row Select Checkbox -->
 						<td v-if="selectable" class="vtable__cell vtable__cell--select">
 							<input type="checkbox" :checked="isChecked(row)"
@@ -122,7 +122,7 @@ interface TableColumn {
 	align?: Align;
 	format?: (value: any, row?: any) => string | number;
 	anchor?: { enabled: boolean; urlKey?: string; target?: "_blank" | "_self" };
-	className?: string;
+	className?: string;	
 
 	to?: string | ((row: any) => string);                 // -> <RouterLink>
 	onClick?: (row: any, value: any, ev: MouseEvent) => void; // plain click handler
@@ -137,11 +137,12 @@ const props = defineProps<{
 	search?: string;                 // Search string (from parent)
 	rowKey?: string;                 // Primary key for row
 	page?: number;                   // External page number
-	searchTerm?: string;             // (Unused? Could be removed)
 	perPage?: number;                // Page size (default 25)
 	selectable?: boolean;            // Row selection enabled
 	selectedKeys?: Array<string | number>;
 	clearSelected?: number;
+	sortKey?: string;
+	rowClass?:(row:any) => string | string;
 }>();
 
 const emit = defineEmits<{
@@ -154,7 +155,7 @@ const emit = defineEmits<{
 // - Reactive State & Derived Values -----------------------------------
 
 const state = reactive({
-	sortKey: "",
+	sortKey: props.sortKey ?? "",
 	sortDir: "asc" as "asc" | "desc",
 });
 

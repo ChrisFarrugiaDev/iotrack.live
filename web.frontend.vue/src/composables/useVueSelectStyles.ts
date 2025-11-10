@@ -11,7 +11,7 @@ export function useVueSelectStyles() {
     '--vs-border-radius': 'var(--radius-md, 0.375rem)',
     '--vs-font-weight': '400',
     '--vs-font-size': '.95rem',
-    '--vs-font-family': 'var(--font-mono)',
+    '--vs-font-family': 'var(--font-mono)',  
     '--vs-outline-width': '0',
     '--vs-outline-color': 'var(--color-blue-500)',
     '--vs-menu-z-index': '2000',

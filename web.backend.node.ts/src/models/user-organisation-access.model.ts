@@ -6,6 +6,7 @@ import { bigIntToString } from '../utils/utils';
 export class UserOrganisationAccess {
 
 
+
     //  Get all org access overrides for a given user.
     //  Returns an array (possibly empty) of override objects.   
     static async getUserOrgOverrides(userId: number | bigint | string) {
@@ -26,7 +27,5 @@ export class UserOrganisationAccess {
 
         // Always return an array, convert all BigInt fields to strings (recursively)
         return bigIntToString(overrides);
-    }
-
-    
+    }    
 }

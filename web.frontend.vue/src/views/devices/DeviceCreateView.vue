@@ -149,14 +149,14 @@ const vueSelectStyles = useVueSelectStyles();
 
 // - Store -------------------------------------------------------------
 
+const messageStore = useMessageStore();
 const organisationStore = useOrganisationStore();
 const deviceStore = useDeviceStore();
-const messageStore = useMessageStore();
 const settingsStore = useSettingsStore();
 
 const dashboardStore = useDashboardStore();
 
-
+// - Data --------------------------------------------------------------
 const confirmOn = ref(false)
 
 const form = reactive({

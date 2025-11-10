@@ -1,4 +1,5 @@
 import './assets/main.css'
+import 'vue3-treeselect/dist/vue3-treeselect.css'
 
 
 import { createApp } from 'vue'

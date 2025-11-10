@@ -8,7 +8,7 @@
 
         <!-- Device table (with selection, pagination, actions) -->
         <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
-            v-model:page="currentPage" row-key="id" :selectable="true" :searchTerm="searchTerm"
+            v-model:page="currentPage" row-key="id" :selectable="true" 
             @update:page="currentPage = Number($emit)" @update:selectedKeys="selectedKeys = ($event as any)">
             <!-- Pagination slot for custom pager component -->
             <template #pagination="{ page, pageCount, setPage }">

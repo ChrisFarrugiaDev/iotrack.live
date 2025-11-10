@@ -36,6 +36,10 @@ func Routes() http.Handler {
 	mux.Get("/assets/new", vueHandler.ServerIndexWithVariables)
 	mux.Get("/devices", vueHandler.ServerIndexWithVariables)
 	mux.Get("/devices/new", vueHandler.ServerIndexWithVariables)
+	mux.Get("/organisations", vueHandler.ServerIndexWithVariables)
+	mux.Get("/organisations/new", vueHandler.ServerIndexWithVariables)
+	mux.Get("/users", vueHandler.ServerIndexWithVariables)
+	mux.Get("/users/new", vueHandler.ServerIndexWithVariables)
 
 	// Build absolute path to the 'dist' directory (Vue build output)
 	workDir, _ := filepath.Abs(".")

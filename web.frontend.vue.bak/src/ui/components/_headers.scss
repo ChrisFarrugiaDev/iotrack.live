@@ -1,0 +1,28 @@
+.vheading--2 {
+    font-size: 1.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    color: var(--color-text-2);
+    font-family:'Montserrat', var(--font-display);
+}
+
+.vheading--3 {
+    font-size: 1rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    color: var(--color-text-2);
+    font-family: var(--font-display);
+    letter-spacing: 1px;
+}
+
+.vheading--4 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--color-text-2);
+    font-family: var(--font-display);
+    letter-spacing: 0.08em;
+    padding-bottom: 0.4rem;
+
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text-4) 60%, transparent);
+}
