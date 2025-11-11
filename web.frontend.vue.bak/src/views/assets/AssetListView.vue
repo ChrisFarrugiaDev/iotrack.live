@@ -11,16 +11,19 @@
             :table-data="tableData"
             :search="searchTerm" :per-page="25"
             v-model:page="currentPage"
-            row-key="id" :selectable="true"
-            :searchTerm="searchTerm"
+            row-key="id" :selectable="true"  
             :clearSelected="clearSelected"
             @update:page="currentPage = Number($emit)"
             @update:selectedKeys="selectedKeys = ($event as any)">
-            <template #actions="{ row }">          
+            <template #actions="{ row }"
+        >          
                 <VIconButton icon="icon-image" @click="showUpdateImageModalOpen(row.id)"/>
                 <VIconButton icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
             </template>
-            
+            <!-- Pagination slot for custom pager component -->
+            <template #pagination="{ page, pageCount, setPage }">
+                <ThePager class="justify-center w-100" :page="page" :page-count="pageCount" :set-page="setPage" />
+            </template>
         </VTable>
 
     </div>

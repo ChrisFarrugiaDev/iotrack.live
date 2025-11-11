@@ -44,8 +44,8 @@ import { useOrganisationStore } from './stores/organisationStore';
 import { useSettingsStore } from './stores/settingsStore';
 import type { AuthenticatedUser } from './types/authenticated.user.type';
 import SocketIo from './components/socketio/SocketIo.vue';
-import type { Organisation } from './types/organisation.type';
-import type { Asset } from './types/asset.type';
+import { usePermissionStore } from './stores/permissionStore';
+
 
 // - Store -------------------------------------------------------------
 
@@ -65,6 +65,7 @@ const deviceStore = useDeviceStore();
 const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
 const settingsStore = useSettingsStore();
+const permissionStore = usePermissionStore();
 
 
 // - Routes ------------------------------------------------------------
@@ -154,7 +155,8 @@ async function fetchAccessProfile() {
             organisationStore.setOrganisation(profile.organisation);
             organisationStore.setOrganisationScope(profile.organisation_scope);
             settingsStore.setMapsApiKey(profile.settings?.maps_api_key);
-  
+            permissionStore.setRoles(profile.permissoins.roles);
+      
 
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,

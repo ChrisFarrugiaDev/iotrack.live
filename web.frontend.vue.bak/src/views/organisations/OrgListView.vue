@@ -1,6 +1,25 @@
 <template>
     <div>
-        <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :sortKey="'path'" :row-class="getOrgRowClass"></VTable>
+        <div class="mt-16 flex">
+            <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
+            
+        </div>
+        <VTable class="mt-4" 
+            :search="searchTerm" 
+            :table-col="tableCol" 
+            :table-data="tableData" 
+            :sortKey="'path'" 
+            :row-class="getOrgRowClass"
+            :per-page="25"
+            v-model:page="currentPage"
+             @update:page="currentPage = Number($emit)"
+        >
+
+            <!-- Pagination slot for custom pager component -->
+            <template #pagination="{ page, pageCount, setPage }">
+                <ThePager class="justify-center w-100" :page="page" :page-count="pageCount" :set-page="setPage" />
+            </template>
+        </VTable>
     </div>
 </template>
 
@@ -18,6 +37,9 @@ const organisationStore = useOrganisationStore();
 const { getOrganisationScope, getOrganisation } = storeToRefs(organisationStore);
 
 // --- Data ------------------------------------------------------------
+const searchTerm = ref("");
+const currentPage = ref(1);
+
 const tableCol = ref<TableColumn[]>([
     {
         col: "ID",
@@ -60,12 +82,10 @@ const tableCol = ref<TableColumn[]>([
     },
 ]);
 
-// --- Data mapping for table display ------------------------------
+// --- Data mapping for table display ----------------------------------
 
 const tableData = computed(()=>{
     const organisations = Object.values(getOrganisationScope.value || {});
-    console.log(organisations)
-
     return organisations.map( (org)=>{
         const level = getOrgLevel(org.path); 
         return {...org, level}
@@ -99,5 +119,10 @@ onMounted(() =>{
 
 <style lang="scss" scoped>
 // Placeholder comment to ensure global styles are imported correctly
+
+
+.hello {
+    opacity: 1;
+}
 </style>
 

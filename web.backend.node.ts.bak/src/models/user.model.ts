@@ -61,10 +61,23 @@ export class User {
 
     // -----------------------------------------------------------------
 
+    static async getUsersByOrganisationIds(orgIds: string[]): Promise<UserType[]> {
+        const ids: bigint[] = orgIds.map(id => BigInt(id));
+
+        const users = await prisma.users.findMany({
+            where: { organisation_id: { in: ids } }
+        });
+
+
+        return bigIntToString(users);
+    }
+
+    // -----------------------------------------------------------------
+
     // Increments the user's token_version by 1. 
     // If result > 1000, resets to 1.
     // Returns the new token_version.
-    static async bumpTokenVersion(userId: number): Promise<number> {
+    static async updateLoginSession(userId: number): Promise<number> {
         // Use a transaction for consistency
         const result = await prisma.$transaction(async (tx) => {
             // First, get the current version
@@ -82,7 +95,7 @@ export class User {
 
             await tx.users.update({
                 where: { id: userId },
-                data: { token_version: newVersion },
+                data: { token_version: newVersion, last_login_at: new Date() },
             });
 
             return newVersion;
@@ -90,4 +103,7 @@ export class User {
 
         return result;
     }
+
+
+
 }

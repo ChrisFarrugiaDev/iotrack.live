@@ -446,4 +446,5 @@ async function uploadImages(newAsset: Asset) {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly</style>
+// Placeholder comment to ensure global styles are imported correctly
+</style>

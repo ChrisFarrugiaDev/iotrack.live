@@ -21,3 +21,14 @@ export function divideLine(
 }
 
 // ---------------------------------------------------------------------
+
+export function formatLabel(apiString: string): string {
+  if (!apiString) return "";
+  return apiString
+    .replace(/_/g, " ")                // Replace underscores with spaces
+    .replace(/\w\S*/g, (txt) =>        // Capitalize each word
+      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    );
+}
+
+// ---------------------------------------------------------------------

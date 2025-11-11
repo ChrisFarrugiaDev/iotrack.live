@@ -137,7 +137,6 @@ const props = defineProps<{
 	search?: string;                 // Search string (from parent)
 	rowKey?: string;                 // Primary key for row
 	page?: number;                   // External page number
-	searchTerm?: string;             // (Unused? Could be removed)
 	perPage?: number;                // Page size (default 25)
 	selectable?: boolean;            // Row selection enabled
 	selectedKeys?: Array<string | number>;

@@ -29,10 +29,14 @@ import { VTabs, Vview } from '@/ui';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { useRoute, useRouter } from 'vue-router';
-import { reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
+import { useUserStore } from '@/stores/userStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
+const userStore = useUserStore();
+const dashboardStore = useDashboardStore();
 
 // - Route -------------------------------------------------------------
 
@@ -64,6 +68,40 @@ function setActiveTab(e: any) {
 function clearMessage() {
     messageStore.clearFlashMessageList();
 }
+
+async function loadUserScopeIfNeeded() {
+
+    try {
+        if (userStore.getUserScope == null) {
+
+            dashboardStore.setIsLoading(true);
+            const r = await userStore.fetchUserScope();    
+
+            const users = r?.data?.data?.users;
+            const count = r?.data?.data?.count;
+
+            if (count === 0 ) {
+                userStore.setUserScope({});
+            }
+            else if (users) {
+                userStore.setUserScope(users);
+            } else {
+                userStore.setUserScope(null);
+            }
+        }
+    } catch (err) {
+        console.error("! UserListView loadUserScopeIfNeeded !", err);
+        
+    } finally {
+        dashboardStore.setIsLoading(false);
+    }    
+}
+
+// -- Hooks ------------------------------------------------------------
+
+onMounted(()=>{
+    loadUserScopeIfNeeded();    
+});
 
 </script>
 

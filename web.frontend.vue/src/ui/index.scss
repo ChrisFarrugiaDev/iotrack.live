@@ -2,6 +2,7 @@
 @use './components' as *;
 
 
+// - vtable ------------------------------------------------------------
 .org-parent {
   background: var(--color-red-600) !important;
   color: var(--color-zinc-50);
@@ -32,3 +33,10 @@
     background: var(--color-zinc-400) !important;
   }
 }
+
+
+
+// - vue-treeselect ----------------------------------------------------
+
+
+// ---------------------------------------------------------------------

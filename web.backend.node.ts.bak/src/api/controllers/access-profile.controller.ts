@@ -10,6 +10,7 @@ import { Asset, AssetType } from "../../models/asset.model";
 import { UserDeviceAccess } from "../../models/user-device-access.model";
 import { Device, DeviceType } from "../../models/device.model";
 import { AccessProfile } from "../../types/access-profile.type";
+import { Role } from "../../models/role.model";
 
 // -------------------------------------------------------------------------
 
@@ -57,7 +58,13 @@ export class AccessProfileController {
             const devices = await AccessProfileController.getAccessibleDevicesForUser(user.id, accessibleOrgIds);
             const settings = await AccessProfileController.getUserSettings(user);
 
-            // 6. Construct the access profile object
+            // 6 fetch permissoins
+            const roles = await Role.getAll();
+            const permissoins: Record<string, any> = {
+                roles,
+            };  
+
+            // 7. Construct the access profile object
             const profile: AccessProfile = {
                 first_name: user.first_name,
                 last_name: user.last_name,
@@ -76,9 +83,11 @@ export class AccessProfileController {
                 assets,
                 devices,
                 settings,
-            };
+                permissoins,
+            };        
 
-            // 7. Respond with the profile
+
+            // 8. Respond with the profile
             return reply.send({
                 success: true,
                 message: 'Access profile fetched successfully',
@@ -145,8 +154,6 @@ export class AccessProfileController {
                     // .filter(pid => pid && !orgIds.includes(pid))
             )
         );
-
-        console.log(">>->", parentOrgIds);
 
         // 3. Fetch all parent orgs needed (batched)
         const parentOrgs = parentOrgIds.length
