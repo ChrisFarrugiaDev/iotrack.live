@@ -80,7 +80,9 @@ model permissions {
   perm_id          Int                @id @db.SmallInt
   key              String             @unique
   description      String
+  group_name       String?
   role_permissions role_permissions[]
+  user_permissions user_permissions[]
 
   @@schema("app")
 }
@@ -141,6 +143,7 @@ model users {
   user_asset_access        user_asset_access[]
   user_device_access       user_device_access[]
   user_organisation_access user_organisation_access[]
+  user_permissions         user_permissions[]
   organisations            organisations              @relation(fields: [organisation_id], references: [id], onUpdate: NoAction)
   roles                    roles                      @relation(fields: [role_id], references: [role_id], onUpdate: NoAction)
 
@@ -242,5 +245,16 @@ model images {
   uploaded_by     BigInt?
 
   @@index([entity_type, entity_id], map: "ix_images_entity")
+  @@schema("app")
+}
+
+model user_permissions {
+  user_id     BigInt
+  perm_id     Int         @db.SmallInt
+  is_allowed  Boolean     @default(true)
+  permissions permissions @relation(fields: [perm_id], references: [perm_id], onDelete: Cascade, onUpdate: NoAction)
+  users       users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, perm_id])
   @@schema("app")
 }

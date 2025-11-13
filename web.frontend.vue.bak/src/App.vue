@@ -156,7 +156,9 @@ async function fetchAccessProfile() {
             organisationStore.setOrganisationScope(profile.organisation_scope);
             settingsStore.setMapsApiKey(profile.settings?.maps_api_key);
             permissionStore.setRoles(profile.permissoins.roles);
+            permissionStore.setPermissions(profile.permissoins.permissoins)
       
+            console.log(profile.permissoins.permissoins)
 
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,

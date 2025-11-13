@@ -156,10 +156,12 @@ async function fetchAccessProfile() {
             organisationStore.setOrganisationScope(profile.organisation_scope);
             settingsStore.setMapsApiKey(profile.settings?.maps_api_key);
             permissionStore.setRoles(profile.permissoins.roles);
-            permissionStore.setPermissions(profile.permissoins.permissoins)
-      
-            console.log(profile.permissoins.permissoins)
+            permissionStore.setPermissions(profile.permissoins.permissoins);
+            permissionStore.setRolePermissions(profile.permissoins.role_permissions);
 
+
+    
+   
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,
                 last_name: profile.last_name,

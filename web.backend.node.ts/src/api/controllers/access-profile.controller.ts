@@ -12,6 +12,7 @@ import { Device, DeviceType } from "../../models/device.model";
 import { AccessProfile } from "../../types/access-profile.type";
 import { Role } from "../../models/role.model";
 import { Permissions } from "../../models/permissions.model";
+import { RolePermissions } from "../../models/role-permissions.model";
 
 // -------------------------------------------------------------------------
 
@@ -63,10 +64,12 @@ export class AccessProfileController {
             // TODO:  cache these values
             const roles = await Role.getAll();
             const perm = await Permissions.getAll();
+            const role_permissions = await RolePermissions.getGroupedByRole(true);   
 
             const permissoins: Record<string, any> = {
                 roles,
                 permissoins: perm,
+                role_permissions,
             };  
 
             // 7. Construct the access profile object

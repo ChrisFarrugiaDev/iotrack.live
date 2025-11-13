@@ -11,6 +11,7 @@ import { UserDeviceAccess } from "../../models/user-device-access.model";
 import { Device, DeviceType } from "../../models/device.model";
 import { AccessProfile } from "../../types/access-profile.type";
 import { Role } from "../../models/role.model";
+import { Permissions } from "../../models/permissions.model";
 
 // -------------------------------------------------------------------------
 
@@ -59,9 +60,13 @@ export class AccessProfileController {
             const settings = await AccessProfileController.getUserSettings(user);
 
             // 6 fetch permissoins
+            // TODO:  cache these values
             const roles = await Role.getAll();
+            const perm = await Permissions.getAll();
+
             const permissoins: Record<string, any> = {
                 roles,
+                permissoins: perm,
             };  
 
             // 7. Construct the access profile object

@@ -1,10 +1,18 @@
 <template>
-    <div class="vform__row " :class="{ 'vform__disabled': confirmOn }">
-        <div class="vform__group mb-7 w-full">
+    <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+        <div class="vform__group mb-7 w-full" style="height: fit-content;">
             <label class="vform__label" for="permissions">Permissions</label>
-
-            <Treeselect v-model="permissions" :multiple="true" :options="permissionsOptions" placeholder=""
-                :disabled="confirmOn" :show-count="true"  :disable-branch-nodes="true" />
+            <!-- TreeSelect (force re-render with :key to sync changes instantly) -->
+            <Treeselect
+                :key="treeKey"
+                v-model="permissions"
+                :multiple="true"
+                :options="permissionsOptions"
+                :disabled="confirmOn"
+                :show-count="true"
+                :disable-branch-nodes="true"
+                placeholder=""
+            />
         </div>
     </div>
 </template>
@@ -14,34 +22,61 @@
 <script setup lang="ts">
 import { usePermissionStore } from '@/stores/permissionStore';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import Treeselect from 'vue3-treeselect';
 import 'vue3-treeselect/dist/vue3-treeselect.css';
 
+// - Store -------------------------------------------------------------
 const permissionStore = usePermissionStore();
-const {getGroupedPermissions} = storeToRefs(permissionStore);
+const { getGroupedPermissions } = storeToRefs(permissionStore);
 
-
+// - Props -------------------------------------------------------------
 const props = defineProps<{
     confirmOn: boolean,    
-}>()
+    defaultPermissions?: number[],
+}>();
+
+// - Emits -------------------------------------------------------------
+
+const emit = defineEmits<{
+    (e: 'perm-changed', value: number[]): void
+}>();
 
 
-const permissions = ref<string[]>(["6", "5", "4"]);
+
+// - Data --------------------------------------------------------------
+const permissions = ref<number[]>([]);
 const permissionsOptions = ref<Record<string, any>[]>([]);
+const treeKey = ref(1); // Used to force Treeselect re-render
 
+// - Watch -------------------------------------------------------------
 
-
-watch(getGroupedPermissions, (grpPerms)=>{
-    permissionsOptions.value = grpPerms    
+// Update options whenever store changes
+watch(getGroupedPermissions, (grpPerms) => {
+    permissionsOptions.value = grpPerms;
+}, {
+    deep: true,
+    immediate: true,
 });
 
-watch(permissions, (p)=>{
-    console.log(p)
-})
+// Update model & force Treeselect to re-render when defaultPermissions prop changes
+watch(() => props.defaultPermissions, (p, oldP) => {
+    console.log(">", p)
+    if (p && JSON.stringify(p) !== JSON.stringify(oldP)) {
+        permissions.value = p;
+        treeKey.value++; // Bump key to force re-render (keeps UI in sync, no flicker)
+    }
+}, {
+    immediate: true,
+});
 
+// Debug: log permissions changes
+watch(permissions, (p, oldP) => {
 
-
+    if (JSON.stringify(p) !== JSON.stringify(oldP)) {
+        emit('perm-changed', p);
+    }
+});
 </script>
 
 <!-- --------------------------------------------------------------- -->
@@ -74,22 +109,16 @@ watch(permissions, (p)=>{
     }
 }
 
-:deep(.vue-treeselect--focused:not(.vue-treeselect--open) .vue-treeselect__control) {
-    border-color: var(--color-blue-500);
-    box-shadow: none;
-}
-
+:deep(.vue-treeselect--focused:not(.vue-treeselect--open) .vue-treeselect__control),
 :deep(.vue-treeselect--focused .vue-treeselect__control) {
     border-color: var(--color-blue-500);
     box-shadow: none;
 }
 
 :deep(.vue-treeselect__multi-value) {
-
     height: 100%;
     min-height: 3rem;
     width: 100%;
-
     display: inline-block;
     padding: 1.5rem .5rem .5rem .5rem;
 }
@@ -114,22 +143,19 @@ watch(permissions, (p)=>{
 
 // options
 :deep(.vue-treeselect__menu) {
-
     border: 1px solid var(--color-gray-300);
     background-color: var(--color-zinc-100);
     margin-top: .5rem !important;
     margin-bottom: .5rem !important;
-
+    border-radius: 5px;
 }
 
 :deep(.vue-treeselect__label) {
     color: var(--color-text-1);
-
 }
 
 :deep(.vue-treeselect__option--selected) {
     background: rgba(59, 130, 246, .08);
-
 }
 
 :deep(.vue-treeselect__option--highlight) {

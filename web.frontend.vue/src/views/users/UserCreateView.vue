@@ -68,7 +68,7 @@
 
 		</div>
 
-		<UserPermissions :confirmOn="confirmOn" :permissionsOptions="permissionsOptions"></UserPermissions>
+		<UserPermissions :confirmOn="confirmOn" :defaultPermissions="defaultPermissions" @perm-changed="form.permissions = $event"></UserPermissions>
 
 		<UserOrganisations :confirmOn="confirmOn" :organisationsOptions="organisationsOptions" ></UserOrganisations>
 
@@ -80,12 +80,13 @@
 <script setup lang="ts">
 import VueSelect from "vue3-select-component";
 import { useMessageStore } from '@/stores/messageStore';
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 
 
 import UserPermissions from "@/components/users/UserPermissions.vue";
 import UserOrganisations from "@/components/users/UserOrganisations.vue";
+import { usePermissionStore } from "@/stores/permissionStore";
 
 
 // - Composable --------------------------------------------------------
@@ -95,44 +96,9 @@ const vueSelectStyles = useVueSelectStyles();
 // - Store -------------------------------------------------------------
 
 const messageStore = useMessageStore();
+const permissionStore = usePermissionStore();
 
 // - Data --------------------------------------------------------------
-
-const permissionsOptions = [
-	{
-		id: '100',
-		label: "Test",
-
-	},
-	{
-		id: 'users',
-		label: 'Users',
-		children: [
-			{ id: '1', label: 'Create User' },
-			{ id: '2', label: 'Update User' },
-			{ id: '3', label: 'Delete User' },
-		],
-	},
-	{
-		id: 'organisation',
-		label: 'Organisations',
-		children: [
-			{ id: '4', label: 'Create Organisation' },
-			{ id: '5', label: 'Update Organisation' },
-			{ id: '6', label: 'Delete Organisation' },
-		],
-	},
-	{
-		id: 'devices',
-		label: 'Devices',
-		children: [
-			{ id: '13', label: 'View Devices' },
-			{ id: '14', label: 'Create Devices' },
-			{ id: '15', label: 'Update Devices' },
-			{ id: '16', label: 'Delete Devices' },
-		],
-	},
-];
 
 const organisationsOptions: Record<string, any>[] = [];
 
@@ -152,7 +118,7 @@ const form = reactive({
 	password: null as null | string,
 	role: 3,
 	active: true,
-	permissions: [] as any[],
+	permissions: [] as number[],
 });
 
 const errors = ref<Record<string, string>>({
@@ -163,6 +129,28 @@ const errors = ref<Record<string, string>>({
 	role: "",
 	active: "",
 });
+
+const defaultPermissions = ref<number[]>([]);
+
+// - Watch -------------------------------------------------------------
+
+watch(()=>[form.role, permissionStore.isLoaded], ([_, loaded]) => {
+
+	if (!loaded) return;
+
+	if (form.role && Number(form.role) > 0) {
+		
+		let rp = permissionStore.getRolePermissions[form.role];
+
+		defaultPermissions.value = rp;
+
+		form.permissions = rp;
+	}
+}, {
+	immediate: true,
+	deep: true
+});
+
 
 // - Methods -----------------------------------------------------------
 

@@ -8,7 +8,7 @@ import (
 )
 
 // Load config from environment variables (fall back to defaults if not set)
-var GO_APP_URL = getEnv("GO_APP_URL", "http://iotrack.live")
+var GO_APP_URL = getEnv("GO_APP_URL", "https://iotrack.live")
 var GO_APP_PORT = getEnv("GO_APP_PORT", "4000")
 
 // getEnv returns the value of the environment variable or a default if not set
