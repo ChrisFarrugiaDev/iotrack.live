@@ -21,6 +21,18 @@ export const useUserStore = defineStore('userStore', () => {
 
     // ---- Setters (Actions) ------------------------------------------
 
+    async function createUser(payload: Record<string, any>) {
+        try {
+            const url = `${appStore.getAppUrl}/api/user`;
+            const result = await axios.post(url, payload);
+            return result;
+
+        } catch (err) {
+            console.error('! userStore createUser !\n', err);
+            throw err;
+        }
+    }
+
     async function fetchUserScope() {
 
         try {
@@ -48,6 +60,8 @@ export const useUserStore = defineStore('userStore', () => {
         getUserScope,
         setUserScope,  
         fetchUserScope,
+
+        createUser,
         
         clear,
     }

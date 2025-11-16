@@ -3,8 +3,15 @@
         <div class="vform__group mb-7 w-full">
             <label class="vform__label" for="organisations">Organisations</label>
 
-            <Treeselect :key="treeKey" v-model="organisations" :multiple="true" :options="organisationsOptions" placeholder=""
-                :disabled="confirmOn" :show-count="true" :flat="true"/>
+            <Treeselect 
+                :key="treeKey" 
+                v-model="organisations" 
+                :multiple="true" 
+                :options="organisationsOptions" 
+                placeholder=""
+                :disabled="confirmOn" 
+                :show-count="true" 
+                :flat="true"/>
         </div>
     </div>
 </template>
@@ -18,43 +25,59 @@ import { ref, watch } from 'vue';
 import Treeselect from 'vue3-treeselect';
 import 'vue3-treeselect/dist/vue3-treeselect.css';
 
+// - Store -------------------------------------------------------------
 const organisationStore = useOrganisationStore();
-const { getGroupedOrganisations, getOrganisationScope, getOrganisation } = storeToRefs(organisationStore);
+const { getGroupedOrganisations } = storeToRefs(organisationStore);
 
-
+// - Props -------------------------------------------------------------
 const props = defineProps<{
     confirmOn: boolean,
-    // organisationsOptions: Record<string, any>[]
+    defaultOrganisations?: string[],
 }>();
 
+
+// - Emits -------------------------------------------------------------
+
+const emit = defineEmits<{
+    (e: 'org-changed', value: string[]): void
+}>();
+
+
+// - Data --------------------------------------------------------------
+const treeKey = ref(1); // Used to force Treeselect re-render
 
 const organisations = ref<any>();
 const organisationsOptions = ref<Record<string, any>[]>([]);
 
-const treeKey = ref(1); // Used to force Treeselect re-render
 
+// - Watch -------------------------------------------------------------
 watch(getGroupedOrganisations, (grpOrgs) => {
-
     organisationsOptions.value = grpOrgs;
 },{
     deep: true,
     immediate: true,
-})
+});
 
 
-watch(getOrganisationScope, (orgs) => {
-
-    const parentOrg = getOrganisation.value;
-
-    if (orgs && parentOrg) {
-        delete orgs[parentOrg.id]
-        organisations.value = Object.keys(orgs);
-        treeKey.value++;
+watch(()=>props.defaultOrganisations, (org, oldOrg) => {
+    
+    if (org && JSON.stringify(org) !== JSON.stringify(oldOrg)) {
+        organisations.value = org;
+        treeKey.value++; // Bump key to force re-render (keeps UI in sync, no flicker)
     }
-},{
-    deep: true,
+},{ 
     immediate: true,
-})
+});
+
+
+watch(organisations, (v, oldV) => {
+
+    if (JSON.stringify(v) !== JSON.stringify(oldV)) {
+        emit('org-changed', v);
+    }
+}, {
+    immediate: true
+});
 
 </script>
 
@@ -71,7 +94,6 @@ watch(getOrganisationScope, (orgs) => {
     outline: none !important;
     transition: 0s all !important;
 }
-
 :deep(.vue-treeselect__control) {
     min-height: 4rem;
     height: fit-content;
@@ -87,17 +109,14 @@ watch(getOrganisationScope, (orgs) => {
         border: 1px solid var(--color-zinc-300) !important;
     }
 }
-
 :deep(.vue-treeselect--focused:not(.vue-treeselect--open) .vue-treeselect__control) {
     border-color: var(--color-blue-500);
     box-shadow: none;
 }
-
 :deep(.vue-treeselect--focused .vue-treeselect__control) {
     border-color: var(--color-blue-500);
     box-shadow: none;
 }
-
 :deep(.vue-treeselect__multi-value) {
 
     height: 100%;
@@ -136,18 +155,14 @@ watch(getOrganisationScope, (orgs) => {
     margin-bottom: .5rem !important;
 
 }
-
 :deep(.vue-treeselect__label) {
     color: var(--color-text-1);
 
 }
-
-
 :deep(.vue-treeselect__option--selected) {
     background: rgba(59, 130, 246, .08);
 
 }
-
 :deep(.vue-treeselect__option--highlight) {
     background: rgba(59, 130, 246, .12);
 }

@@ -6,13 +6,13 @@ export const usePermissionStore = defineStore('permissionStore', () => {
     // ---- Types ------------------------------------------------------
 
     type Permission = {
-        perm_id: string
+        perm_id: number
         key: string
         description: string
     }
 
     type TreeNode = {
-        id: string
+        id: number | string
         label: string
         children?: TreeNode[]
     }
@@ -20,10 +20,14 @@ export const usePermissionStore = defineStore('permissionStore', () => {
     // ---- State ------------------------------------------------------
     const roles = ref<Record<string, string>>({});
     const permissions = ref<Permission[]>([]);
+    const rolePermissions = ref< Record<string, number[]> >({});
+
+    const loaded = ref(false);
 
 
     // ---- Getters ----------------------------------------------------
     const getRoles = computed(() => roles.value);
+
     const getGroupedPermissions = computed(() => {
         const groupMap: Record<string, TreeNode> = {}
         const ungrouped: TreeNode[] = []
@@ -55,19 +59,42 @@ export const usePermissionStore = defineStore('permissionStore', () => {
             ...ungrouped,
             ...Object.values(groupMap)
         ]
-    })
-
-
+    });
+    
     const getPermissions = computed(() => permissions.value);
+    
+    const getRolePermissions = computed(() => {
+        return rolePermissions.value;
+    });
 
+    const isLoaded = computed(() => loaded.value);
 
     // ---- Actions ----------------------------------------------------
 
     function setRoles(r: Record<string, string>) {
         roles.value = r;
+        checkLoaded();
     }
     function setPermissions(p: Permission[]) {
         permissions.value = p;
+        checkLoaded();
+    }
+
+    function setRolePermissions(rp: Record<string, number[]>) {   
+        rolePermissions.value = rp;
+        checkLoaded();
+    }
+
+    // Helper to check if all are populated
+    function checkLoaded() {
+        // Only set loaded if all data is non-empty
+        if (
+            Object.keys(roles.value).length > 0 &&
+            permissions.value.length > 0 &&
+            Object.keys(rolePermissions.value).length > 0
+        ) {
+            loaded.value = true;
+        }
     }
 
 
@@ -78,5 +105,8 @@ export const usePermissionStore = defineStore('permissionStore', () => {
         getPermissions,
         setPermissions,
         getGroupedPermissions,
+        getRolePermissions,
+        setRolePermissions,
+        isLoaded,
     };
 });

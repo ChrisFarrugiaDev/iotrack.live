@@ -1,10 +1,13 @@
 import { FastifyInstance } from "fastify";
 import { authMiddleware } from "../middleware/auth.middleware";
 import UserController from "../controllers/user.controller";
+import { validateBody } from "../middleware/validate-body.middleware";
+import { storeSchema } from "../schemas/user.scheme";
 
 
-export default async function userRouter(fasrify: FastifyInstance) {
+export default async function userRouter(fastify: FastifyInstance) {
 
-    fasrify.get("/", {preHandler: [authMiddleware]}, UserController.index);
+    fastify.get("/", {preHandler: [authMiddleware]}, UserController.index);
+    fastify.post("/", { preHandler: [authMiddleware, validateBody(storeSchema)] }, UserController.store);
 
 }

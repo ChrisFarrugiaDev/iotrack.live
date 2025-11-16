@@ -3,8 +3,8 @@
         <div class="vform__group mb-7 w-full">
             <label class="vform__label" for="organisations">Organisations</label>
 
-            <Treeselect v-model="organisations" :multiple="true" :options="organisationsOptions" placeholder=""
-                :disabled="confirmOn" :show-count="true" />
+            <Treeselect :key="treeKey" v-model="organisations" :multiple="true" :options="organisationsOptions" placeholder=""
+                :disabled="confirmOn" :show-count="true" :flat="true"/>
         </div>
     </div>
 </template>
@@ -12,18 +12,49 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { useOrganisationStore } from '@/stores/organisationStore';
+import { storeToRefs } from 'pinia';
+import { ref, watch } from 'vue';
 import Treeselect from 'vue3-treeselect';
 import 'vue3-treeselect/dist/vue3-treeselect.css';
+
+const organisationStore = useOrganisationStore();
+const { getGroupedOrganisations, getOrganisationScope, getOrganisation } = storeToRefs(organisationStore);
 
 
 const props = defineProps<{
     confirmOn: boolean,
-    organisationsOptions: Record<string, any>[]
+    // organisationsOptions: Record<string, any>[]
 }>();
 
 
 const organisations = ref<any>();
+const organisationsOptions = ref<Record<string, any>[]>([]);
+
+const treeKey = ref(1); // Used to force Treeselect re-render
+
+watch(getGroupedOrganisations, (grpOrgs) => {
+
+    organisationsOptions.value = grpOrgs;
+},{
+    deep: true,
+    immediate: true,
+})
+
+
+watch(getOrganisationScope, (orgs) => {
+
+    const parentOrg = getOrganisation.value;
+
+    if (orgs && parentOrg) {
+        delete orgs[parentOrg.id]
+        organisations.value = Object.keys(orgs);
+        treeKey.value++;
+    }
+},{
+    deep: true,
+    immediate: true,
+})
 
 </script>
 
@@ -99,6 +130,7 @@ const organisations = ref<any>();
 :deep(.vue-treeselect__menu) {
 
     border: 1px solid var(--color-gray-300);
+    border-radius: 5px;
     background-color: var(--color-zinc-100);
     margin-top: .5rem !important;
     margin-bottom: .5rem !important;
@@ -109,6 +141,7 @@ const organisations = ref<any>();
     color: var(--color-text-1);
 
 }
+
 
 :deep(.vue-treeselect__option--selected) {
     background: rgba(59, 130, 246, .08);

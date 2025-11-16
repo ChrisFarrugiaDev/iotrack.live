@@ -20,7 +20,7 @@ export const usePermissionStore = defineStore('permissionStore', () => {
     // ---- State ------------------------------------------------------
     const roles = ref<Record<string, string>>({});
     const permissions = ref<Permission[]>([]);
-    const rolePermissions = ref< Record<string, number[]> >({});
+    const rolePermissions = ref<Record<string, number[]>>({});
 
     const loaded = ref(false);
 
@@ -60,9 +60,9 @@ export const usePermissionStore = defineStore('permissionStore', () => {
             ...Object.values(groupMap)
         ]
     });
-    
+
     const getPermissions = computed(() => permissions.value);
-    
+
     const getRolePermissions = computed(() => {
         return rolePermissions.value;
     });
@@ -80,7 +80,7 @@ export const usePermissionStore = defineStore('permissionStore', () => {
         checkLoaded();
     }
 
-    function setRolePermissions(rp: Record<string, number[]>) {   
+    function setRolePermissions(rp: Record<string, number[]>) {
         rolePermissions.value = rp;
         checkLoaded();
     }
@@ -97,6 +97,31 @@ export const usePermissionStore = defineStore('permissionStore', () => {
         }
     }
 
+    function comparePermissionsDiff(
+        rolePermissions: number[],
+        userPermissions: number[]
+    ): Record<number, boolean> {
+
+        const result: Record<number, boolean> = {};
+
+        // Permissions the user has but the role does not → TRUE
+        userPermissions.forEach(perm => {
+            if (!rolePermissions.includes(perm)) {
+                result[perm] = true;
+            }
+        });
+
+        // Permissions the role has but the user does not → FALSE
+        rolePermissions.forEach(perm => {
+            if (!userPermissions.includes(perm)) {
+                result[perm] = false;
+            }
+        });
+
+        return result;
+    }
+
+
 
     // - Expose --------------------------------------------------------
     return {
@@ -108,5 +133,6 @@ export const usePermissionStore = defineStore('permissionStore', () => {
         getRolePermissions,
         setRolePermissions,
         isLoaded,
+        comparePermissionsDiff,
     };
 });

@@ -55,6 +55,36 @@ class UserController {
             });
         }
     }
+
+
+    static async store(request: FastifyRequest, reply: FastifyReply) {
+
+        const {
+            first_name,
+            last_name,
+            email,
+            password,
+            role,
+            active,
+            user_permissions,
+            user_organisation_access,
+            user_asset_access,
+            user_device_access,
+        } = (request as any).body;
+
+        console.log({
+            first_name,
+            last_name,
+            email,
+            password,
+            role,
+            active,
+            user_permissions,
+            user_organisation_access,
+            user_asset_access,
+            user_device_access,
+        })
+    }
 }
 
 

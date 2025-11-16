@@ -4,11 +4,21 @@ import type { Asset } from '@/types/asset.type'
 import { useAppStore } from './appStore';
 import axios from '@/axios';
 import { useDeviceStore } from './deviceStore';
+import { useOrganisationStore } from './organisationStore';
 
 export const useAssetStore = defineStore('assetStore', () => {
 
     const appStore = useAppStore();
     const deviceStore = useDeviceStore();
+    const organisationStore = useOrganisationStore();
+
+    // ---- Types ------------------------------------------------------
+
+    type TreeNode = {
+        id: number | string
+        label: string
+        children?: TreeNode[]
+    }
 
     // ---- State ------------------------------------------------------
     const assets = ref<Record<string, Asset> | null>(null);
@@ -17,7 +27,7 @@ export const useAssetStore = defineStore('assetStore', () => {
     const getAssets = computed(() => assets.value);
 
     const getAssetsWithDevice = computed(() => {
-        if(assets.value == null) return [];
+        if (assets.value == null) return [];
         let a = Object.values(assets.value);
         a = a.filter(a => {
             return a.devices.length && Object.keys(a.devices[0].last_telemetry).length
@@ -34,6 +44,39 @@ export const useAssetStore = defineStore('assetStore', () => {
         }
 
         return map;
+    });
+
+
+    const getGroupedAssets = computed(() => {
+        // Object to store groupings: { [orgName]: TreeNode }
+        const groupedAssets: Record<string, TreeNode> = {};
+        const orgs = organisationStore.getOrganisationScope;
+
+        if (!assets.value || !orgs) return groupedAssets;
+
+        const assetsList = Object.values(assets.value);
+
+        for (const asset of assetsList) {
+            // Find the organisation for this asset
+            const organisation = orgs[asset.organisation_id];
+            if (!organisation) continue; // skip if no org (defensive)
+
+            // Create org group node if not exists
+            if (!(organisation.name in groupedAssets)) {
+                groupedAssets[organisation.name] = {
+                    label: organisation.name,
+                    id: organisation.name,
+                    children: []
+                }
+            }
+
+            // Add asset as child node under its org
+            groupedAssets[organisation.name]!.children!.push({
+                label: asset.name,
+                id: asset.id,
+            });
+        }
+        return groupedAssets;
     });
 
     // ---- Actions ----------------------------------------------------
@@ -67,7 +110,7 @@ export const useAssetStore = defineStore('assetStore', () => {
     async function createAsset(payload: Record<string, any>) {
         try {
             console.log(payload)
-            
+
             const url = `${appStore.getAppUrl}/api/asset`;
             const result = await axios.post(url, payload);
             return result;
@@ -125,5 +168,6 @@ export const useAssetStore = defineStore('assetStore', () => {
         addAssetToStore,
         removeAssetFromStore,
         getAssetsWithDevice,
+        getGroupedAssets,
     }
 })
