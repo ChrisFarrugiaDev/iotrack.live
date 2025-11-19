@@ -37,6 +37,7 @@ export const storeSchema = z.object({
     password: nonEmptyString.optional(),
     role: requiredNumber,
     active:requiredBoolen,
+    organisation_id: numericString,
     user_permissions: booleanRecord ,
     user_organisation_access: booleanRecord,
     user_asset_access: booleanRecord,
