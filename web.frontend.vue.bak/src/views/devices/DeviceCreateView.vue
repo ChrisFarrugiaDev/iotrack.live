@@ -141,11 +141,26 @@ import { useDeviceStore } from "@/stores/deviceStore";
 import { useMessageStore } from "@/stores/messageStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useDashboardStore } from "@/stores/dashboardStore";
+import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
 
 
 // - Composable --------------------------------------------------------
 
 const vueSelectStyles = useVueSelectStyles();
+
+const errors = ref<Record<string, string>>({
+    external_id: '',
+    external_id_type: '',
+    organisation_id: '',
+    vendor: '',
+    model: '',
+    protocol: '',
+    status: '',
+    iccid: '',
+    msisdn: '',
+});
+
+const { handleFormError } = useFormErrorHandler(errors);
 
 // - Store -------------------------------------------------------------
 
@@ -171,17 +186,6 @@ const form = reactive({
   organisation_id: null as null | string,
 });
 
-const errors = ref<Record<string, string>>({
-    external_id: '',
-    external_id_type: '',
-    organisation_id: '',
-    vendor: '',
-    model: '',
-    protocol: '',
-    status: '',
-    iccid: '',
-    msisdn: '',
-});
 
 // - Computed ----------------------------------------------------------
 
@@ -260,36 +264,8 @@ async function createDevice() {
         });
 
     } catch (err: any) {
-        // Try to extract server-side validation errors
-        const fieldErrors = err?.response?.data?.error?.details?.fieldErrors;
-        if (fieldErrors && typeof fieldErrors === "object") {
-            for (const key in fieldErrors) {
-                if (Object.prototype.hasOwnProperty.call(errors.value, key)) {
-                    errors.value[key] = fieldErrors[key][0];
-                }
-            }
-            messageStore.setFlashMessagesList(
-                ["Please fix the highlighted errors and try again."],
-                'flash-message--orange'
-            );
-            return;
-        }
 
-        // Known global error messages from backend
-        const message = err?.response?.data?.message;
-        if (message === 'Invalid input.') {
-            messageStore.setFlashMessagesList(
-                ["Some of the provided information is invalid."],
-                'flash-message--orange'
-            );
-            return;
-        }
-
-        // Fallback for totally unexpected errors
-        messageStore.setFlashMessagesList(
-            ["An unexpected error occurred. Please try again later."],
-            'flash-message--orange'
-        );
+        handleFormError(err);
 
         // Always log error for developer debugging
         console.error("! DeviceCreateView createDevice !", err);

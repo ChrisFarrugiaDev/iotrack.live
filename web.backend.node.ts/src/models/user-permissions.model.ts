@@ -10,27 +10,27 @@ export class UserPermissions {
         prismaClient: Prisma.TransactionClient | PrismaClient = prisma
     ) {
 
-        const result = await prisma.user_permissions.create({
+        const result = await prismaClient.user_permissions.create({
             data: perm
         })
 
         return bigIntToString(result);
     }
 
+    // -----------------------------------------------------------------
+
     static async createMany(
-        perms: Prisma.user_permissionsCreateManyInput,
+        perms: Prisma.user_permissionsCreateManyInput[],
         prismaClient: Prisma.TransactionClient | PrismaClient = prisma
     ) {
 
-        const result = await prisma.user_permissions.createManyAndReturn({
+        const result = await prismaClient.user_permissions.createManyAndReturn({
             data: perms,
             skipDuplicates: true,
         })
 
         return bigIntToString(result);
     }
-
-
 }
 
 

@@ -1,4 +1,4 @@
-import { organisations } from '../../generated/prisma'
+import { organisations, Prisma, PrismaClient } from '../../generated/prisma'
 import prisma from '../config/prisma.config';
 import * as redisUtils from '../utils/redis.utils';
 import { bigIntToString } from '../utils/utils';
@@ -140,4 +140,18 @@ export class Organisation {
         return null;
     }
 
+
+        // -----------------------------------------------------------------
+
+    static async create( 
+        user: Prisma.organisationsCreateInput, 
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ): Promise<OrganisationType> {
+
+        const result = await prismaClient.organisations.create({
+            data: user
+        })
+
+        return bigIntToString(result);
+    }
 }

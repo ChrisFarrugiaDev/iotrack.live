@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import AuthController from "../controllers/auth.controller";
 import { validateBody } from "../middleware/validate-body.middleware";
-import { loginSchema } from "../schemas/auth.scheme";
+import { loginSchema } from "../schemas/auth.schema";
 
 // ---------------------------------------------------------------------
 

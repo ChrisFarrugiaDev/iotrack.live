@@ -83,14 +83,13 @@
 			@perm-changed="form.permissions = $event">
 		</UserPermissions>
 
-		<UserOrganisations :confirmOn="confirmOn" :defaultOrganisations="defaultOrganisations"
-			@org-changed="form.organisations = $event">
+		<UserOrganisations :confirmOn="confirmOn" :defaultOrganisations="defaultOrganisations"  @org-changed="form.organisations = $event">
 		</UserOrganisations>
 
 		<UserAssets :confirmOn="confirmOn" :defaultAssets="defaultAssets" @assets-changed="form.assets = $event">
 		</UserAssets>
 
-		<UserDevices :confirmOn="confirmOn" :defaultDevices="defaultDevices" @devices-changed="form.devices = $event">
+		<UserDevices :confirmOn="confirmOn" :defaultDevices="defaultDevices"  @devices-changed="form.devices = $event">
 		</UserDevices>
 
 		<div class="vform__row mt-9 ">
@@ -124,6 +123,7 @@ import * as utils from "@/utils/utils";
 import { useUserStore } from "@/stores/userStore";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
+import { useUserAssignableStore } from "@/stores/userAssignableStore";
 
 
 // - Composable --------------------------------------------------------
@@ -147,11 +147,9 @@ const {handleFormError} = useFormErrorHandler(errors);
 const userStore = useUserStore();
 const messageStore = useMessageStore();
 const permissionStore = usePermissionStore();
-const organisationStore = useOrganisationStore();
-const deviceStore = useDeviceStore();
-const assetStore = useAssetStore();
 const dashboardStore = useDashboardStore();
-
+const organisationStore = useOrganisationStore();
+const userAssignableStore = useUserAssignableStore();
 
 // - Data --------------------------------------------------------------
 
@@ -178,8 +176,6 @@ const form = reactive({
 	devices: [] as string[],
 });
 
-
-
 const defaultPermissions = ref<number[]>([]);
 const defaultOrganisations = ref<string[]>([]);
 const defaultAssets = ref<string[]>([]);
@@ -196,9 +192,36 @@ const getOrganisations = computed(() => {
     }));
 });
 
-
-
 // - Watch -------------------------------------------------------------
+
+watch(()=>form.organisation_id, async (id) => {
+
+	if (!id || isNaN(Number(id))) return;
+
+	await userAssignableStore.fetchAssignableResources(id);
+
+}, {
+	immediate: true,
+	deep: true
+});
+
+
+watch(()=>userAssignableStore.getSelectedOrgId, (id)=>{
+
+		const assets = userAssignableStore.getAssignableResources[id]?.assets ?? {};
+		defaultAssets.value = Object.keys(assets);
+
+		const orgs = userAssignableStore.getAssignableResources[id]?.organisation ?? {};
+		defaultOrganisations.value = Object.keys(orgs).filter(dd => id != dd);		
+
+		const devices = userAssignableStore.getAssignableResources[id]?.devices ?? {};
+		defaultDevices.value = Object.keys(devices);
+
+
+}, {
+	immediate: true,
+	deep: true
+});
 
 watch(() => [form.role, permissionStore.isLoaded], ([_, loaded]) => {
 
@@ -218,35 +241,12 @@ watch(() => [form.role, permissionStore.isLoaded], ([_, loaded]) => {
 });
 
 
-watch(() => organisationStore.getChildrenIds, (ids) => {
-	defaultOrganisations.value = ids;
-}, {
-	immediate: true,
-	deep: true
-});
-
-watch(() => assetStore.getAssets, (assets) => {
-	if (assets) {
-		defaultAssets.value = Object.keys(assets);
-	}
-}, {
-	immediate: true,
-	deep: true
-});
-
-watch(() => deviceStore.getDevices, (devices) => {
-	if (devices) {
-		defaultDevices.value = Object.keys(devices);
-	}
-}, {
-	immediate: true,
-	deep: true
-});
-
 watch(()=>organisationStore.getOrganisation, (org) => {    
 	form.organisation_id = org?.id ?? null;
-})
-
+}, {
+	immediate: true,
+	deep: true
+});
 
 
 // - Methods -----------------------------------------------------------
@@ -265,13 +265,15 @@ function initCreateUser() {
 		active: "",
 		organisation_id: '',
 	};
-	clearMessage();``
+	
+	clearMessage();
 	confirmOn.value = true;
 }
 
 async function createUser() {
 
 	dashboardStore.setIsLoading(true);
+	
 	try {
 		const {
 			permissions,
@@ -303,8 +305,20 @@ async function createUser() {
 			user_device_access,
 		};
 
+		const r = await userStore.createUser(payload);
 
-		await userStore.createUser(payload);
+        // Success message
+        messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+		userStore.addUserToStore(r.data.data.user);
+
+		// Reset form fields to defaults     
+        Object.assign(form, {
+			first_name: null,
+			last_name: null,
+			email: null,
+			password: null,
+        });
 
 	} catch (err) {
 
@@ -317,8 +331,6 @@ async function createUser() {
 		
 	}
 }
-
-
 
 </script>
 

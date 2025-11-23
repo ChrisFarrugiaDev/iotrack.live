@@ -4,10 +4,20 @@ import type { Device } from '@/types/device.type';
 import axios from '@/axios';
 import { useAppStore } from './appStore';
 import * as util from "@/utils/utils";
+import { useOrganisationStore } from './organisationStore';
 
 export const useDeviceStore = defineStore('deviceStore', () => {
 
     const appStore = useAppStore();
+    const organisationStore = useOrganisationStore();
+
+    // ---- Types ------------------------------------------------------
+
+    type TreeNode = {
+        id: number | string
+        label: string
+        children?: TreeNode[]
+    }
 
     // ---- State ------------------------------------------------------
 
@@ -34,6 +44,43 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         }
 
         return map;
+    });
+
+    const getGroupedDevices = computed(() => {
+        // This object will group devices by their organisation name
+        const groupedDevices: Record<string, TreeNode> = {};
+        // Get the organisation scope from your organisation store (change as needed)
+        const orgs = useOrganisationStore().getOrganisationScope;
+
+        if (!devices.value || !orgs) return [];
+
+        const devicesList = Object.values(devices.value);
+
+        for (const device of devicesList) {
+            // Defensive: skip if device is missing organisation
+            const organisation = orgs[device.organisation_id!];
+            if (!organisation) continue;
+
+            // Create org node if it doesn't exist yet
+            if (!(organisation.name in groupedDevices)) {
+                groupedDevices[organisation.name] = {
+                    label: organisation.name,
+                    id: organisation.name,
+                    children: []
+                };
+            }
+
+            const label = device.model ? `${device.model} ${device.external_id}` : `${device.external_id}`
+
+            // Add this device as a child under its org node
+            groupedDevices[organisation.name].children!.push({
+                label,
+                id: device.id,
+            });
+        }
+
+    
+        return groupedDevices
     });
 
     // ---- Actions ----------------------------------------------------
@@ -158,11 +205,11 @@ export const useDeviceStore = defineStore('deviceStore', () => {
             ...data.telemetry.elements,
         };
 
-        if (enableAnimation && ( newLat + newLng )) {
+        if (enableAnimation && (newLat + newLng)) {
             // Smooth movement
             const path = util.divideLine([curLat, curLng], [newLat, newLng], 40);
             queueMovement(data.device_id, dev, path, 25);
-        } else if ( newLat + newLng ) {
+        } else if (newLat + newLng) {
             // Snap instantly to new position
             dev.last_telemetry.latitude = newLat;
             dev.last_telemetry.longitude = newLng;
@@ -269,5 +316,6 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         useDevice,
         addAssetToDeviceInStore,
         removeAssetToDeviceInStore,
+        getGroupedDevices,
     };
 });

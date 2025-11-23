@@ -21,6 +21,12 @@ export const useUserStore = defineStore('userStore', () => {
 
     // ---- Setters (Actions) ------------------------------------------
 
+
+    function addUserToStore(user: User) {
+        if (!userScope.value) return;
+        userScope.value[user.id] = user;
+    }
+
     async function createUser(payload: Record<string, any>) {
         try {
             const url = `${appStore.getAppUrl}/api/user`;
@@ -62,6 +68,7 @@ export const useUserStore = defineStore('userStore', () => {
         fetchUserScope,
 
         createUser,
+        addUserToStore,
         
         clear,
     }

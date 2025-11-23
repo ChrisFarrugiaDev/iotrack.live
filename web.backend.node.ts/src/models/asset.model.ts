@@ -1,7 +1,7 @@
 import { bigIntToString } from '../utils/utils';
-import { Prisma, assets } from '../../generated/prisma';
+import { Prisma, assets, PrismaClient } from '../../generated/prisma';
 import prisma from '../config/prisma.config';
-import { PrismaClient } from '@prisma/client';
+
 
 // ---------------------------------------------------------------------
 

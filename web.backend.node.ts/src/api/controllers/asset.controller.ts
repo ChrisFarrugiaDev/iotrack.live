@@ -6,7 +6,7 @@ import { AccessProfileController } from "./access-profile.controller";
 import { Device, DeviceType } from "../../models/device.model";
 import { Prisma } from "../../../generated/prisma";
 import z from "zod";
-import { AssetDestroyBody, AssetStoreBody } from "../schemas/asset.scheme";
+import { AssetDestroyBody, AssetStoreBody } from "../schemas/asset.schema";
 import prisma from "../../config/prisma.config";
 
 

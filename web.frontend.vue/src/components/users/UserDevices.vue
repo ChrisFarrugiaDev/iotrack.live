@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { useDeviceStore } from '@/stores/deviceStore';
+import { useUserAssignableStore } from '@/stores/userAssignableStore';
 import { storeToRefs } from 'pinia';
 import { ref, watch, watchEffect } from 'vue';
 
@@ -45,6 +46,8 @@ const emit = defineEmits<{
 const deviceStore = useDeviceStore();
 const { getGroupedDevices } = storeToRefs(deviceStore);
 
+const userAssignableStore = useUserAssignableStore();
+
 // - Data --------------------------------------------------------------
 const treeKey = ref(1); // Used to force Treeselect re-render
 
@@ -52,12 +55,13 @@ const devices = ref<any>();
 const devicesOptions = ref<Record<string, any>[]>([]);
 
 // - Watch -------------------------------------------------------------
-watch(getGroupedDevices, (grpDevices) => {
 
-    const dd = Object.values(grpDevices);
+watch(()=> userAssignableStore.getSelectedOrgId, async () => {
+    
+    const grpDevices = userAssignableStore.getGroupedDevices;
+    console.log(grpDevices);
+    devicesOptions.value = Object.values(grpDevices);
 
-    if (!dd) { return };
-    devicesOptions.value = dd;
 },{
     deep: true,
     immediate: true,

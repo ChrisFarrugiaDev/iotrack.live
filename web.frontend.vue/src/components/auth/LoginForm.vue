@@ -111,6 +111,7 @@ async function submitForm() {
 
             setTimeout(()=>{
                 authStore.setJwt(token);
+                // appStore.setShouldFetchAccessProfile(true);
             }, 100)
 
             goToView('login.view');              

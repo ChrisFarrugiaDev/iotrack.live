@@ -68,9 +68,36 @@
 
 		</div>
 
-		<UserPermissions :confirmOn="confirmOn" :defaultPermissions="defaultPermissions" @perm-changed="form.permissions = $event"></UserPermissions>
+		<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+			<div class="vform__group mb-7">
+                <label class="vform__label" for="organisation_id">Organisation<span
+                        class="vform__required">*</span></label>
+                <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]"
+                    :options="getOrganisations" placeholder="" id="organisation_id" />
+                <p class="vform__error">{{ errors.organisation_id }}</p>
+            </div>
+		</div>
 
-		<UserOrganisations :confirmOn="confirmOn" :organisationsOptions="organisationsOptions" ></UserOrganisations>
+		<UserPermissions :confirmOn="confirmOn" :defaultPermissions="defaultPermissions"
+			@perm-changed="form.permissions = $event">
+		</UserPermissions>
+
+		<UserOrganisations :confirmOn="confirmOn" :defaultOrganisations="defaultOrganisations"
+			@org-changed="form.organisations = $event">
+		</UserOrganisations>
+
+		<UserAssets :confirmOn="confirmOn" :defaultAssets="defaultAssets" @assets-changed="form.assets = $event">
+		</UserAssets>
+
+		<UserDevices :confirmOn="confirmOn" :defaultDevices="defaultDevices" @devices-changed="form.devices = $event">
+		</UserDevices>
+
+		<div class="vform__row mt-9 ">
+			<button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initCreateUser">Register User</button>
+			<button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false">Cancel</button>
+			<button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="createUser">Confirm</button>
+		</div>
 
 	</form>
 </template>
@@ -80,27 +107,53 @@
 <script setup lang="ts">
 import VueSelect from "vue3-select-component";
 import { useMessageStore } from '@/stores/messageStore';
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 
 
 import UserPermissions from "@/components/users/UserPermissions.vue";
 import UserOrganisations from "@/components/users/UserOrganisations.vue";
+import UserAssets from "@/components/users/UserAssets.vue";
+import UserDevices from "@/components/users/UserDevices.vue";
+
 import { usePermissionStore } from "@/stores/permissionStore";
+import { useOrganisationStore } from "@/stores/organisationStore";
+import { useDeviceStore } from "@/stores/deviceStore";
+import { useAssetStore } from "@/stores/assetStore";
+import * as utils from "@/utils/utils";
+import { useUserStore } from "@/stores/userStore";
+import { useDashboardStore } from "@/stores/dashboardStore";
+import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
 
 
 // - Composable --------------------------------------------------------
 
 const vueSelectStyles = useVueSelectStyles();
 
+const errors = ref<Record<string, string>>({
+	first_name: '',
+	last_name: '',
+	email: '',
+	password: '',
+	role: "",
+	active: "",
+	organisation_id: '',
+});
+
+const {handleFormError} = useFormErrorHandler(errors);
+
 // - Store -------------------------------------------------------------
 
+const userStore = useUserStore();
 const messageStore = useMessageStore();
 const permissionStore = usePermissionStore();
+const organisationStore = useOrganisationStore();
+const deviceStore = useDeviceStore();
+const assetStore = useAssetStore();
+const dashboardStore = useDashboardStore();
+
 
 // - Data --------------------------------------------------------------
-
-const organisationsOptions: Record<string, any>[] = [];
 
 const confirmOn = ref(false);
 
@@ -118,28 +171,41 @@ const form = reactive({
 	password: null as null | string,
 	role: 3,
 	active: true,
+	organisation_id: null as null | string,
 	permissions: [] as number[],
+	organisations: [] as string[],
+	assets: [] as string[],
+	devices: [] as string[],
 });
 
-const errors = ref<Record<string, string>>({
-	first_name: '',
-	last_name: '',
-	email: '',
-	password: '',
-	role: "",
-	active: "",
-});
+
 
 const defaultPermissions = ref<number[]>([]);
+const defaultOrganisations = ref<string[]>([]);
+const defaultAssets = ref<string[]>([]);
+const defaultDevices = ref<string[]>([]);
+
+// - Computed ----------------------------------------------------------
+
+const getOrganisations = computed(() => {
+    const orgs = organisationStore.getOrganisationScope || {};
+
+    return Object.values(orgs).map((o: any) => ({
+        label: o.name,
+        value: o.id,
+    }));
+});
+
+
 
 // - Watch -------------------------------------------------------------
 
-watch(()=>[form.role, permissionStore.isLoaded], ([_, loaded]) => {
+watch(() => [form.role, permissionStore.isLoaded], ([_, loaded]) => {
 
 	if (!loaded) return;
 
 	if (form.role && Number(form.role) > 0) {
-		
+
 		let rp = permissionStore.getRolePermissions[form.role];
 
 		defaultPermissions.value = rp;
@@ -152,11 +218,107 @@ watch(()=>[form.role, permissionStore.isLoaded], ([_, loaded]) => {
 });
 
 
+watch(() => organisationStore.getChildrenIds, (ids) => {
+	defaultOrganisations.value = ids;
+}, {
+	immediate: true,
+	deep: true
+});
+
+watch(() => assetStore.getAssets, (assets) => {
+	if (assets) {
+		defaultAssets.value = Object.keys(assets);
+	}
+}, {
+	immediate: true,
+	deep: true
+});
+
+watch(() => deviceStore.getDevices, (devices) => {
+	if (devices) {
+		defaultDevices.value = Object.keys(devices);
+	}
+}, {
+	immediate: true,
+	deep: true
+});
+
+watch(()=>organisationStore.getOrganisation, (org) => {    
+	form.organisation_id = org?.id ?? null;
+})
+
+
+
 // - Methods -----------------------------------------------------------
 
 function clearMessage() {
 	messageStore.clearFlashMessageList();
 }
+
+function initCreateUser() {
+	errors.value = {
+		first_name: '',
+		last_name: '',
+		email: '',
+		password: '',
+		role: "",
+		active: "",
+		organisation_id: '',
+	};
+	clearMessage();``
+	confirmOn.value = true;
+}
+
+async function createUser() {
+
+	dashboardStore.setIsLoading(true);
+	try {
+		const {
+			permissions,
+			organisations,
+			assets,
+			devices,
+			...rawCoreFields
+		} = form;
+
+		const coreFields: { [key: string]: any } = { ...rawCoreFields };
+
+		if (!coreFields.password || coreFields.password.trim() === "") {
+			delete coreFields.password;
+		}
+
+		const rolePermissions = permissionStore.getRolePermissions[form.role];
+		const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
+
+		const user_organisation_access = utils.diffArraysToBooleanMap(defaultOrganisations.value, organisations);
+		const user_asset_access = utils.diffArraysToBooleanMap(defaultAssets.value, assets);
+		const user_device_access = utils.diffArraysToBooleanMap(defaultDevices.value, devices);
+
+
+		const payload: Record<string, any> = {
+			...coreFields,
+			user_permissions,
+			user_organisation_access,
+			user_asset_access,
+			user_device_access,
+		};
+
+
+		await userStore.createUser(payload);
+
+	} catch (err) {
+
+		handleFormError(err);
+		console.error("! UserCreateView createUser !", err);
+		
+	} finally {
+		confirmOn.value = false;
+		dashboardStore.setIsLoading(false);
+		
+	}
+}
+
+
 
 </script>
 

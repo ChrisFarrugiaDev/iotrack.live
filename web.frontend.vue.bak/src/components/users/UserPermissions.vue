@@ -61,7 +61,7 @@ watch(getGroupedPermissions, (grpPerms) => {
 
 // Update model & force Treeselect to re-render when defaultPermissions prop changes
 watch(() => props.defaultPermissions, (p, oldP) => {
-    console.log(">", p)
+    
     if (p && JSON.stringify(p) !== JSON.stringify(oldP)) {
         permissions.value = p;
         treeKey.value++; // Bump key to force re-render (keeps UI in sync, no flicker)
@@ -70,7 +70,7 @@ watch(() => props.defaultPermissions, (p, oldP) => {
     immediate: true,
 });
 
-// Debug: log permissions changes
+
 watch(permissions, (p, oldP) => {
 
     if (JSON.stringify(p) !== JSON.stringify(oldP)) {

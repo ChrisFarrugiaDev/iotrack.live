@@ -4,7 +4,7 @@ import type { Organisation } from '@/types/organisation.type';
 
 export const useOrganisationStore = defineStore('organisationStore', () => {
 
-    type OrgMap = Record<string, Organisation>;
+    
     type TreeNode = {
         id: string;
         label: string;
@@ -27,6 +27,22 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
 
     });
 
+
+    const getChildrenIds = computed(() => {
+
+        const parentOrg = organisation.value;
+
+        const orgs = {...organisationScope.value};
+
+        if (orgs && parentOrg) {
+            delete orgs[parentOrg.id]
+            return Object.keys(orgs);
+            
+        } else {
+            return [];
+        }
+    });
+
     // ---- Setters (Actions) ------------------------------------------
 
     function setOrganisation(val: Record<string, string> | null) {
@@ -35,7 +51,6 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
     function setOrganisationScope(val: Record<string, any> | null) {
         organisationScope.value = val
     }
-
 
     function clear() {
         organisation.value = null;
@@ -104,6 +119,8 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         return topLevel.map(stripEmptyChildren);
     }
 
+
+
     // ---- Expose -----------------------------------------------------
     return {
 
@@ -114,6 +131,7 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         setOrganisationScope,
 
         getGroupedOrganisations,
+        getChildrenIds,
 
         clear,
     }

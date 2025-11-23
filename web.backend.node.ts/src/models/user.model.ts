@@ -1,6 +1,5 @@
 import prisma from '../config/prisma.config';
-import { PrismaClient } from '@prisma/client';
-import { Prisma, users } from "../../generated/prisma";
+import { Prisma, PrismaClient, users } from "../../generated/prisma";
 import { bigIntToString } from '../utils/utils';
 
 
@@ -105,13 +104,14 @@ export class User {
         return result;
     }
 
+    // -----------------------------------------------------------------
 
     static async create( 
         user: Prisma.usersCreateInput, 
         prismaClient: Prisma.TransactionClient | PrismaClient = prisma
-    ) {
+    ): Promise<UserType> {
 
-        const result = await prisma.users.create({
+        const result = await prismaClient.users.create({
             data: user
         })
 

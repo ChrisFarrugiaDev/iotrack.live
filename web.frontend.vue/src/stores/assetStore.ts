@@ -46,39 +46,6 @@ export const useAssetStore = defineStore('assetStore', () => {
         return map;
     });
 
-
-    const getGroupedAssets = computed(() => {
-        // Object to store groupings: { [orgName]: TreeNode }
-        const groupedAssets: Record<string, TreeNode> = {};
-        const orgs = organisationStore.getOrganisationScope;
-
-        if (!assets.value || !orgs) return groupedAssets;
-
-        const assetsList = Object.values(assets.value);
-
-        for (const asset of assetsList) {
-            // Find the organisation for this asset
-            const organisation = orgs[asset.organisation_id];
-            if (!organisation) continue; // skip if no org (defensive)
-
-            // Create org group node if not exists
-            if (!(organisation.name in groupedAssets)) {
-                groupedAssets[organisation.name] = {
-                    label: organisation.name,
-                    id: organisation.name,
-                    children: []
-                }
-            }
-
-            // Add asset as child node under its org
-            groupedAssets[organisation.name]!.children!.push({
-                label: asset.name,
-                id: asset.id,
-            });
-        }
-        return groupedAssets;
-    });
-
     // ---- Actions ----------------------------------------------------
     function setAssets(payload: Record<string, Asset>) {
         assets.value = payload;
@@ -167,7 +134,6 @@ export const useAssetStore = defineStore('assetStore', () => {
         updatedAsset,
         addAssetToStore,
         removeAssetFromStore,
-        getAssetsWithDevice,
-        getGroupedAssets,
+        getAssetsWithDevice,   
     }
 })
