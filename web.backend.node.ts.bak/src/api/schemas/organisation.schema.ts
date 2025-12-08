@@ -38,7 +38,3 @@ export const storeSchema = z.object({
     can_inherit_key: requiredBoolean, 
 
 });
-
-export const destroySchema = z.object({
-    organisation_ids: z.array(numericString, "Field is required.").min(1, "Provide at least one organisation id.")
-});

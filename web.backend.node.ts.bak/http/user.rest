@@ -2,4 +2,13 @@
 
 GET http://57.129.22.122:4001/api/user
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozNSwiaWF0IjoxNzYyNDE2NTM2LCJleHAiOjE3NjI0NTk3MzZ9.zTlXIAiKmhIvEqy_oRjRid338PNJuHZ7I5PWPW5rD6c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozNiwiaWF0IjoxNzYzNzI4ODUwLCJleHAiOjE3NjM3NzIwNTB9.YYDnOcSk2jTibQqRN3DZGZ4tnQfOQhALy_EY2ndmVyQ
+
+### --------------------------------------------------------------------
+POST http://57.129.22.122:4001/api/user/assignment-options
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozNiwiaWF0IjoxNzYzNzI4ODUwLCJleHAiOjE3NjM3NzIwNTB9.YYDnOcSk2jTibQqRN3DZGZ4tnQfOQhALy_EY2ndmVyQ
+
+{
+    "org_id" : 2
+}

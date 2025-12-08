@@ -25,6 +25,7 @@ export class AccessProfileController {
      */
 
     static async getAccessProfile(request: FastifyRequest, reply: FastifyReply) {
+        
         try {
             // 1. Extract the authenticated user ID from the request
             //    (this is set by the auth middleware from the JWT payload)       
@@ -38,6 +39,8 @@ export class AccessProfileController {
                     error: { code: 'MISSING_USER_ID' }
                 } as ApiResponse);
             }
+
+            logger.debug({ userID }, "Fetching access profile");
 
             // 2. Load the user from the database with their roles and organisation info
             const user = await User.getByID(userID, ['organisations', 'roles']);

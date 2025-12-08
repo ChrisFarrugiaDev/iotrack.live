@@ -43,7 +43,6 @@
                 <p class="vform__error">{{ errors.maps_api_key }}</p>
             </div>
 
-
 		</div>
 
 
@@ -146,12 +145,23 @@ async function createOrganisation() {
     
         const r = await organisationStore.createOrganisation(payload);
 
-        console.log(r)
+        // Success message
+        messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+        const newOrganisation = r.data.data.organisation;
+
+        organisationStore.addOrganisationToScope(newOrganisation);
+
+        // Reset form fields to defaults     
+        Object.assign(form, {
+			name: null,
+			maps_api_key: null,        
+        });
         
     } catch (err) {
 
 		handleFormError(err);
-		console.error("! UserCreateView createUser !", err);
+		console.error("! OrganisationCreateView createOrganisation !", err);
         
     } finally {
         confirmOn.value = false;

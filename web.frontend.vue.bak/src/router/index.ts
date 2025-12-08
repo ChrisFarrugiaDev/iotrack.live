@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, type NavigationGuardNext, type RouteLoc
 import MapView from '../views/MapView.vue'
 import SvgSpriteView from '../views/helpers/SvgSpriteView.vue'
 import AuthView from '@/views/AuthView.vue'
-import OrganisationView from '@/views/OrganisationView.vue'
+
 import { useAuthStore } from '@/stores/authStore'
 import { useMessageStore } from '@/stores/messageStore'
 import { storeToRefs } from 'pinia'

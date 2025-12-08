@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import DeviceController from "../controllers/device.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validateBody } from "../middleware/validate-body.middleware";
-import { destroySchema, getSchema, storeSchema, updateSchema } from "../schemas/device.scheme";
+import { destroySchema, getSchema, storeSchema, updateSchema } from "../schemas/device.schema";
 import { validateParams } from "../middleware/validate-params.middleware";
 
 // ---------------------------------------------------------------------

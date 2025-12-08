@@ -158,8 +158,6 @@ async function fetchAccessProfile() {
             permissionStore.setRoles(profile.permissoins.roles);
             permissionStore.setPermissions(profile.permissoins.permissoins);
             permissionStore.setRolePermissions(profile.permissoins.role_permissions);
-
-
     
    
             const autUserPayload: AuthenticatedUser = {
@@ -174,6 +172,7 @@ async function fetchAccessProfile() {
             settingsStore.setAuthenticatedUser(autUserPayload)
         }
         appStore.setShouldFetchAccessProfile(false);
+
     } catch (err) {
         // optional: if 401/403 -> force logout
         // authStore.logout();

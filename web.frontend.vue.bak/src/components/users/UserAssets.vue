@@ -20,8 +20,7 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { useAssetStore } from '@/stores/assetStore';
-import { storeToRefs } from 'pinia';
+import { useUserAssignableStore } from '@/stores/userAssignableStore';
 import { watch } from 'vue';
 import { ref } from 'vue';
 
@@ -41,8 +40,8 @@ const emit = defineEmits<{
 }>();
 
 // - Store -------------------------------------------------------------
-const assetStore = useAssetStore();
-const { getAssets, getGroupedAssets } = storeToRefs(assetStore);
+
+const userAssignableStore = useUserAssignableStore();
 
 // - Data --------------------------------------------------------------
 const treeKey = ref(1); // Used to force Treeselect re-render
@@ -52,12 +51,12 @@ const assetsOptions = ref<Record<string, any>[]>([]);
 
 
 // - Watch -------------------------------------------------------------
-watch(getGroupedAssets, (grpAssets) => {
 
-    const aa = Object.values(grpAssets);
+watch(()=> userAssignableStore.getSelectedOrgId, async () => {
+    
+    const grpAssets = userAssignableStore.getGroupedAssets    
+    assetsOptions.value = Object.values(grpAssets);
 
-    if (!aa) { return };
-    assetsOptions.value = aa;
 },{
     deep: true,
     immediate: true,
@@ -73,9 +72,8 @@ watch(()=>props.defaultAssets, (ass, oldAss) => {
     }
 },{ 
     immediate: true,
+    deep:true,
 });
-
-
 
 
 watch(assets, (v, oldV) => {
@@ -84,7 +82,8 @@ watch(assets, (v, oldV) => {
         emit('assets-changed', v);
     }
 }, {
-    immediate: true
+    immediate: true,
+    deep:true,
 });
 </script>
 

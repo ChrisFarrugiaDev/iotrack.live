@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { authMiddleware } from "../middleware/auth.middleware";
 import AssetController from "../controllers/asset.controller";
 import { validateBody } from "../middleware/validate-body.middleware";
-import { destroySchema, storeSchema, updateSchema } from "../schemas/asset.scheme";
+import { destroySchema, storeSchema, updateSchema } from "../schemas/asset.schema";
 
 
 // ---------------------------------------------------------------------

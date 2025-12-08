@@ -202,6 +202,9 @@ const tableData = computed(() => {
 });
 
 // --- Methods ------------------------------------------------------
+function clearMessage() {
+    messageStore.clearFlashMessageList();
+}
 
 // --- for ref ---
 // https://chatgpt.com/c/689bf2ec-b244-8329-9fda-9c46032b9206
@@ -219,6 +222,7 @@ function showDeleteDeviceModal() {
             "flash-message--red", 2
         );
     } else {
+        clearMessage();
         isDeleteModalOpen.value = true;
     }
 }
@@ -267,7 +271,7 @@ async function deleteDevices() {
 
         // Fallback
         messageStore.setFlashMessagesList(
-            ["An unexpected error occurred while deleting devices."],
+            ["An unexpected error occurred while deleting the device(s)."],
             "flash-message--orange"
         );
     } finally {

@@ -66,6 +66,8 @@ class UserController {
         }
     }
 
+    // -----------------------------------------------------------------
+
     /**
      * Create a new user, with permissions and org access validation.
      */
@@ -204,6 +206,68 @@ class UserController {
             message: "User created successfully.",
             data: { ...result },
         } as ApiResponse);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async destroy(request: FastifyRequest, reply: FastifyReply) {
+
+        try {
+
+
+            const { user_ids } = (request as any).body;
+
+            if (!user_ids || user_ids.length === 0) {
+                return reply.status(400).send({
+                    success: false,
+                    message: "No user IDs provided.",
+                    data: { count: 0 },
+                });
+            }
+
+            const users = await User.getByIds(user_ids);
+
+            if (!users || users.length == 0) {
+                return reply.status(404).send({
+                    success: false,
+                    message: "No matching users were found to delete.",
+                    data: { count: 0 },
+                });
+            }
+
+            // Delete from DB
+            const result = await User.deleteByIDs(user_ids);
+
+
+            // Response
+            return reply.send({
+                success: true,
+                message:
+                    result.count === 1
+                        ? "User deleted successfully."
+                        : `${result.count} users were deleted successfully.`,
+                data: { count: result.count, user_ids },
+            });
+
+        } catch (err) {
+
+            logger.error({ err }, "! UserController destroy !");
+
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to delete users.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+
+
+
     }
 }
 

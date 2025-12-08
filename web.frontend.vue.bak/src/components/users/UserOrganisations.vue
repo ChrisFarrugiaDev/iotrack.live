@@ -20,14 +20,15 @@
 
 <script setup lang="ts">
 import { useOrganisationStore } from '@/stores/organisationStore';
+import { useUserAssignableStore } from '@/stores/userAssignableStore';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
 import Treeselect from 'vue3-treeselect';
 import 'vue3-treeselect/dist/vue3-treeselect.css';
 
 // - Store -------------------------------------------------------------
-const organisationStore = useOrganisationStore();
-const { getGroupedOrganisations } = storeToRefs(organisationStore);
+
+const userAssignableStore = useUserAssignableStore();
 
 // - Props -------------------------------------------------------------
 const props = defineProps<{
@@ -51,8 +52,15 @@ const organisationsOptions = ref<Record<string, any>[]>([]);
 
 
 // - Watch -------------------------------------------------------------
-watch(getGroupedOrganisations, (grpOrgs) => {
+
+watch(()=>userAssignableStore.getGroupedOrganisations, async (userOrgId) => {
+
+    if (!userOrgId) return [];
+    
+    const grpOrgs = userAssignableStore.getGroupedOrganisations;
+    
     organisationsOptions.value = grpOrgs;
+
 },{
     deep: true,
     immediate: true,
@@ -66,6 +74,7 @@ watch(()=>props.defaultOrganisations, (org, oldOrg) => {
         treeKey.value++; // Bump key to force re-render (keeps UI in sync, no flicker)
     }
 },{ 
+    deep: true,
     immediate: true,
 });
 
@@ -76,6 +85,7 @@ watch(organisations, (v, oldV) => {
         emit('org-changed', v);
     }
 }, {
+    deep: true,
     immediate: true
 });
 

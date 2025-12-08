@@ -13,7 +13,20 @@
             <template #pagination="{ page, pageCount, setPage }">
                 <ThePager class="justify-center w-100" :page="page" :page-count="pageCount" :set-page="setPage" />
             </template>
+
+            <!-- Row action slot: view/edit button -->
+             <template #actions="{ row }">
+                <VIconButton icon="icon-view-more" @click="showUpdateUserModal(row.uuid)" />
+             </template>
         </VTable>
+
+        <!-- Update Modal: opens user update form for selected user -->
+        <VModal v-model="isUpdateModalOpen" size="xl">
+            <template #header>
+                <div class="vheading--2">Device Details</div>
+            </template>
+
+        </VModal>
     </div>
 </template>
 
@@ -43,6 +56,10 @@ const { getRoles } = storeToRefs(permissionStore);
 // --- Data ------------------------------------------------------------
 const searchTerm = ref("");
 const currentPage = ref(1);
+
+// Modal visibility state
+const isUpdateModalOpen = ref(false);
+const selectedUserUuid = ref<string | null>(null);
 
 const tableCol = ref<TableColumn[]>([
     {
@@ -105,7 +122,12 @@ const tableData = computed(()=>{
 
 // -- Methods ----------------------------------------------------------
 
-
+// Show update modal for selected device (skip if already open on same device)
+function showUpdateUserModal(id: string) {
+    if (id === selectedUserUuid.value) return;
+    isUpdateModalOpen.value = true;
+    selectedUserUuid.value = id;
+}
 
 
 

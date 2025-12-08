@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-import { Prisma, devices } from "../../generated/prisma";
+import { Prisma, PrismaClient, devices } from "../../generated/prisma";
 import prisma from "../config/prisma.config";
 import { bigIntToString } from "../utils/utils";
 

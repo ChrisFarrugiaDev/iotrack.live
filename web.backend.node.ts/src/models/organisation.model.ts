@@ -26,6 +26,31 @@ export class Organisation {
 
     // -----------------------------------------------------------------
 
+    static async getByIds(ids: string[]): Promise<OrganisationType[] | null> {
+
+        const orgs = await prisma.organisations.findMany({
+            where: { id: {in: ids.map(id => BigInt(id))} }
+        });
+
+        return bigIntToString(orgs);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async getByName(name: string): Promise<OrganisationType | null> {
+        const org = await prisma.organisations.findFirst({
+            where: { name: name }
+        });
+        if (!org) return null;
+        return {
+            ...org,
+            id: org.id.toString(),
+            parent_org_id: org.parent_org_id?.toString() ?? null
+        }
+    }
+
+    // -----------------------------------------------------------------
+
     static async getAll(): Promise<OrganisationType[]> {
 
         const result = await prisma.organisations.findMany()
@@ -141,17 +166,31 @@ export class Organisation {
     }
 
 
-        // -----------------------------------------------------------------
+    // -----------------------------------------------------------------
 
     static async create( 
-        user: Prisma.organisationsCreateInput, 
+        orgData: Prisma.organisationsCreateInput, 
         prismaClient: Prisma.TransactionClient | PrismaClient = prisma
     ): Promise<OrganisationType> {
 
         const result = await prismaClient.organisations.create({
-            data: user
-        })
+            data: orgData
+        });      
+                
+        const organisation = bigIntToString(result);        
 
-        return bigIntToString(result);
+        return organisation
+    }
+
+    // -----------------------------------------------------------------
+
+    static async deleteByIDs(orgIDs: string[]) {
+        const ids = orgIDs.map(id => BigInt(id));
+        const result = await prisma.organisations.deleteMany({
+            where: {
+                id: { in: ids }
+            }
+        })
+        return result;
     }
 }
