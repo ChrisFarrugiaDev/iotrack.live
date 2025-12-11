@@ -34,6 +34,19 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         }
     });
 
+    const getOrgScopeByUUID = computed(() => {
+        const oo: Record<string, Organisation> = {};
+        if (!getOrganisationScope.value!) return oo;
+    
+
+        for (let id in getOrganisationScope.value) {
+            const uuid = getOrganisationScope.value[id].uuid
+            oo[uuid] = getOrganisationScope.value[id]; 
+        }
+
+        return oo;
+    });
+
     // ---- Setters (Actions) ------------------------------------------
 
     function setOrganisation(val: Record<string, string> | null) {
@@ -75,6 +88,21 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         }
     }
 
+    async function updateOrganisation(orgId: string, payload: Record<string, any>) {
+        try {
+            const url = `${appStore.getAppUrl}/api/organisation/${orgId}`;
+            return await axios.request({
+                method: 'patch',
+                url,
+                data: payload,
+            });
+            
+        } catch (err) {
+            console.error('! organisationStore updateOrganisation !\n', err);
+            throw err;
+        }
+    }
+
     function removeOrganisationFromStore(orgId: string | number) {
         if (!organisationScope.value) return;
         if (organisationScope.value[orgId]) {
@@ -101,6 +129,8 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
 
         createOrganisation,
         deleteOrganisations,
+        updateOrganisation,
+        getOrgScopeByUUID,
 
         clear,
     }

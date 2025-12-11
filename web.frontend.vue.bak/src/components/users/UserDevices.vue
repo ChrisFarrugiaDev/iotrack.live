@@ -59,7 +59,6 @@ const devicesOptions = ref<Record<string, any>[]>([]);
 watch(()=> userAssignableStore.getSelectedOrgId, async () => {
     
     const grpDevices = userAssignableStore.getGroupedDevices;
-    console.log(grpDevices);
     devicesOptions.value = Object.values(grpDevices);
 
 },{

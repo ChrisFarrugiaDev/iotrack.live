@@ -12,3 +12,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4O
 {
     "org_id" : 2
 }
+
+
+###
+
+GET http://node.track.iotsolutions.com.mt:3333/reset-driver?imei=864275070859932
+Content-Type: application/json

@@ -1,5 +1,5 @@
 <template>
-    <div>        
+    <div >        
         <!-- Search bar and delete button row -->
         <div class="mt-16 flex">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
@@ -197,6 +197,9 @@ const tableData = computed(() => {
 });
 
 // - Methods -----------------------------------------------------------
+function clearMessage() {
+    messageStore.clearFlashMessageList();
+}
 
 // Show update modal for selected asset (skip if already open on same asset)
 function showUpdateAssetModal(id: string) {
@@ -219,6 +222,7 @@ function showDeleteAssetModal() {
             "flash-message--red", 2
         );
     } else {
+        clearMessage();
         isDeleteModalOpen.value = true;
     }
 }
@@ -273,7 +277,7 @@ async function deleteAssets() {
 
         // Fallback
         messageStore.setFlashMessagesList(
-            ["An unexpected error occurred while deleting assets."],
+            ["An unexpected error occurred while deleting the asset(s)."],
             "flash-message--orange"
         );
     } finally {

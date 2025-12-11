@@ -35,10 +35,21 @@ export const storeSchema = z.object({
     name: nonEmptyString,
     parent_org_id: numericString,
     maps_api_key: nonEmptyString.optional(),
-    can_inherit_key: requiredBoolean, 
+    can_inherit_key: requiredBoolean,
 
 });
 
 export const destroySchema = z.object({
     organisation_ids: z.array(numericString, "Field is required.").min(1, "Provide at least one organisation id.")
+});
+
+export const updateSchema = z.object({
+
+    name: nonEmptyString.optional(),
+    parent_org_id: numericString.optional(),
+    maps_api_key: nonEmptyString.optional(),
+    can_inherit_key: requiredBoolean.optional(),
+
+}).refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided to update",
 });

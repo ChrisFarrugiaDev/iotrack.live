@@ -13,7 +13,7 @@ export type UserType = Omit<users, 'id' | 'organisation_id'> & {
 type UserRelation = 'organisations' | 'roles';
 
 export class User {
-    
+
     // Fetches a user by email, with optional related data.
     static async getByEmail(email: string, relations?: UserRelation[]) {
         // Convert array of relation names to Prisma's expected include object
@@ -39,7 +39,7 @@ export class User {
 
 
     static async getByID(id: string, relations?: UserRelation[]) {
-                // Convert array of relation names to Prisma's expected include object
+        // Convert array of relation names to Prisma's expected include object
         const includeObj = relations
             ? Object.fromEntries(relations.map(relation => [relation, true]))
             : undefined;
@@ -57,6 +57,17 @@ export class User {
 
         // Return null if not found
         return null;
+    }
+
+    // -----------------------------------------------------------------
+
+    static async getByIds(ids: string[]): Promise<UserType[] | null> {
+
+        const users = await prisma.users.findMany({
+            where: { id: {in: ids.map(id => BigInt(id))} }
+        });
+
+        return bigIntToString(users);
     }
 
     // -----------------------------------------------------------------
@@ -106,8 +117,8 @@ export class User {
 
     // -----------------------------------------------------------------
 
-    static async create( 
-        user: Prisma.usersCreateInput, 
+    static async create(
+        user: Prisma.usersCreateInput,
         prismaClient: Prisma.TransactionClient | PrismaClient = prisma
     ): Promise<UserType> {
 
@@ -116,6 +127,18 @@ export class User {
         })
 
         return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async deleteByIDs(userIDs: string[]) {
+        const ids = userIDs.map(id => BigInt(id));
+        const result = await prisma.users.deleteMany({
+            where: {
+                id: { in: ids }
+            }
+        })
+        return result;
     }
 }
 

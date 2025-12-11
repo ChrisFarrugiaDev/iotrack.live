@@ -39,6 +39,31 @@ export const useUserStore = defineStore('userStore', () => {
         }
     }
 
+    function removeUserFromStore(userId: string | number) {
+        if (!userScope.value) return;
+        if (userScope.value[userId]) {
+            delete userScope.value[userId];
+        }
+    }
+
+    async function deleteUsers(payload: {user_ids: string[]}) {
+
+        console.log('>',payload);
+        
+        try {
+            const url = `${appStore.getAppUrl}/api/user`;
+            return await axios.request({
+                method: 'DELETE',
+                url,
+                data: payload, // ok to include a body on DELETE
+                // headers not needed here; interceptor sets Authorization + Content-Type when data exists
+            });
+        } catch (err) {
+            console.error('! userStore deleteUsers !\n', err);
+            throw err;
+        }
+    }
+
     async function fetchUserScope() {
 
         try {
@@ -68,7 +93,10 @@ export const useUserStore = defineStore('userStore', () => {
         fetchUserScope,
 
         createUser,
+        deleteUsers,
+
         addUserToStore,
+        removeUserFromStore,
         
         clear,
     }

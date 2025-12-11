@@ -64,3 +64,8 @@ export const storeSchema = z.object({
     user_asset_access: booleanRecord,                // Asset access map: { [asset_id]: boolean }
     user_device_access: booleanRecord,               // Device access map: { [device_id]: boolean }
 });
+
+
+export const destroySchema = z.object({
+    user_ids: z.array(numericString, "Field is required.").min(1, "Provide at least one user id.")
+});

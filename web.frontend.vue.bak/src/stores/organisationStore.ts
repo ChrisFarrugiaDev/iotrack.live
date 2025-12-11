@@ -44,6 +44,11 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         organisationScope.value = val
     }
 
+    function addOrganisationToScope(org: Organisation) {
+        if (!organisationScope.value ) return;
+        organisationScope.value[org.id] = org;
+    }
+
     async function createOrganisation(payload: Record<string, any>) {
         try {
             const url = `${appStore.getAppUrl}/api/organisation`;
@@ -52,6 +57,28 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         } catch (err) {
             console.error('! organisationStore createOrganisation !\n', err);
             throw err;
+        }
+    }
+    
+    async function deleteOrganisations(payload: { organisation_ids: string[] }) {
+        try {
+            const url = `${appStore.getAppUrl}/api/organisation`;
+            return await axios.request({
+                method: 'DELETE',
+                url,
+                data: payload, // ok to include a body on DELETE
+                // headers not needed here; interceptor sets Authorization + Content-Type when data exists
+            });
+        } catch (err) {
+            console.error('! organisationStore deleteOrganisations !\n', err);
+            throw err;
+        }
+    }
+
+    function removeOrganisationFromStore(orgId: string | number) {
+        if (!organisationScope.value) return;
+        if (organisationScope.value[orgId]) {
+            delete organisationScope.value[orgId];
         }
     }
 
@@ -68,9 +95,12 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
 
         getOrganisationScope,
         setOrganisationScope,  
+        addOrganisationToScope,
+        removeOrganisationFromStore,
         getChildrenIds,
 
         createOrganisation,
+        deleteOrganisations,
 
         clear,
     }

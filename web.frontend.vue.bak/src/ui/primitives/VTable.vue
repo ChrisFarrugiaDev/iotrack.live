@@ -37,7 +37,7 @@
 
 				<!--  Table Body (Rows) ---------------------------- -->
 				<tbody class="vtable__body">
-					<tr v-for="row in pagedRows" :key="props.rowKey ? row[props.rowKey] : (row.uuid ?? row.id)"
+					<tr v-for="row in pagedRows" :key="props.rowKey ? row[props.rowKey] : ( row.id ?? row.uuid)"
 						class="vtable__row" :class="[typeof props.rowClass === 'function' ? props.rowClass(row) : props.rowClass]">
 						<!-- Row Select Checkbox -->
 						<td v-if="selectable" class="vtable__cell vtable__cell--select">
@@ -248,7 +248,7 @@ const pagedRows = computed(() => {
 // - Row Keys ----------------------------------------------------------
 
 function getRowKey(row: any) {
-	return props.rowKey ? row[props.rowKey] : (row.uuid ?? row.id);
+	return props.rowKey ? row[props.rowKey] : (row.id ?? row.uuid);
 }
 
 
@@ -271,6 +271,7 @@ function isChecked(row: any) {
 function setChecked(row: any, checked: boolean) {
 	const key = getRowKey(row);
 	checked ? selectedSet.value.add(key) : selectedSet.value.delete(key);
+
 	emit("update:selectedKeys", Array.from(selectedSet.value));
 }
 

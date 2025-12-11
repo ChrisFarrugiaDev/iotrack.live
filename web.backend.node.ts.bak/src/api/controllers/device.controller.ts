@@ -171,8 +171,11 @@ class DeviceController {
                         : `${result.count} devices were deleted successfully.`,
                 data: { count: result.count, device_ids },
             });
+            
         } catch (err: unknown) {
+
             logger.error({ err }, "! DeviceController destroy !");
+            
             return reply.status(500).send({
                 success: false,
                 message: "Failed to delete devices.",
