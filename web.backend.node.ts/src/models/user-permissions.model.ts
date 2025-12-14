@@ -1,7 +1,10 @@
-import { Prisma, PrismaClient } from '../../generated/prisma';
+import { Prisma, PrismaClient, user_permissions } from '../../generated/prisma';
 import prisma from '../config/prisma.config';
 
 import { bigIntToString } from '../utils/utils';
+
+
+export type UserPermissionsType = user_permissions;
 
 export class UserPermissions {
 
@@ -27,6 +30,16 @@ export class UserPermissions {
         const result = await prismaClient.user_permissions.createManyAndReturn({
             data: perms,
             skipDuplicates: true,
+        })
+
+        return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async getByUserID(userID: string): Promise<UserPermissionsType[]> {
+        const result = await prisma.user_permissions.findMany({
+            where: { 'user_id': BigInt(userID) }
         })
 
         return bigIntToString(result);

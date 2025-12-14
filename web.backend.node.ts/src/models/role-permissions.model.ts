@@ -17,4 +17,13 @@ export class RolePermissions {
         }
         return result;
     }
+
+
+    static async getByRoleID(roleID: number | string) {
+        const result = await prisma.role_permissions.findMany({
+            where: { 'role_id': Number(roleID) }
+        })
+
+        return result
+    }
 }

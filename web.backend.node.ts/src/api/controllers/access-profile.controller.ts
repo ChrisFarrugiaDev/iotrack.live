@@ -13,6 +13,7 @@ import { AccessProfile } from "../../types/access-profile.type";
 import { Role } from "../../models/role.model";
 import { Permissions } from "../../models/permissions.model";
 import { RolePermissions } from "../../models/role-permissions.model";
+import { UserPermissions } from "../../models/user-permissions.model";
 
 // -------------------------------------------------------------------------
 
@@ -25,7 +26,7 @@ export class AccessProfileController {
      */
 
     static async getAccessProfile(request: FastifyRequest, reply: FastifyReply) {
-        
+
         try {
             // 1. Extract the authenticated user ID from the request
             //    (this is set by the auth middleware from the JWT payload)       
@@ -67,13 +68,13 @@ export class AccessProfileController {
             // TODO:  cache these values
             const roles = await Role.getAll();
             const perm = await Permissions.getAll();
-            const role_permissions = await RolePermissions.getGroupedByRole(true);   
+            const role_permissions = await RolePermissions.getGroupedByRole(true);
 
             const permissoins: Record<string, any> = {
                 roles,
                 permissoins: perm,
                 role_permissions,
-            };  
+            };
 
             // 7. Construct the access profile object
             const profile: AccessProfile = {
@@ -95,7 +96,7 @@ export class AccessProfileController {
                 devices,
                 settings,
                 permissoins,
-            };        
+            };
 
 
             // 8. Respond with the profile
@@ -150,7 +151,7 @@ export class AccessProfileController {
      * Given an array of organisation IDs, fetch their details from Redis
      * and return a map of organisation ID to partial OrganisationType.
      */
-    static async buildOrganisationInfoMap(orgIds: string[]): Promise<Record<string, Partial<OrganisationType>  > > {
+    static async buildOrganisationInfoMap(orgIds: string[]): Promise<Record<string, Partial<OrganisationType>>> {
         const organisationMap: Record<string, Partial<OrganisationType>> = {};
 
         // 1. Fetch all orgs in parallel
@@ -162,7 +163,7 @@ export class AccessProfileController {
                 orgs
                     .map(org => org?.parent_org_id)
                     .filter(pid => pid && Number(pid))
-                    // .filter(pid => pid && !orgIds.includes(pid))
+                // .filter(pid => pid && !orgIds.includes(pid))
             )
         );
 
@@ -217,7 +218,7 @@ export class AccessProfileController {
         // 2. Fetch all assets in the specified organisations
         const assets = await Asset.getByOrganisationsIDs(organisationIds, ['devices']);
 
-        
+
         // 3. Remove assets explicitly denied to the user
         const accessibleAssets = assets.filter((asset: AssetType) => !deny.includes(asset.id));
 
@@ -225,7 +226,7 @@ export class AccessProfileController {
 
         const assetMap: Record<string, AssetType> = {}
 
-        for (let asset of accessibleAssets) {    
+        for (let asset of accessibleAssets) {
             assetMap[asset.id] = asset;
         }
 
@@ -269,5 +270,39 @@ export class AccessProfileController {
         settings['maps_api_key'] = await Organisation.getMapsApiKeyFromCache(user.organisation_id)
 
         return settings;
+    }
+
+
+    static async getUserPermissions(user: UserType) {
+
+        const [permissions, rolePermissions, userPermissions] = await Promise.all([
+            Permissions.getAll(),                      // full permission list
+            RolePermissions.getByRoleID(user.role_id), // { role_id, perm_id }
+            UserPermissions.getByUserID(user.id)       // { user_id, perm_id, is_allowed }
+        ]);
+
+
+        // Build a Set from role permissions
+        const effectivePermIds = new Set<number>(
+            rolePermissions.map(rp => Number(rp.perm_id))
+        );
+
+        // Apply user overrides
+        for (const up of userPermissions) {
+            const permId = Number(up.perm_id);
+
+            if (up.is_allowed) {
+                effectivePermIds.add(permId);    // explicit grant
+            } else {
+                effectivePermIds.delete(permId); // explicit revoke
+            }
+        }
+
+        // Return full permission objects
+        const effectivePermissions = permissions.filter(p =>
+            effectivePermIds.has(Number(p.perm_id))
+        );
+
+        return effectivePermissions;
     }
 }
