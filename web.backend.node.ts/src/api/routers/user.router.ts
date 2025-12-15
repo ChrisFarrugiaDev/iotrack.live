@@ -8,8 +8,17 @@ import UserAssignmentController from "../controllers/user-assignable.controller"
 
 export default async function userRouter(fastify: FastifyInstance) {
 
-    fastify.get("/", {preHandler: [authMiddleware]}, UserController.index);
-    fastify.post("/", { preHandler: [authMiddleware, validateBody(storeSchema)] }, UserController.store);
+    fastify.get(
+        "/",
+        { preHandler: [authMiddleware] },
+        UserController.index
+    );
+
+    fastify.post(
+        "/",
+        { preHandler: [authMiddleware, validateBody(storeSchema)] },
+        UserController.store
+    );
 
     fastify.delete(
         "/",
@@ -17,8 +26,17 @@ export default async function userRouter(fastify: FastifyInstance) {
         UserController.destroy
     );
 
+    // User permissions
+    fastify.get(
+        "/:id/permissions",
+        { preHandler: [authMiddleware] },
+        UserController.permissions
+    );
 
-    // Add the assignment route
-    fastify.post( "/assignment-options", { preHandler: [authMiddleware] }, UserAssignmentController.getAssignableResources );
-
+    // Assignment options
+    fastify.post(
+        "/assignment-options",
+        { preHandler: [authMiddleware] },
+        UserAssignmentController.getAssignableResources
+    );
 }

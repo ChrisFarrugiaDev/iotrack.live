@@ -269,6 +269,54 @@ class UserController {
 
 
     }
+
+
+    static async permissions(
+        request: FastifyRequest,
+        reply: FastifyReply
+    ) {
+        try {
+            const { id: userID } = request.params as { id: string };
+
+            // 1. Fetch user
+            const user = await User.getByID(userID);
+
+            if (!user) {
+                return reply.status(404).send({
+                    success: false,
+                    message: "User not found.",
+                });
+            }
+
+            // 2. Resolve effective permissions (role + user overrides)
+            const userPermissions =
+                await AccessProfileController.getUserPermissions(user);
+
+            // 3. Respond
+            return reply.send({
+                success: true,
+                message: "User permissions retrieved successfully.",
+                data: {
+                    user_permissions: userPermissions,
+                },
+            });
+
+        } catch (err) {
+            logger.error({ err }, "! UserController.permissions !");
+
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to retrieve user permissions.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
 }
 
 // =====================================================================

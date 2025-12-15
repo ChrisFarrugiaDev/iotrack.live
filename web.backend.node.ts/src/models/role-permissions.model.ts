@@ -1,4 +1,8 @@
+import { role_permissions } from '../../generated/prisma';
 import prisma from '../config/prisma.config';
+
+
+export type RolePermissionsType = role_permissions;
 
 export class RolePermissions {
 

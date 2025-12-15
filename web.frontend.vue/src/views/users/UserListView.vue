@@ -32,7 +32,7 @@
             <template #header>
                 <div class="vheading--2">User Details</div>
             </template>
-
+            <UserUpdateView :user-uuid="selectedUserUuid"></UserUpdateView>
         </VModal>
 
         <!-- Delete Confirmation Modal -->
@@ -71,7 +71,14 @@ import type { TableColumn } from '@/types/table.column.type';
 import { VSearch, ThePager, VTable, VIconButton, VModal } from '@/ui';
 import { formatLabel } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import  UserUpdateView from './UserUpdateView.vue';
+import { useRoute, useRouter } from 'vue-router';
+
+
+// --- Router -------------------------------------------------------
+const route = useRoute();
+const router = useRouter();
 
 // -- Store ------------------------------------------------------------
 
@@ -221,6 +228,41 @@ async function deleteUser() {
         dashboardStore.setIsLoading(false);
     }
 }
+
+// --- Modal sync with URL query params --------------------------------
+
+// 1. On mount, read modal state from query params
+onMounted(() => {
+    const q = route.query;
+    const user_uuid = typeof q.user_uuid === 'string' ? q.user_uuid : null;
+    const open = q.update === 'true' || q.update === '1';
+
+    selectedUserUuid.value = user_uuid;
+    isUpdateModalOpen.value = !!(open && user_uuid) && route.name == 'users.list'; 
+});
+
+// 2. Watch for URL query changes (browser nav/manual edit)
+watch(
+    () => route.query,
+    (q) => {
+        const user_uuid = typeof q.user_uuid === 'string' ? q.user_uuid : null;
+        const open = q.update === 'true' || q.update === '1';
+       selectedUserUuid.value = user_uuid;
+        isUpdateModalOpen.value = !!(open && user_uuid)  && route.name == 'users.list';
+    }
+);
+// 3. Watch modal state and write to URL (replace to avoid history spam)
+watch([selectedUserUuid, isUpdateModalOpen], ([user_uuid, open]) => {
+    const next = { ...route.query };
+    if (open && user_uuid) {
+        next.update = 'true';
+        next.user_uuid = user_uuid;
+    } else {
+        delete next.update;
+        delete next.user_uuid;
+    }
+    router.replace({ query: next });
+});
 
 </script>
 

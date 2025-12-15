@@ -12,7 +12,7 @@ import { Device, DeviceType } from "../../models/device.model";
 import { AccessProfile } from "../../types/access-profile.type";
 import { Role } from "../../models/role.model";
 import { Permissions } from "../../models/permissions.model";
-import { RolePermissions } from "../../models/role-permissions.model";
+import { RolePermissions, RolePermissionsType } from "../../models/role-permissions.model";
 import { UserPermissions } from "../../models/user-permissions.model";
 
 // -------------------------------------------------------------------------
@@ -284,7 +284,7 @@ export class AccessProfileController {
 
         // Build a Set from role permissions
         const effectivePermIds = new Set<number>(
-            rolePermissions.map(rp => Number(rp.perm_id))
+            rolePermissions.map((rp: RolePermissionsType) => Number(rp.perm_id))
         );
 
         // Apply user overrides
@@ -298,11 +298,14 @@ export class AccessProfileController {
             }
         }
 
-        // Return full permission objects
-        const effectivePermissions = permissions.filter(p =>
-            effectivePermIds.has(Number(p.perm_id))
-        );
+        // // Return full permission objects
+        // const effectivePermissions = permissions.filter(p =>
+        //     effectivePermIds.has(Number(p.perm_id))
+        // );
+        // return effectivePermissions;
 
-        return effectivePermissions;
+
+
+        return Array.from(effectivePermIds);
     }
 }

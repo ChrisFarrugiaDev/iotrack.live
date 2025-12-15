@@ -21,6 +21,7 @@ export const usePermissionStore = defineStore('permissionStore', () => {
     const roles = ref<Record<string, string>>({});
     const permissions = ref<Permission[]>([]);
     const rolePermissions = ref<Record<string, number[]>>({});
+    
 
     const loaded = ref(false);
 
@@ -66,6 +67,8 @@ export const usePermissionStore = defineStore('permissionStore', () => {
     const getRolePermissions = computed(() => {
         return rolePermissions.value;
     });
+
+    
 
     const isLoaded = computed(() => loaded.value);
 
@@ -123,6 +126,8 @@ export const usePermissionStore = defineStore('permissionStore', () => {
 
 
 
+
+
     // - Expose --------------------------------------------------------
     return {
         getRoles,
@@ -134,5 +139,6 @@ export const usePermissionStore = defineStore('permissionStore', () => {
         setRolePermissions,
         isLoaded,
         comparePermissionsDiff,
+  
     };
 });
