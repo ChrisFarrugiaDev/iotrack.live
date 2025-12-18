@@ -152,6 +152,8 @@ export const useUserStore = defineStore('userStore', () => {
     }
 
     async function fetchUserOrganisations(userId: string) {
+
+        
         try {
             const url = `${appStore.getAppUrl}/api/user/${userId}/organisations`;
             const res = await axios.get(url);

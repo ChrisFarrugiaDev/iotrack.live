@@ -121,7 +121,7 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
             if (!(organisation.name in groupedAssets)) {
                 groupedAssets[organisation.name] = {
                     label: organisation.name,
-                    id: organisation.name,
+                    id: organisation.name,                  
                     children: []
                 }
             }
@@ -143,13 +143,14 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
         if (!devices || !orgs) return {}
 
         const groupedDevices: Record<string, TreeNode> = {}
+
         for (const device of Object.values(devices)) {
             const organisation = orgs[device.organisation_id!]
             if (!organisation) continue
             if (!(organisation.name in groupedDevices)) {
                 groupedDevices[organisation.name] = {
                     label: organisation.name,
-                    id: organisation.name,
+                    id: "org_" + organisation.id,
                     children: []
                 }
             }
@@ -161,6 +162,8 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
                 id: device.id,
             })
         }
+
+        
         return groupedDevices
     }
 

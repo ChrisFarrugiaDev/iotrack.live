@@ -167,7 +167,7 @@ class UserController {
                 const userOrg: UserOrganisationAccessType = {
                     user_id: BigInt(user.id),
                     organisation_id: Number(org),
-                    is_allowed: data.user_permissions[org]
+                    is_allowed: data.user_organisation_access[org]
                 };
                 userOrganisationAccess.push(userOrg);
             }
@@ -267,9 +267,6 @@ class UserController {
                 },
             });
         }
-
-
-
     }
 
 
@@ -389,7 +386,8 @@ class UserController {
             const accessibleOrgIds =
                 await AccessProfileController.computeAccessibleOrganisationIds(
                     user.organisation_id,
-                    user.id
+                    // user.id
+                    "1"
                 );
 
             // 4. Fetch all assets belonging to those organisations
@@ -457,11 +455,14 @@ class UserController {
             const accessibleOrgIds =
                 await AccessProfileController.computeAccessibleOrganisationIds(
                     user.organisation_id,
-                    user.id
+                    // user.id
+                    "1"
                 );
 
+  
             // 4. Fetch all devices belonging to those organisations
             const devices = await Device.getByOrganisationsIDs(accessibleOrgIds);
+
 
             // 5. Remove devices explicitly denied to the user
             const accessibleDevices = devices.filter(

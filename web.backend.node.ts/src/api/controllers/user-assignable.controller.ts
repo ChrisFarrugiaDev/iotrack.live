@@ -17,14 +17,26 @@ class UserAssignmentController {
             // TODO:  validate org_id is within user's allowed scope
 
              // 1. Compute all accessible org IDs for this user in this org context
-            const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(org_id, "1");
+            const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(
+                org_id, 
+                // userID
+                "1"
+            );
 
              // 2. Build organisation metadata map for response
             const organisation = await AccessProfileController.buildOrganisationInfoMap(accessibleOrgIds);
 
             // 3. Get all assignable assets/devices
-            const assets = await AccessProfileController.getAccessibleAssetsForUser("1", accessibleOrgIds);
-            const devices = await AccessProfileController.getAccessibleDevicesForUser("1", accessibleOrgIds);
+            const assets = await AccessProfileController.getAccessibleAssetsForUser(
+                // userID,
+                "1", 
+                accessibleOrgIds
+            );
+            const devices = await AccessProfileController.getAccessibleDevicesForUser(
+                // userID,
+                "1", 
+                accessibleOrgIds
+            );
 
 
             // 4. Respond with all assignable entities

@@ -47,8 +47,6 @@
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
 
-
-
 			<!-- Role -->
 			<div class="vform__group mb-7" @click="roleChangedByUser = true">
 				<label class="vform__label" for="role">Role <span class="vform__required">*</span></label>
@@ -70,8 +68,21 @@
 
 		</div>
 
-        <UserPermissions :confirmOn="confirmOn" :defaultPermissions="defaultPermissions"
-			@perm-changed="form.permissions = $event">
+        <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+
+			<!-- Password -->
+			<div class="vform__group mb-7">
+				<label class="vform__label" for="password">Password</label>
+				<input v-model="form.password" :class="{ 'vform__input--error': errors.password }" class="vform__input"
+					id="password" type="password" placeholder="Leave blank to keep user's current password" autocomplete="new-password"
+					:disabled="confirmOn">
+				<p class="vform__error">{{ errors.password }}</p>
+			</div>
+
+		</div>
+
+        <UserPermissions :confirmOn="confirmOn" 
+            :defaultPermissions="defaultPermissions" @perm-changed="form.permissions = $event">
 		</UserPermissions>
 
 		<UserOrganisations :confirmOn="confirmOn" 
@@ -87,6 +98,11 @@
 		</UserDevices>
 
 
+        <div class="vform__row mt-9 ">
+			<button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateUser">Update User</button>
+			<button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false">Cancel</button>
+			<button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="updateUser">Confirm</button>
+		</div>
     </form>
 </template>
 
@@ -101,7 +117,7 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useUserStore } from '@/stores/userStore';
 import type { User } from '@/types/user.type';
 import { storeToRefs } from 'pinia';
-import { computed, onActivated, onDeactivated, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, reactive, ref, toRaw, watch } from 'vue';
 import { useOrganisationStore } from "@/stores/organisationStore";
 import UserPermissions from "@/components/users/UserPermissions.vue";
 import { usePermissionStore } from "@/stores/permissionStore";
@@ -109,6 +125,12 @@ import UserOrganisations from "@/components/users/UserOrganisations.vue";
 import UserDevices from "@/components/users/UserDevices.vue";
 import UserAssets from "@/components/users/UserAssets.vue";
 import { useUserAssignableStore } from "@/stores/userAssignableStore";
+import { useDashboardStore } from "@/stores/dashboardStore";
+import * as utils from "@/utils/utils";
+
+// - Store -------------------------------------------------------------
+
+const dashboardStore = useDashboardStore();
 
 // - Composable --------------------------------------------------------
 
@@ -175,9 +197,14 @@ const form = reactive({
 
 const user = ref<null | User>(null);
 
-const defaultPermissions = ref<number[]>([]);
-const defaultOrganisations = ref<string[]>([]);
-const defaultAssets = ref<string[]>([]);
+const currentUserPermissions = ref<number[]>([]);
+const currentUserOrganisations = ref<string[]>([]);
+const currentUserAssets = ref<string[]>([]);
+const currentUserDevices = ref<string[]>([]);
+
+const defaultPermissions = ref<number[]>([]); 
+const defaultOrganisations = ref<string[]>([]); 
+const defaultAssets = ref<string[]>([]); 
 const defaultDevices = ref<string[]>([]);
 
 
@@ -251,29 +278,41 @@ watch(
         if (perms.length === 0) {
             perms = await userStore.fetchUserPermissions(userId);
         }
+        currentUserPermissions.value = [...perms];
         defaultPermissions.value = [...perms];
-        form.permissions = [...perms];
+         form.permissions = [...perms];
 
         // Assets
         let assets = userStore.getUserAssetsById(userId);
         if (assets.length === 0) {
             assets = await userStore.fetchUserAssets(userId);
         }
+        currentUserAssets.value = [...assets];
         defaultAssets.value = [...assets];
+        form.assets = [...assets];
+
+        
 
         // Organisations
         let orgs = userStore.getUserOrganisationsById(userId);
+
         if (orgs.length === 0) {
             orgs = await userStore.fetchUserOrganisations(userId);
         }
+        currentUserOrganisations.value = [...orgs];
         defaultOrganisations.value = [...orgs];
+        form.organisations = [...orgs];
 
         // Devices
         let devices = userStore.getUserDevicesById(userId);
         if (devices.length === 0) {
             devices = await userStore.fetchUserDevices(userId);
         }
+
+    
+        currentUserDevices.value = [...devices];
         defaultDevices.value = [...devices];
+        form.devices = [...devices];
     },
     { immediate: true }
 );
@@ -290,10 +329,13 @@ watch(
         const assignable =
             userAssignableStore.getAssignableResources[orgId] ?? {};
 
+        form.assets = Object.keys(assignable.assets ?? {});
+        form.devices = Object.keys(assignable.devices ?? {});
+        form.organisations = Object.keys(assignable.organisation ?? {});
+
         defaultAssets.value = Object.keys(assignable.assets ?? {});
         defaultDevices.value = Object.keys(assignable.devices ?? {});
-        defaultOrganisations.value = Object.keys(assignable.organisation ?? {})
-            .filter(o => o !== orgId);
+        defaultOrganisations.value = Object.keys(assignable.organisation ?? {});
     }
 );
 
@@ -311,8 +353,8 @@ watch(
 
         const rolePerms = permissionStore.getRolePermissions[newRoleId];
 
-        defaultPermissions.value = [...rolePerms];
         form.permissions = [...rolePerms];
+        defaultPermissions.value  = [...rolePerms];
     }
 );
 
@@ -323,6 +365,124 @@ function clearMessage() {
     messageStore.clearFlashMessageList();
 }
 
+function initUpdateUser() {
+	errors.value = {
+		first_name: '',
+		last_name: '',
+		email: '',
+		password: '',
+		role: "",
+		active: "",
+		organisation_id: '',
+	};
+	
+	clearMessage();
+	confirmOn.value = true;
+}
+
+function updateUser() {
+    try {
+        dashboardStore.setIsLoading(true);
+
+        const {
+			permissions,
+			organisations,
+			assets,
+			devices,
+			...rawCoreFields
+		} = form;
+
+        const coreFields: { [key: string]: any } = { ...rawCoreFields };
+
+        if (!coreFields.password || coreFields.password.trim() === "") {
+			delete coreFields.password;
+		}
+
+        const rolePermissions = permissionStore.getRolePermissions[form.role_id!];
+
+		const assignableOrgs = userAssignableStore.getAssignableResources[form.organisation_id!]?.organisation ?? {};
+		const assignableOrgsIDs = Object.keys(assignableOrgs);	
+
+		const assignableAssets = userAssignableStore.getAssignableResources[form.organisation_id!]?.assets ?? {};
+		const assignableAssetsIDs = Object.keys(assignableAssets);
+
+		const assignableDevices = userAssignableStore.getAssignableResources[form.organisation_id!]?.devices ?? {};
+		const assignableDevicesIDs = Object.keys(assignableDevices);
+
+		const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
+		const user_organisation_access = utils.diffArraysToBooleanMap(assignableOrgsIDs, organisations);
+		const user_asset_access = utils.diffArraysToBooleanMap(assignableAssetsIDs, assets);
+		const user_device_access = utils.diffArraysToBooleanMap(assignableDevicesIDs, devices);
+
+        const payload: Record<string, any> = {};
+
+        if (form.first_name != user.value?.first_name) {
+            payload.first_name = form.first_name;
+        }
+
+        if (form.last_name != user.value?.last_name) {
+            payload.last_name = form.last_name;
+        }
+
+        if (form.email != user.value?.email) {
+            payload.email = form.email;
+        }
+
+        if (form.password && form.password.trim() != '') {
+            payload.password = form.password.trim();
+        }
+
+        if (form.active != user.value?.active) {
+            payload.active = form.active;
+        }
+
+        if (form.organisation_id != user.value?.organisation_id) {
+            payload.organisation_id = form.organisation_id;
+            payload.user_organisation_access = user_organisation_access;
+            payload.user_asset_access = user_asset_access;
+            payload.user_device_access = user_device_access;
+
+        } else {
+            const old_organisation_access  = utils.diffArraysToBooleanMap(assignableOrgsIDs, currentUserOrganisations.value);            
+            if (toRaw(old_organisation_access) != toRaw(user_organisation_access)) {
+                console.log(toRaw(old_organisation_access),  toRaw(user_organisation_access))
+                payload.user_organisation_access = user_organisation_access;
+            }
+
+            // const old_asset_access  = utils.diffArraysToBooleanMap(assignableAssetsIDs, currentUserAssets.value);
+            // if (old_asset_access != user_asset_access) {
+            //     payload.user_asset_access = user_asset_access;
+            // }
+
+            // const old_device_access  = utils.diffArraysToBooleanMap(assignableDevicesIDs, currentUserDevices.value);
+            // if (old_device_access != user_device_access) {
+            //     payload.user_device_access = user_device_access;
+            // }
+        }
+
+        if (form.role_id != user.value?.role_id) {
+            payload.role = form.role_id;
+            payload.user_permissions = user_permissions;
+        } else {
+
+            // const old_permissions = utils.diffArraysToBooleanMap(rolePermissions, currentUserPermissions.value);
+            // if (old_permissions != user_permissions) {
+            //     payload.user_permissions = user_permissions;
+            // }
+        }
+
+
+        console.log(payload)
+
+
+    } catch (err) {
+        handleFormError(err);
+		console.error("! UserUpdateView updateUser !", err);
+    } finally {
+		confirmOn.value = false;
+		dashboardStore.setIsLoading(false);
+    }
+}
 
 </script>
 

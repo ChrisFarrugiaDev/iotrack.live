@@ -117,8 +117,6 @@ import UserDevices from "@/components/users/UserDevices.vue";
 
 import { usePermissionStore } from "@/stores/permissionStore";
 import { useOrganisationStore } from "@/stores/organisationStore";
-import { useDeviceStore } from "@/stores/deviceStore";
-import { useAssetStore } from "@/stores/assetStore";
 import * as utils from "@/utils/utils";
 import { useUserStore } from "@/stores/userStore";
 import { useDashboardStore } from "@/stores/dashboardStore";
@@ -210,13 +208,15 @@ watch(()=>userAssignableStore.getSelectedOrgId, (id)=>{
 
 		const assets = userAssignableStore.getAssignableResources[id]?.assets ?? {};
 		defaultAssets.value = Object.keys(assets);
+		form.assets = Object.keys(assets);
 
 		const orgs = userAssignableStore.getAssignableResources[id]?.organisation ?? {};
 		defaultOrganisations.value = Object.keys(orgs);			
+		form.organisations = Object.keys(orgs);			
 
 		const devices = userAssignableStore.getAssignableResources[id]?.devices ?? {};
 		defaultDevices.value = Object.keys(devices);
-
+		form.devices = Object.keys(devices);
 
 }, {
 	immediate: true,
@@ -232,7 +232,6 @@ watch(() => [form.role, permissionStore.isLoaded], ([_, loaded]) => {
 		let rp = permissionStore.getRolePermissions[form.role];
 
 		defaultPermissions.value = rp;
-
 		form.permissions = rp;
 	}
 }, {
@@ -247,6 +246,12 @@ watch(()=>organisationStore.getOrganisation, (org) => {
 	immediate: true,
 	deep: true
 });
+
+
+watch(()=>form.organisations, (v) => {
+	console.log(v)
+	console.log()
+})
 
 
 // - Methods -----------------------------------------------------------
@@ -271,10 +276,10 @@ function initCreateUser() {
 }
 
 async function createUser() {
-
-	dashboardStore.setIsLoading(true);
 	
 	try {
+		dashboardStore.setIsLoading(true);
+
 		const {
 			permissions,
 			organisations,
@@ -290,8 +295,8 @@ async function createUser() {
 		}
 
 		const rolePermissions = permissionStore.getRolePermissions[form.role];
-		const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
 
+		const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
 		const user_organisation_access = utils.diffArraysToBooleanMap(defaultOrganisations.value, organisations);
 		const user_asset_access = utils.diffArraysToBooleanMap(defaultAssets.value, assets);
 		const user_device_access = utils.diffArraysToBooleanMap(defaultDevices.value, devices);
