@@ -118,8 +118,9 @@
         </div>
 
         <div class="vform__row mt-9 ">
-            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateAsset">Register
-                Asset</button>
+            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateAsset">
+                Update Asset
+            </button>
             <button v-if="confirmOn" class="vbtn vbtn--zinc-lt  mt-3" @click.prevent="confirmOn = false">Cancel</button>
             <button v-if="confirmOn" class="vbtn vbtn--sky  mt-3" @click.prevent="updateAsset">Confirm</button>
         </div>

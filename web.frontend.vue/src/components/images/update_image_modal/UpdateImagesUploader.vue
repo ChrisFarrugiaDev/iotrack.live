@@ -35,6 +35,7 @@ import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css
 import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useImageStore } from '@/stores/imageStore';
+import { useAppStore } from '@/stores/appStore';
 
 
 
@@ -55,6 +56,7 @@ export type UploaderItem = {
 // - Store -------------------------------------------------------------
 
 const authStore = useAuthStore();
+const appStore = useAppStore();
 
 // - Props -------------------------------------------------------------
 
@@ -75,7 +77,7 @@ const files = ref<any[]>([]);
 
 const serverOptions = {
 	process: {
-		url: 'http://iotrack.live/img/upload',
+		url: `${appStore.getAppUrl}/img/upload`,
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${authStore.getJwt}`,

@@ -130,7 +130,7 @@ const tableCol = ref<TableColumn[]>([
         data: "organisation",
         sort: true,
         searchable: true,
-        anchor: { enabled: true, urlKey: "organisation_url", target: "_blank" }
+        to: (row) => row.organisation_url
     },
     {
         col: "Name",
@@ -177,7 +177,8 @@ const tableData = computed(() => {
 
     return assets.map((a) => {
 
-        const organisation = a.organisation_id ? organisations[a.organisation_id]?.name : null;        
+        const organisation = a.organisation_id ? organisations[a.organisation_id] : null;        
+        const organisationName = organisation ? organisation?.name : null;        
 
         const device = a.devices?.length ? a.devices[0] : null
         const tracking_device = device ?  devices[device.id] : null;
@@ -185,8 +186,8 @@ const tableData = computed(() => {
         return {
             ...a,
             
-            organisation: organisation || null,
-            organisation_url: a.organisation_id ? `/organisations/${a.organisation_id}` : null,
+            organisation: organisationName ?? "",            
+            organisation_url: organisation ? `/organisations?update=true&org_uuid=${organisation.uuid}` : "/organisations",
 
             tracking_device : tracking_device?.external_id || null,
             tracking_device_url: tracking_device ? `/devices?update=true&device_uuid=${tracking_device?.uuid}` : "/assets",             
@@ -195,6 +196,7 @@ const tableData = computed(() => {
         };
     });
 });
+
 
 // - Methods -----------------------------------------------------------
 function clearMessage() {

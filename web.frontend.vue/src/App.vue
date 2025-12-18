@@ -11,7 +11,7 @@
         <section class="page">
             <RouterView v-slot="{ Component, route }">
                 <!-- <Transition :name="(route.meta?.transition as string) || 'fade'" > -->
-                <KeepAlive v-if="useKeepAlive" :exclude="['devices.list', 'assets.list']">
+                <KeepAlive v-if="useKeepAlive" :exclude="['devices.list', 'assets.list', 'users.list', 'users.view', 'organisations.list']">
                     <component :is="Component" :key="route.name" />
                 </KeepAlive>
                 <component v-else :is="Component" :key="route.name" />

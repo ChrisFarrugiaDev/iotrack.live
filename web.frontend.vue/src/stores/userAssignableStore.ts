@@ -66,8 +66,8 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
     function buildOrgTree(): TreeNode[] {
         const orgId = selectedOrgId.value
         const orgs = assignableResources.value[orgId]?.organisation
-        const rootToSkipId = orgId
-        if (!orgs || !rootToSkipId) return []
+    
+        if (!orgs) return []
 
         // 1. Create flat node map
         const nodeMap: Record<string, TreeNode & { children: TreeNode[] }> = {}
@@ -83,9 +83,9 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
 
         // 2. Link nodes into a tree, skipping the root org
         Object.values(orgs as Record<string, any>).forEach((org) => {
-            if (org.id === rootToSkipId) return // skip root
+            
             const parentId = org.parent_org_id ?? null
-            if (parentId === rootToSkipId) {
+            if (parentId === orgId) {
                 topLevel.push(nodeMap[org.id]) // direct children of root
             } else if (parentId && nodeMap[parentId]) {
                 nodeMap[parentId].children.push(nodeMap[org.id])

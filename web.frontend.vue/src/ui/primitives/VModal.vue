@@ -9,7 +9,7 @@
                         <button class="overflow-visible vmodal__close" @click="close" aria-label="Close">&times;</button>
                     </header>
 
-                    <div class="overflow-visible vmodal__body">
+                    <div class=" overflow-scroll  vmodal__body">
                         <slot />
                     </div>
 
@@ -187,6 +187,7 @@ onBeforeUnmount(() => {
         @extend %v-custom-scrollbar;
         z-index: 6000;
         font-family: var(--font-primary);
+        max-height: calc(100vh - 12rem);      
     }
 
     &__footer {
@@ -226,6 +227,10 @@ onBeforeUnmount(() => {
 
 .overflow-visible {
     overflow: visible !important;
+}
+.overflow-scroll {
+    overflow-y: scroll!important;
+    overflow-x: hidden;
 }
 
 .flex-align-center {

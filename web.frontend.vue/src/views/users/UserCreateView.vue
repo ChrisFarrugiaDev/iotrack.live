@@ -212,7 +212,7 @@ watch(()=>userAssignableStore.getSelectedOrgId, (id)=>{
 		defaultAssets.value = Object.keys(assets);
 
 		const orgs = userAssignableStore.getAssignableResources[id]?.organisation ?? {};
-		defaultOrganisations.value = Object.keys(orgs).filter(dd => id != dd);		
+		defaultOrganisations.value = Object.keys(orgs);			
 
 		const devices = userAssignableStore.getAssignableResources[id]?.devices ?? {};
 		defaultDevices.value = Object.keys(devices);

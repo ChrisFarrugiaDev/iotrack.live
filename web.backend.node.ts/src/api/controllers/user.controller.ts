@@ -14,6 +14,8 @@ import { z } from "zod";
 import { UserOrganisationAccess } from "../../models/user-organisation-access.model";
 import { UserAssetAccess } from "../../models/user-asset-access.model";
 import { UserDeviceAccess } from "../../models/user-device-access.model";
+import { Asset, AssetType } from "../../models/asset.model";
+import { Device, DeviceType } from "../../models/device.model";
 
 // UserController: Handles all user-related endpoints
 class UserController {
@@ -271,10 +273,7 @@ class UserController {
     }
 
 
-    static async permissions(
-        request: FastifyRequest,
-        reply: FastifyReply
-    ) {
+    static async permissions(request: FastifyRequest, reply: FastifyReply) {
         try {
             const { id: userID } = request.params as { id: string };
 
@@ -317,6 +316,187 @@ class UserController {
             });
         }
     }
+
+    static async organisations(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const { id: userID } = request.params as { id: string };
+
+            // 1. Fetch user
+            const user = await User.getByID(userID);
+
+            if (!user) {
+                return reply.status(404).send({
+                    success: false,
+                    message: "User not found.",
+                });
+            }
+
+            // 2. Determine all organisation IDs the user can access
+            const accessibleOrgIds: string[] = await AccessProfileController.computeAccessibleOrganisationIds(user.organisation_id, user.id);
+
+            // 3. Respond
+            return reply.send({
+                success: true,
+                message: "User organisations retrieved successfully.",
+                data: {
+                    organisations: accessibleOrgIds,
+                },
+            });
+
+        } catch (err) {
+            logger.error({ err }, "! UserController.organisations !");
+
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to retrieve user's organisations.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
+
+    static async assets(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const { id: userID } = request.params as { id: string };
+
+            // 1. Fetch user
+            const user = await User.getByID(userID);
+
+            if (!user) {
+                return reply.status(404).send({
+                    success: false,
+                    message: "User not found.",
+                });
+            }
+
+            // 2. Fetch user-specific asset access overrides
+            //    (explicit allow / deny rules)
+            const overrides = await UserAssetAccess.getByUserID(user.id);
+
+            const allow: string[] = [];
+            const deny: string[] = [];
+
+            for (const override of overrides) {
+                (override.is_allowed ? allow : deny).push(override.asset_id);
+            }
+
+            // 3. Determine all organisation IDs the user can access
+            const accessibleOrgIds =
+                await AccessProfileController.computeAccessibleOrganisationIds(
+                    user.organisation_id,
+                    user.id
+                );
+
+            // 4. Fetch all assets belonging to those organisations
+            const assets = await Asset.getByOrganisationsIDs(accessibleOrgIds);
+
+            // 5. Remove assets explicitly denied to the user
+            const accessibleAssets = assets.filter(
+                (asset: AssetType) => !deny.includes(asset.id)
+            );
+
+            // 6. Return asset IDs only (lightweight payload)
+            const accessibleAssetIds = accessibleAssets.map(asset => asset.id);
+
+            return reply.send({
+                success: true,
+                message: "User assets retrieved successfully.",
+                data: {
+                    assets: accessibleAssetIds,
+                },
+            });
+
+        } catch (err) {
+            logger.error({ err }, "! UserController.assets !");
+
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to retrieve user's assets.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
+
+    static async devices(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const { id: userID } = request.params as { id: string };
+
+            // 1. Fetch user
+            const user = await User.getByID(userID);
+
+            if (!user) {
+                return reply.status(404).send({
+                    success: false,
+                    message: "User not found.",
+                });
+            }
+
+            // 2. Fetch user-specific device access overrides
+            //    (explicit allow / deny rules)
+            const overrides = await UserDeviceAccess.getByUserID(user.id);
+
+            const allow: string[] = [];
+            const deny: string[] = [];
+
+            for (const override of overrides) {
+                (override.is_allowed ? allow : deny).push(override.device_id);
+            }
+
+            // 3. Determine all organisation IDs the user can access
+            const accessibleOrgIds =
+                await AccessProfileController.computeAccessibleOrganisationIds(
+                    user.organisation_id,
+                    user.id
+                );
+
+            // 4. Fetch all devices belonging to those organisations
+            const devices = await Device.getByOrganisationsIDs(accessibleOrgIds);
+
+            // 5. Remove devices explicitly denied to the user
+            const accessibleDevices = devices.filter(
+                (device: DeviceType) => !deny.includes(device.id)
+            );
+
+            // 6. Return device IDs only (lightweight payload)
+            const accessibleDeviceIds = accessibleDevices.map(device => device.id);
+
+            return reply.send({
+                success: true,
+                message: "User devices retrieved successfully.",
+                data: {
+                    devices: accessibleDeviceIds,
+                },
+            });
+
+        } catch (err) {
+            logger.error({ err }, "! UserController.devices !");
+
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to retrieve user's devices.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
+
+
 }
 
 // =====================================================================

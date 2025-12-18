@@ -13,7 +13,11 @@ export const useUserStore = defineStore('userStore', () => {
     // ---- State ------------------------------------------------------
 
     const userScope = ref<Record<string, User> | null>(null);
+
     const usersPermissions = ref<Record<string, number[]>>({});
+    const usersOrganisations = ref<Record<string, string[]>>({});
+    const usersAssets = ref<Record<string, string[]>>({});
+    const usersDevices = ref<Record<string, string[]>>({});
 
 
     // ---- Getters ----------------------------------------------------
@@ -32,13 +36,30 @@ export const useUserStore = defineStore('userStore', () => {
         return uu;
     });
 
-    const getUsersPermissions = computed(() => { return usersPermissions.value });
+
 
     const getUserPermissionsById = computed(() => {
         return (userId: string): number[] => {
             return usersPermissions.value[userId] ?? [];
         };
     });
+    const getUserOrganisationsById = computed(() => {
+        return (userId: string): string[] => {
+            return usersOrganisations.value[userId] ?? [];
+        };
+    });
+    const getUserAssetsById = computed(() => {
+        return (userId: string): string[] => {
+            return usersAssets.value[userId] ?? [];
+        };
+    });
+    const getUserDevicesById = computed(() => {
+        return (userId: string): string[] => {
+            return usersDevices.value[userId] ?? [];
+        };
+    });
+
+
 
     // ---- Setters (Actions) ------------------------------------------
 
@@ -68,7 +89,7 @@ export const useUserStore = defineStore('userStore', () => {
     }
 
     async function deleteUsers(payload: { user_ids: string[] }) {
-        
+
 
         try {
             const url = `${appStore.getAppUrl}/api/user`;
@@ -130,6 +151,61 @@ export const useUserStore = defineStore('userStore', () => {
         return usersPermissions.value[userId]?.includes(permId) ?? false;
     }
 
+    async function fetchUserOrganisations(userId: string) {
+        try {
+            const url = `${appStore.getAppUrl}/api/user/${userId}/organisations`;
+            const res = await axios.get(url);
+
+            const orgs: string[] = res.data?.data?.organisations ?? [];
+
+            // cache by userId
+            usersOrganisations.value[userId] = orgs;
+
+            return orgs;
+
+        } catch (err) {
+            console.error('! userStore fetchUserOrganisations !\n', err);
+            throw err;
+        }
+    }
+
+    async function fetchUserAssets(userId: string) {
+        try {
+            const url = `${appStore.getAppUrl}/api/user/${userId}/assets`;
+            const res = await axios.get(url);
+
+            const assets: string[] = res.data?.data?.assets ?? [];
+
+            // cache by userId
+            usersAssets.value[userId] = assets;
+
+            return assets;
+
+        } catch (err) {
+            console.error('! userStore fetchUserAssets !\n', err);
+            throw err;
+        }
+    }
+
+    async function fetchUserDevices(userId: string) {
+        try {
+            const url = `${appStore.getAppUrl}/api/user/${userId}/devices`;
+            const res = await axios.get(url);
+
+            const devices: string[] = res.data?.data?.devices ?? [];
+
+            // cache by userId
+            usersDevices.value[userId] = devices;
+
+            return devices;
+
+        } catch (err) {
+            console.error('! userStore fetchUserDevices !\n', err);
+            throw err;
+        }
+    }
+
+
     // ---- Expose -----------------------------------------------------
     return {
 
@@ -137,12 +213,18 @@ export const useUserStore = defineStore('userStore', () => {
         getUserScope,
         getUserScopeByUuid,
 
-        getUsersPermissions,
         getUserPermissionsById,
+        getUserOrganisationsById,
+        getUserAssetsById,
+        getUserDevicesById,
 
         // actions
         fetchUserScope,
         fetchUserPermissions,
+
+        fetchUserOrganisations,
+        fetchUserAssets,
+        fetchUserDevices,
 
         createUser,
         deleteUsers,

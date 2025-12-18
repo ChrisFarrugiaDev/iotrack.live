@@ -13,9 +13,9 @@
         </VTabs>
     
         <RouterView v-slot="{ Component, route }">
-            <KeepAlive :exclude="['users.list', 'users.create']">
+      
                 <component :is="Component" :key="route.name" />
-            </KeepAlive>
+          
         </RouterView>
 
 

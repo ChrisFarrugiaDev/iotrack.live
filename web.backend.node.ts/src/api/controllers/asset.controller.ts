@@ -45,8 +45,6 @@ class AssetController {
         try {
             const { name, asset_type, organisation_id, device_id, attributes } = (request as any).body;
 
-            console.log(">>",{attributes})
-
             // Organisation access check
             const accessibleOrgsByUser = await AccessProfileController.computeAccessibleOrganisationIds(
                 request.userOrgID!, request.userID!

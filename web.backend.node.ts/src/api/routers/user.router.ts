@@ -33,6 +33,27 @@ export default async function userRouter(fastify: FastifyInstance) {
         UserController.permissions
     );
 
+    // User organisations
+    fastify.get(
+        "/:id/organisations",
+        { preHandler: [authMiddleware] },
+        UserController.organisations
+    );
+
+    // User assets
+    fastify.get(
+        "/:id/assets",
+        { preHandler: [authMiddleware] },
+        UserController.assets
+    );
+
+    // User devices
+    fastify.get(
+        "/:id/devices",
+        { preHandler: [authMiddleware] },
+        UserController.devices
+    );
+
     // Assignment options
     fastify.post(
         "/assignment-options",

@@ -33,7 +33,7 @@
 				<p class="vform__error">{{ errors.email }}</p>
 			</div>
 
-            			<!-- Active Status -->
+            <!-- Active Status -->
 			<div class="vform__group mb-7">
 				<label class="vform__label" for="active">Active <span class="vform__required">*</span></label>
 				<VueSelect v-model="form.active" class="vform__group" :shouldAutofocusOption="false"
@@ -45,12 +45,12 @@
 			</div>
         </div>
 
-        		<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+        <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
 
 
 
 			<!-- Role -->
-			<div class="vform__group mb-7">
+			<div class="vform__group mb-7" @click="roleChangedByUser = true">
 				<label class="vform__label" for="role">Role <span class="vform__required">*</span></label>
 				<VueSelect v-model="form.role_id" class="vform__group" :shouldAutofocusOption="false"
 					:isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.role)]"
@@ -59,7 +59,7 @@
 			</div>
 
 
-            <div class="vform__group mb-7">
+            <div class="vform__group mb-7" @click="organisationChangedByUser = true">
                 <label class="vform__label" for="organisation_id">Organisation<span
                         class="vform__required">*</span></label>
                 <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
@@ -73,6 +73,18 @@
         <UserPermissions :confirmOn="confirmOn" :defaultPermissions="defaultPermissions"
 			@perm-changed="form.permissions = $event">
 		</UserPermissions>
+
+		<UserOrganisations :confirmOn="confirmOn" 
+			:defaultOrganisations="defaultOrganisations"  @org-changed="form.organisations = $event">
+		</UserOrganisations>
+
+		<UserAssets :confirmOn="confirmOn" 
+			:defaultAssets="defaultAssets" @assets-changed="form.assets = $event">
+		</UserAssets>
+
+		<UserDevices :confirmOn="confirmOn" 
+			:defaultDevices="defaultDevices"  @devices-changed="form.devices = $event">
+		</UserDevices>
 
 
     </form>
@@ -89,10 +101,14 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useUserStore } from '@/stores/userStore';
 import type { User } from '@/types/user.type';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useOrganisationStore } from "@/stores/organisationStore";
 import UserPermissions from "@/components/users/UserPermissions.vue";
 import { usePermissionStore } from "@/stores/permissionStore";
+import UserOrganisations from "@/components/users/UserOrganisations.vue";
+import UserDevices from "@/components/users/UserDevices.vue";
+import UserAssets from "@/components/users/UserAssets.vue";
+import { useUserAssignableStore } from "@/stores/userAssignableStore";
 
 // - Composable --------------------------------------------------------
 
@@ -126,6 +142,8 @@ const { getUserScopeByUuid } = storeToRefs(userStore);
 const organisationStore = useOrganisationStore();
 
 const permissionStore = usePermissionStore();
+
+const userAssignableStore = useUserAssignableStore();
 
 
 // - Data --------------------------------------------------------------
@@ -163,6 +181,15 @@ const defaultAssets = ref<string[]>([]);
 const defaultDevices = ref<string[]>([]);
 
 
+// Track user-initiated changes only.
+// Without these flags, watchers would run when form values are set
+// programmatically (e.g. on edit load), causing permissions/assets
+// to be recalculated incorrectly.
+const roleChangedByUser = ref(false);
+const organisationChangedByUser  = ref(false);
+
+
+
 // - Computed ----------------------------------------------------------
 
 const getOrganisations = computed(() => {
@@ -175,13 +202,27 @@ const getOrganisations = computed(() => {
 });
 
 // - Watchers ----------------------------------------------------------
-watch([() => props.userUuid, getUserScopeByUuid], ([uuid, userScope]) =>{
+
+// When organisation_id changes, load assignable: assets, devices and organisations for that organisation
+watch(()=>form.organisation_id, async (id) => {
+	if (!id || isNaN(Number(id))) return;
+	await userAssignableStore.fetchAssignableResources(id);
+}, {
+	deep: true
+});
+
+// Populate form and base context when editing a user
+// (runs on initial mount or when userUuid changes)
+watch([() => props.userUuid, getUserScopeByUuid], async ([uuid, userScope]) =>{
 
     if (!uuid) return;
 
     const uu = userScope[uuid]
 
     if (!uu) return;
+
+    // Preload assignable resources for user's organisation
+	await userAssignableStore.fetchAssignableResources(uu.organisation_id!);
 
     user.value = uu;
 
@@ -196,24 +237,83 @@ watch([() => props.userUuid, getUserScopeByUuid], ([uuid, userScope]) =>{
     immediate: true,
 });
 
+// Load user-specific assignments (permissions, orgs, assets, devices)
+// Uses cache first, falls back to API on first load
 watch(
     () => user.value,
     async (u) => {
         if (!u) return;
 
-        // 1. Try from cache first
-        let perms = userStore.getUserPermissionsById(u.id);
+        const userId = u.id;
 
-        // 2. If not cached, fetch from API
+        // Permissions
+        let perms = userStore.getUserPermissionsById(userId);
         if (perms.length === 0) {
-            perms = await userStore.fetchUserPermissions(u.id);
+            perms = await userStore.fetchUserPermissions(userId);
         }
-
-        // 3. Apply to form
         defaultPermissions.value = [...perms];
         form.permissions = [...perms];
+
+        // Assets
+        let assets = userStore.getUserAssetsById(userId);
+        if (assets.length === 0) {
+            assets = await userStore.fetchUserAssets(userId);
+        }
+        defaultAssets.value = [...assets];
+
+        // Organisations
+        let orgs = userStore.getUserOrganisationsById(userId);
+        if (orgs.length === 0) {
+            orgs = await userStore.fetchUserOrganisations(userId);
+        }
+        defaultOrganisations.value = [...orgs];
+
+        // Devices
+        let devices = userStore.getUserDevicesById(userId);
+        if (devices.length === 0) {
+            devices = await userStore.fetchUserDevices(userId);
+        }
+        defaultDevices.value = [...devices];
     },
     { immediate: true }
+);
+
+// Update assignable assets/devices when the user explicitly changes organisation
+// (prevents overwriting user assignments during initial load)
+watch(
+    () => userAssignableStore.getSelectedOrgId,
+    (orgId) => {
+        if (!orgId) return;
+
+        if (!organisationChangedByUser.value) return;
+
+        const assignable =
+            userAssignableStore.getAssignableResources[orgId] ?? {};
+
+        defaultAssets.value = Object.keys(assignable.assets ?? {});
+        defaultDevices.value = Object.keys(assignable.devices ?? {});
+        defaultOrganisations.value = Object.keys(assignable.organisation ?? {})
+            .filter(o => o !== orgId);
+    }
+);
+
+// Reset permissions to role defaults ONLY when role is changed by the user
+// (avoids overriding permissions on edit load)
+watch(
+    () => form.role_id,
+    (newRoleId, oldRoleId) => {
+        
+        if (!roleChangedByUser.value) return;
+
+        if (!permissionStore.isLoaded) return;
+        if (!newRoleId) return;
+        if (newRoleId === oldRoleId) return;
+
+        const rolePerms = permissionStore.getRolePermissions[newRoleId];
+
+        defaultPermissions.value = [...rolePerms];
+        form.permissions = [...rolePerms];
+    }
 );
 
 
@@ -223,11 +323,6 @@ function clearMessage() {
     messageStore.clearFlashMessageList();
 }
 
-
-onMounted(()=>{
-    // console.log(props.userUuid);
-    // console.log(userStore.getUserScopeByUuid[props.userUuid!])
-})
 
 </script>
 

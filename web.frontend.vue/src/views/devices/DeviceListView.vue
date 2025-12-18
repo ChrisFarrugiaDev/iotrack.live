@@ -125,11 +125,7 @@ const tableCol = ref<TableColumn[]>([
         data: "organisation",
         sort: true,
         searchable: true,
-        anchor: {
-            enabled: true,
-            urlKey: "organisation_url",
-            target: "_blank",
-        },
+        to: (row) => row.organisation_url,
     },
     {
         col: "Asset",
@@ -188,14 +184,15 @@ const tableData = computed(() => {
 
     return devices.map((d) => {
         const asset = d.asset_id ? assets[d.asset_id] : null;
-        const organisation = d.organisation_id ? organisations[d.organisation_id]?.name : null;
+        const organisation = d.organisation_id ? organisations[d.organisation_id] : null;
+        
 
         return {
             ...d,
             asset: asset?.name || null,
-            organisation: organisation || null,
+            organisation: organisation ? organisation.name : "",
             asset_url: d.asset_id ? `/assets?update=true&asset_uuid=${asset?.uuid}` : "/devices",
-            organisation_url: d.organisation_id ? `/organisations/${d.organisation_id}` : null,
+            organisation_url: organisation ? `/organisations?update=true&org_uuid=${organisation.uuid}` : "/organisations",
             created_at: d.created_at ? new Date(d.created_at) : null,
         };
     });
