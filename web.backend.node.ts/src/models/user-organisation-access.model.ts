@@ -1,8 +1,8 @@
-import { Prisma, PrismaClient } from '../../generated/prisma'
+import { Prisma, PrismaClient, user_organisation_access } from '../../generated/prisma'
 import prisma from '../config/prisma.config';
 import { bigIntToString } from '../utils/utils';
 
-
+export type UserOrganisationAccessType = user_organisation_access;
 export class UserOrganisationAccess {
 
     //  Get all org access overrides for a given user.
@@ -54,5 +54,18 @@ export class UserOrganisationAccess {
         })
 
         return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async deleteByUserID(
+        userID: string, 
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ) {
+        const result = await prismaClient.user_organisation_access.deleteMany({
+            where: { 'user_id': BigInt(userID) }
+        })
+
+        return result;
     }
 }

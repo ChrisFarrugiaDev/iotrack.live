@@ -3,58 +3,58 @@
         <TheFlashMessage></TheFlashMessage>
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }" @click="clearMessage">
-			<!-- First Name -->
-			<div class="vform__group mb-7">
-				<label class="vform__label" for="first_name">First Name <span class="vform__required">*</span></label>
-				<input v-model.trim="form.first_name" :class="{ 'vform__input--error': errors.first_name }"
-					class="vform__input" id="first_name" type="text" placeholder="Enter first name"
-					:disabled="confirmOn">
-				<p class="vform__error">{{ errors.first_name }}</p>
-			</div>
+            <!-- First Name -->
+            <div class="vform__group mb-7">
+                <label class="vform__label" for="first_name">First Name <span class="vform__required">*</span></label>
+                <input v-model.trim="form.first_name" :class="{ 'vform__input--error': errors.first_name }"
+                    class="vform__input" id="first_name" type="text" placeholder="Enter first name"
+                    :disabled="confirmOn">
+                <p class="vform__error">{{ errors.first_name }}</p>
+            </div>
 
-			<!-- Last Name -->
-			<div class="vform__group mb-7">
-				<label class="vform__label" for="last_name">Last Name <span class="vform__required">*</span></label>
-				<input v-model.trim="form.last_name" :class="{ 'vform__input--error': errors.last_name }"
-					class="vform__input" id="last_name" type="text" placeholder="Enter last name" :disabled="confirmOn">
-				<p class="vform__error">{{ errors.last_name }}</p>
-			</div>
+            <!-- Last Name -->
+            <div class="vform__group mb-7">
+                <label class="vform__label" for="last_name">Last Name <span class="vform__required">*</span></label>
+                <input v-model.trim="form.last_name" :class="{ 'vform__input--error': errors.last_name }"
+                    class="vform__input" id="last_name" type="text" placeholder="Enter last name" :disabled="confirmOn">
+                <p class="vform__error">{{ errors.last_name }}</p>
+            </div>
         </div>
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }" @click="clearMessage">
 
 
-			<!-- Email -->
-			<div class="vform__group mb-7">
-				<label class="vform__label" for="email">Email <span class="vform__required">*</span></label>
-				<input v-model.trim="form.email" :class="{ 'vform__input--error': errors.email }" class="vform__input"
-					id="email" type="email" placeholder="Enter email address" autocomplete="email"
-					:disabled="confirmOn">
-				<p class="vform__error">{{ errors.email }}</p>
-			</div>
+            <!-- Email -->
+            <div class="vform__group mb-7">
+                <label class="vform__label" for="email">Email <span class="vform__required">*</span></label>
+                <input v-model.trim="form.email" :class="{ 'vform__input--error': errors.email }" class="vform__input"
+                    id="email" type="email" placeholder="Enter email address" autocomplete="email"
+                    :disabled="confirmOn">
+                <p class="vform__error">{{ errors.email }}</p>
+            </div>
 
             <!-- Active Status -->
-			<div class="vform__group mb-7">
-				<label class="vform__label" for="active">Active <span class="vform__required">*</span></label>
-				<VueSelect v-model="form.active" class="vform__group" :shouldAutofocusOption="false"
-					:isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]" :options="[
-						{ label: 'Yes', value: true },
-						{ label: 'No', value: false }
-					]" placeholder="" />
-				<p class="vform__error">{{ errors.active }}</p>
-			</div>
+            <div class="vform__group mb-7">
+                <label class="vform__label" for="active">Active <span class="vform__required">*</span></label>
+                <VueSelect v-model="form.active" class="vform__group" :shouldAutofocusOption="false"
+                    :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]" :options="[
+                        { label: 'Yes', value: true },
+                        { label: 'No', value: false }
+                    ]" placeholder="" />
+                <p class="vform__error">{{ errors.active }}</p>
+            </div>
         </div>
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
 
-			<!-- Role -->
-			<div class="vform__group mb-7" @click="roleChangedByUser = true">
-				<label class="vform__label" for="role">Role <span class="vform__required">*</span></label>
-				<VueSelect v-model="form.role_id" class="vform__group" :shouldAutofocusOption="false"
-					:isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.role)]"
-					:options="roleOptions" placeholder="" />
-				<p class="vform__error">{{ errors.role }}</p>
-			</div>
+            <!-- Role -->
+            <div class="vform__group mb-7" @click="roleChangedByUser = true">
+                <label class="vform__label" for="role">Role <span class="vform__required">*</span></label>
+                <VueSelect v-model="form.role_id" class="vform__group" :shouldAutofocusOption="false"
+                    :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.role)]"
+                    :options="roleOptions" placeholder="" />
+                <p class="vform__error">{{ errors.role }}</p>
+            </div>
 
 
             <div class="vform__group mb-7" @click="organisationChangedByUser = true">
@@ -66,43 +66,41 @@
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>
 
-		</div>
+        </div>
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
 
-			<!-- Password -->
-			<div class="vform__group mb-7">
-				<label class="vform__label" for="password">Password</label>
-				<input v-model="form.password" :class="{ 'vform__input--error': errors.password }" class="vform__input"
-					id="password" type="password" placeholder="Leave blank to keep user's current password" autocomplete="new-password"
-					:disabled="confirmOn">
-				<p class="vform__error">{{ errors.password }}</p>
-			</div>
+            <!-- Password -->
+            <div class="vform__group mb-7">
+                <label class="vform__label" for="password">Password</label>
+                <input v-model="form.password" :class="{ 'vform__input--error': errors.password }" class="vform__input"
+                    id="password" type="password" placeholder="Leave blank to keep user's current password"
+                    autocomplete="new-password" :disabled="confirmOn">
+                <p class="vform__error">{{ errors.password }}</p>
+            </div>
 
-		</div>
+        </div>
 
-        <UserPermissions :confirmOn="confirmOn" 
-            :defaultPermissions="defaultPermissions" @perm-changed="form.permissions = $event">
-		</UserPermissions>
+        <UserPermissions :confirmOn="confirmOn" :defaultPermissions="defaultPermissions"
+            @perm-changed="form.permissions = $event">
+        </UserPermissions>
 
-		<UserOrganisations :confirmOn="confirmOn" 
-			:defaultOrganisations="defaultOrganisations"  @org-changed="form.organisations = $event">
-		</UserOrganisations>
+        <UserOrganisations :confirmOn="confirmOn" :defaultOrganisations="defaultOrganisations"
+            @org-changed="form.organisations = $event">
+        </UserOrganisations>
 
-		<UserAssets :confirmOn="confirmOn" 
-			:defaultAssets="defaultAssets" @assets-changed="form.assets = $event">
-		</UserAssets>
+        <UserAssets :confirmOn="confirmOn" :defaultAssets="defaultAssets" @assets-changed="form.assets = $event">
+        </UserAssets>
 
-		<UserDevices :confirmOn="confirmOn" 
-			:defaultDevices="defaultDevices"  @devices-changed="form.devices = $event">
-		</UserDevices>
+        <UserDevices :confirmOn="confirmOn" :defaultDevices="defaultDevices" @devices-changed="form.devices = $event">
+        </UserDevices>
 
 
-        <div class="vform__row mt-9 ">
-			<button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateUser">Update User</button>
-			<button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false">Cancel</button>
-			<button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="updateUser">Confirm</button>
-		</div>
+        <div class="vform__row mt-9 mb-12">
+            <button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdateUser">Update User</button>
+            <button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false">Cancel</button>
+            <button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="updateUser">Confirm</button>
+        </div>
     </form>
 </template>
 
@@ -137,13 +135,13 @@ const dashboardStore = useDashboardStore();
 const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
-	first_name: '',
-	last_name: '',
-	email: '',
-	password: '',
-	role: "",
-	active: "",
-	organisation_id: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    password: '',
+    role: "",
+    active: "",
+    organisation_id: '',
 });
 
 const { handleFormError } = useFormErrorHandler(errors);
@@ -173,26 +171,26 @@ const userAssignableStore = useUserAssignableStore();
 const confirmOn = ref(false);
 
 const roleOptions = [
-	{ label: 'System Admin', value: 1 },
-	{ label: 'Admin', value: 2 },
-	{ label: 'User', value: 3 },
-	{ label: 'Viewer', value: 4 },
+    { label: 'System Admin', value: 1 },
+    { label: 'Admin', value: 2 },
+    { label: 'User', value: 3 },
+    { label: 'Viewer', value: 4 },
 ];
 
 type Form = typeof form;
 
 const form = reactive({
-	first_name: null as null | string,
-	last_name: null as null | string,
-	email: null as null | string,
-	password: null as null | string,
-	role_id: null as null | number,
-	active: true,
-	organisation_id: null as null | string,
-	permissions: [] as number[],
-	organisations: [] as string[],
-	assets: [] as string[],
-	devices: [] as string[],
+    first_name: null as null | string,
+    last_name: null as null | string,
+    email: null as null | string,
+    password: null as null | string,
+    role_id: null as null | number,
+    active: true,
+    organisation_id: null as null | string,
+    permissions: [] as number[],
+    organisations: [] as string[],
+    assets: [] as string[],
+    devices: [] as string[],
 });
 
 const user = ref<null | User>(null);
@@ -202,9 +200,9 @@ const currentUserOrganisations = ref<string[]>([]);
 const currentUserAssets = ref<string[]>([]);
 const currentUserDevices = ref<string[]>([]);
 
-const defaultPermissions = ref<number[]>([]); 
-const defaultOrganisations = ref<string[]>([]); 
-const defaultAssets = ref<string[]>([]); 
+const defaultPermissions = ref<number[]>([]);
+const defaultOrganisations = ref<string[]>([]);
+const defaultAssets = ref<string[]>([]);
 const defaultDevices = ref<string[]>([]);
 
 
@@ -213,7 +211,7 @@ const defaultDevices = ref<string[]>([]);
 // programmatically (e.g. on edit load), causing permissions/assets
 // to be recalculated incorrectly.
 const roleChangedByUser = ref(false);
-const organisationChangedByUser  = ref(false);
+const organisationChangedByUser = ref(false);
 
 
 
@@ -231,16 +229,16 @@ const getOrganisations = computed(() => {
 // - Watchers ----------------------------------------------------------
 
 // When organisation_id changes, load assignable: assets, devices and organisations for that organisation
-watch(()=>form.organisation_id, async (id) => {
-	if (!id || isNaN(Number(id))) return;
-	await userAssignableStore.fetchAssignableResources(id);
+watch(() => form.organisation_id, async (id) => {
+    if (!id || isNaN(Number(id))) return;
+    await userAssignableStore.fetchAssignableResources(id);
 }, {
-	deep: true
+    deep: true
 });
 
 // Populate form and base context when editing a user
 // (runs on initial mount or when userUuid changes)
-watch([() => props.userUuid, getUserScopeByUuid], async ([uuid, userScope]) =>{
+watch([() => props.userUuid, getUserScopeByUuid], async ([uuid, userScope]) => {
 
     if (!uuid) return;
 
@@ -249,7 +247,7 @@ watch([() => props.userUuid, getUserScopeByUuid], async ([uuid, userScope]) =>{
     if (!uu) return;
 
     // Preload assignable resources for user's organisation
-	await userAssignableStore.fetchAssignableResources(uu.organisation_id!);
+    await userAssignableStore.fetchAssignableResources(uu.organisation_id!);
 
     user.value = uu;
 
@@ -280,7 +278,7 @@ watch(
         }
         currentUserPermissions.value = [...perms];
         defaultPermissions.value = [...perms];
-         form.permissions = [...perms];
+        form.permissions = [...perms];
 
         // Assets
         let assets = userStore.getUserAssetsById(userId);
@@ -291,7 +289,7 @@ watch(
         defaultAssets.value = [...assets];
         form.assets = [...assets];
 
-        
+
 
         // Organisations
         let orgs = userStore.getUserOrganisationsById(userId);
@@ -309,7 +307,7 @@ watch(
             devices = await userStore.fetchUserDevices(userId);
         }
 
-    
+
         currentUserDevices.value = [...devices];
         defaultDevices.value = [...devices];
         form.devices = [...devices];
@@ -344,7 +342,7 @@ watch(
 watch(
     () => form.role_id,
     (newRoleId, oldRoleId) => {
-        
+
         if (!roleChangedByUser.value) return;
 
         if (!permissionStore.isLoaded) return;
@@ -354,7 +352,7 @@ watch(
         const rolePerms = permissionStore.getRolePermissions[newRoleId];
 
         form.permissions = [...rolePerms];
-        defaultPermissions.value  = [...rolePerms];
+        defaultPermissions.value = [...rolePerms];
     }
 );
 
@@ -366,128 +364,160 @@ function clearMessage() {
 }
 
 function initUpdateUser() {
-	errors.value = {
-		first_name: '',
-		last_name: '',
-		email: '',
-		password: '',
-		role: "",
-		active: "",
-		organisation_id: '',
-	};
-	
-	clearMessage();
-	confirmOn.value = true;
+    errors.value = {
+        first_name: '',
+        last_name: '',
+        email: '',
+        password: '',
+        role: "",
+        active: "",
+        organisation_id: '',
+    };
+
+    clearMessage();
+    confirmOn.value = true;
 }
 
-function updateUser() {
+async function updateUser() {
     try {
         dashboardStore.setIsLoading(true);
 
         const {
-			permissions,
-			organisations,
-			assets,
-			devices,
-			...rawCoreFields
-		} = form;
+            permissions,
+            organisations,
+            assets,
+            devices,
+            ...rawCoreFields
+        } = form;
 
         const coreFields: { [key: string]: any } = { ...rawCoreFields };
 
         if (!coreFields.password || coreFields.password.trim() === "") {
-			delete coreFields.password;
-		}
+            delete coreFields.password;
+        }
 
         const rolePermissions = permissionStore.getRolePermissions[form.role_id!];
 
-		const assignableOrgs = userAssignableStore.getAssignableResources[form.organisation_id!]?.organisation ?? {};
-		const assignableOrgsIDs = Object.keys(assignableOrgs);	
+        const assignableOrgs = userAssignableStore.getAssignableResources[form.organisation_id!]?.organisation ?? {};
+        const assignableOrgsIDs = Object.keys(assignableOrgs);
 
-		const assignableAssets = userAssignableStore.getAssignableResources[form.organisation_id!]?.assets ?? {};
-		const assignableAssetsIDs = Object.keys(assignableAssets);
+        const assignableAssets = userAssignableStore.getAssignableResources[form.organisation_id!]?.assets ?? {};
+        const assignableAssetsIDs = Object.keys(assignableAssets);
 
-		const assignableDevices = userAssignableStore.getAssignableResources[form.organisation_id!]?.devices ?? {};
-		const assignableDevicesIDs = Object.keys(assignableDevices);
+        const assignableDevices = userAssignableStore.getAssignableResources[form.organisation_id!]?.devices ?? {};
+        const assignableDevicesIDs = Object.keys(assignableDevices);
 
-		const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
-		const user_organisation_access = utils.diffArraysToBooleanMap(assignableOrgsIDs, organisations);
-		const user_asset_access = utils.diffArraysToBooleanMap(assignableAssetsIDs, assets);
-		const user_device_access = utils.diffArraysToBooleanMap(assignableDevicesIDs, devices);
+        const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
+        const user_organisation_access = utils.diffArraysToBooleanMap(assignableOrgsIDs, organisations);
+        const user_asset_access = utils.diffArraysToBooleanMap(assignableAssetsIDs, assets);
+        const user_device_access = utils.diffArraysToBooleanMap(assignableDevicesIDs, devices);
 
         const payload: Record<string, any> = {};
 
-        if (form.first_name != user.value?.first_name) {
+        if (form.first_name !== user.value?.first_name) {
             payload.first_name = form.first_name;
         }
 
-        if (form.last_name != user.value?.last_name) {
+        if (form.last_name !== user.value?.last_name) {
             payload.last_name = form.last_name;
         }
 
-        if (form.email != user.value?.email) {
+        if (form.email !== user.value?.email) {
             payload.email = form.email;
         }
 
-        if (form.password && form.password.trim() != '') {
+        if (form.password && form.password.trim() !== '') {
             payload.password = form.password.trim();
         }
 
-        if (form.active != user.value?.active) {
+        if (form.active !== user.value?.active) {
             payload.active = form.active;
         }
 
-        if (form.organisation_id != user.value?.organisation_id) {
+
+        // Organisation change      
+        if (form.organisation_id !== user.value?.organisation_id) {
             payload.organisation_id = form.organisation_id;
             payload.user_organisation_access = user_organisation_access;
             payload.user_asset_access = user_asset_access;
             payload.user_device_access = user_device_access;
 
         } else {
-            const old_organisation_access  = utils.diffArraysToBooleanMap(assignableOrgsIDs, currentUserOrganisations.value);            
-            if (toRaw(old_organisation_access) != toRaw(user_organisation_access)) {
-                console.log(toRaw(old_organisation_access),  toRaw(user_organisation_access))
+            const old_organisation_access =
+                utils.diffArraysToBooleanMap(assignableOrgsIDs, currentUserOrganisations.value);
+
+            if (
+                JSON.stringify(old_organisation_access) !==
+                JSON.stringify(user_organisation_access)
+            ) {
                 payload.user_organisation_access = user_organisation_access;
             }
 
-            // const old_asset_access  = utils.diffArraysToBooleanMap(assignableAssetsIDs, currentUserAssets.value);
-            // if (old_asset_access != user_asset_access) {
-            //     payload.user_asset_access = user_asset_access;
-            // }
+            const old_asset_access =
+                utils.diffArraysToBooleanMap(assignableAssetsIDs, currentUserAssets.value);
 
-            // const old_device_access  = utils.diffArraysToBooleanMap(assignableDevicesIDs, currentUserDevices.value);
-            // if (old_device_access != user_device_access) {
-            //     payload.user_device_access = user_device_access;
-            // }
+            if (
+                JSON.stringify(old_asset_access) !==
+                JSON.stringify(user_asset_access)
+            ) {
+                payload.user_asset_access = user_asset_access;
+            }
+
+            const old_device_access =
+                utils.diffArraysToBooleanMap(assignableDevicesIDs, currentUserDevices.value);
+
+            if (
+                JSON.stringify(old_device_access) !==
+                JSON.stringify(user_device_access)
+            ) {
+                payload.user_device_access = user_device_access;
+            }
         }
 
-        if (form.role_id != user.value?.role_id) {
+
+        // Role / permissions        
+        if (form.role_id !== user.value?.role_id) {
             payload.role = form.role_id;
             payload.user_permissions = user_permissions;
         } else {
+            const old_permissions =
+                utils.diffArraysToBooleanMap(rolePermissions, currentUserPermissions.value);
 
-            // const old_permissions = utils.diffArraysToBooleanMap(rolePermissions, currentUserPermissions.value);
-            // if (old_permissions != user_permissions) {
-            //     payload.user_permissions = user_permissions;
-            // }
+            if (
+                JSON.stringify(old_permissions) !==
+                JSON.stringify(user_permissions)
+            ) {
+                payload.user_permissions = user_permissions;
+            }
         }
 
+        if (Object.keys(payload).length === 0) {
 
-        console.log(payload)
+            messageStore.setFlashMessagesList(
+                ['No changes detected.'],
+                'flash-message--orange'
+            );
+            confirmOn.value = false;
+            return;
+        }
 
+        const res = await userStore.updateUser(user.value!.id, payload);
+
+        console.log(res);
 
     } catch (err) {
         handleFormError(err);
-		console.error("! UserUpdateView updateUser !", err);
+        console.error("! UserUpdateView updateUser !", err);
     } finally {
-		confirmOn.value = false;
-		dashboardStore.setIsLoading(false);
+        confirmOn.value = false;
+        dashboardStore.setIsLoading(false);
     }
 }
+
 
 </script>
 
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly
-</style>
+// Placeholder comment to ensure global styles are imported correctly</style>

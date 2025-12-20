@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { authMiddleware } from "../middleware/auth.middleware";
 import UserController from "../controllers/user.controller";
 import { validateBody } from "../middleware/validate-body.middleware";
-import { destroySchema, storeSchema } from "../schemas/user.schema";
+import { destroySchema, storeSchema, updateSchema } from "../schemas/user.schema";
 import UserAssignmentController from "../controllers/user-assignable.controller";
 
 
@@ -24,6 +24,12 @@ export default async function userRouter(fastify: FastifyInstance) {
         "/",
         { preHandler: [authMiddleware, validateBody(destroySchema)] },
         UserController.destroy
+    );
+
+    
+    fastify.patch("/:id", 
+        { preHandler: [authMiddleware, validateBody(updateSchema)] },
+        UserController.update
     );
 
     // User permissions

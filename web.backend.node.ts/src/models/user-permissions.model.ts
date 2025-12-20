@@ -44,6 +44,21 @@ export class UserPermissions {
 
         return bigIntToString(result);
     }
+
+    // -----------------------------------------------------------------
+
+    static async deleteByUserID(
+        userID: string, 
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ) {
+        const result = await prismaClient.user_permissions.deleteMany({
+            where: { 'user_id': BigInt(userID) }
+        })
+
+        return result;
+    }
+
+
 }
 
 

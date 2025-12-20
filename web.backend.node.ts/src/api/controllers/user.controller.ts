@@ -7,15 +7,16 @@ import { ApiResponse } from "../../types/api-response.type";
 import bcrypt from "bcryptjs";
 import { genPass } from "../../utils/utils";
 import prisma from "../../config/prisma.config";
-import { Prisma } from "@prisma/client";
-import { UserPermissions } from "../../models/user-permissions.model";
+import { Prisma } from "../../../generated/prisma";
+import { UserPermissions, UserPermissionsType } from "../../models/user-permissions.model";
 import * as userSchema from "../schemas/user.schema";
-import { z } from "zod";
-import { UserOrganisationAccess } from "../../models/user-organisation-access.model";
-import { UserAssetAccess } from "../../models/user-asset-access.model";
-import { UserDeviceAccess } from "../../models/user-device-access.model";
+import { keyof, z } from "zod";
+import { UserOrganisationAccess, UserOrganisationAccessType } from "../../models/user-organisation-access.model";
+import { UserAssetAccess, UserAssetAccessType } from "../../models/user-asset-access.model";
+import { UserDeviceAccess, UserDeviceAccessType } from "../../models/user-device-access.model";
 import { Asset, AssetType } from "../../models/asset.model";
 import { Device, DeviceType } from "../../models/device.model";
+
 
 // UserController: Handles all user-related endpoints
 class UserController {
@@ -270,6 +271,321 @@ class UserController {
     }
 
 
+
+    static async update(request: FastifyRequest, reply: FastifyReply) {
+        try {
+
+            const userID = (request as any).params.id;
+
+            // ---------------------------------------------
+            // 0. Validate route param
+            // ---------------------------------------------
+            if (!userID) {
+                return reply.status(400).send({
+                    success: false,
+                    message: "Missing user id in route params.",
+                    error: { code: "BAD_REQUEST" },
+                });
+            }
+
+            // ---------------------------------------------
+            // 1. Check if user exists
+            // ---------------------------------------------
+            const existing = await User.getByID(userID);
+            if (!existing) {
+                return reply.status(404).send({
+                    success: false,
+                    message: "User not found.",
+                    error: { code: "USER_NOT_FOUND" },
+                });
+            }
+
+
+            // ---------------------------------------------
+            // 2. Extract allowed update fields from body
+            // ---------------------------------------------
+
+            const parsed = userSchema.updateSchema.safeParse(request.body);
+
+            if (!parsed.success) {
+                // however you handle validation errors in your backend
+
+                return reply.status(422).send({
+                    success: false,
+                    message: "Validation failed",
+                    error: { code: "VALIDATION_ERROR" },
+                });
+            }
+
+            const {
+                first_name,
+                last_name,
+                email,
+                password,
+                role,
+                active,
+                organisation_id,
+                user_permissions,
+                user_organisation_access,
+                user_asset_access,
+                user_device_access
+            } = parsed.data;
+
+
+            // ---------------------------------------------
+            // 3. TO IMPLIMENT validate if user has permissions
+            // ---------------------------------------------
+
+            // ---------------------------------------------
+            // 4. Ensure organisation is within allowed orgs for current user
+            // ---------------------------------------------
+
+            if (organisation_id !== undefined) {
+                // 1. Ensure organisation is within allowed orgs for current user
+                const accessibleOrgsByUser = await AccessProfileController.computeAccessibleOrganisationIds(
+                    request.userOrgID!, request.userID!
+                );
+
+                if (!accessibleOrgsByUser.includes(organisation_id!)) {
+                    return reply.status(403).send({
+                        success: false,
+                        message: "You don't have permission to set a user to this organisation.",
+                        error: {
+                            code: "ORG_ACCESS_DENIED",
+                            details: process.env.DEBUG === "true" ? {
+                                requested_org_id: organisation_id,
+                                accessible_org_ids: accessibleOrgsByUser,
+                            } : undefined,
+                        },
+                    } as ApiResponse);
+                }
+            }
+
+
+            // ---------------------------------------------
+            // 4. Input validation for critical fields
+            // ---------------------------------------------
+            const isEmpty = (v: unknown) =>
+                v === null ||
+                v === undefined ||
+                (typeof v === "string" && v.trim() === "");
+
+            const CRITICAL: Array<keyof typeof existing> = ["first_name", "last_name", "email", "role_id", "active", "organisation_id"];
+
+            const fieldErrors: Record<string, string[]> = {};
+            const data = parsed.data as Record<string, unknown>;
+
+            // check existing DB (critical field already missing there)
+            if (isEmpty(existing.first_name)) fieldErrors["first_name"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.last_name)) fieldErrors["external_id_type"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.email)) fieldErrors["email"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.role_id)) fieldErrors["role_id"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.active)) fieldErrors["active"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.organisation_id)) fieldErrors["organisation_id"] = ["Field cannot be empty (missing in DB)."];
+
+            // Validate user-provided values
+            for (const field of CRITICAL) {
+                if (field in data) {
+                    if (isEmpty(data[field])) {
+                        fieldErrors[field] = ["Field cannot be empty."];
+                    } else {
+                        delete fieldErrors[field]; // value is valid
+                    }
+                }
+            }
+
+            // If any validation errors exist → reject request
+            if (Object.keys(fieldErrors).length > 0) {
+                return reply.status(400).send({
+                    success: false,
+                    message: "Invalid input.",
+                    error: {
+                        code: "INVALID_INPUT",
+                        details: { fieldErrors },
+                    },
+                } as ApiResponse);
+            }
+
+            // ---------------------------------------------
+            // 5. Build Prisma update payload
+            // ---------------------------------------------
+            const userFields: Prisma.usersUpdateInput = {};
+
+            if (first_name !== undefined) { userFields.first_name = first_name; }
+            if (last_name !== undefined) { userFields.last_name = last_name; }
+            if (email !== undefined) { userFields.email = email; }
+            if (active !== undefined) { userFields.active = active; }
+
+            if (password !== undefined) {
+
+                const saltRounds = 10;
+                const salt = await bcrypt.genSalt(saltRounds);
+                const password_hash = password && password.length
+                    ? await bcrypt.hash(password, salt)
+                    : await bcrypt.hash(genPass(), salt);
+
+                userFields.password_hash = password_hash;
+            }
+
+            if (role !== undefined) {
+                userFields.roles = { connect: { role_id: role } };
+            }
+
+            if (organisation_id !== undefined) {
+                userFields.organisations = { connect: { id: BigInt(organisation_id) } };
+            }
+
+
+            await prisma.$transaction(async (tx) => {
+
+                if (Object.keys(userFields).length > 0) {
+                    await User.updateByID(userID, userFields, tx);
+                }
+
+                // ─────────────────────────────────────────
+                // user_permissions
+                // ─────────────────────────────────────────
+                if (user_permissions !== undefined) {
+
+                    const userPermissions: UserPermissionsType[] = [];
+
+                    for (const perm in user_permissions) {
+                        const userPerm: UserPermissionsType = {
+                            user_id: BigInt(userID),
+                            perm_id: Number(perm),
+                            is_allowed: user_permissions[perm],
+                        };
+                        userPermissions.push(userPerm);
+                    }
+
+                    await UserPermissions.deleteByUserID(userID, tx);
+                    await UserPermissions.createMany(userPermissions);
+                }
+
+                // ─────────────────────────────────────────
+                // user_organisation_access
+                // ─────────────────────────────────────────
+                if (user_organisation_access !== undefined) {
+
+                    const userOrganisationAccess: UserOrganisationAccessType[] = [];
+
+                    for (const orgId in user_organisation_access) {
+                        const userOrgAccess: UserOrganisationAccessType = {
+                            user_id: BigInt(userID),
+                            organisation_id: BigInt(orgId),
+                            is_allowed: user_organisation_access[orgId],
+                        };
+                        userOrganisationAccess.push(userOrgAccess);
+                    }
+
+                    await UserOrganisationAccess.deleteByUserID(userID, tx);
+                    await UserOrganisationAccess.createMany(userOrganisationAccess);
+                }
+
+                // ─────────────────────────────────────────
+                // user_asset_access
+                // ─────────────────────────────────────────
+                if (user_asset_access !== undefined) {
+
+                    const userAssetAccess: UserAssetAccessType[] = [];
+
+                    for (const assetId in user_asset_access) {
+                        const userAsset: UserAssetAccessType = {
+                            user_id: BigInt(userID),
+                            asset_id: BigInt(assetId),
+                            is_allowed: user_asset_access[assetId],
+                        };
+                        userAssetAccess.push(userAsset);
+                    }
+
+                    await UserAssetAccess.deleteByUserID(userID, tx);
+                    await UserAssetAccess.createMany(userAssetAccess);
+                }
+
+                // ─────────────────────────────────────────
+                // user_device_access
+                // ─────────────────────────────────────────
+                if (user_device_access !== undefined) {
+
+                    const userDeviceAccess: UserDeviceAccessType[] = [];
+
+                    for (const deviceId in user_device_access) {
+                        const userDevice: UserDeviceAccessType = {
+                            user_id: BigInt(userID),
+                            device_id: BigInt(deviceId),
+                            is_allowed: user_device_access[deviceId],
+                        };
+                        userDeviceAccess.push(userDevice);
+                    }
+
+                    await UserDeviceAccess.deleteByUserID(userID, tx);
+                    await UserDeviceAccess.createMany(userDeviceAccess);
+                }
+            });
+
+            const updatedUser = await User.getByID(userID);
+
+
+            // ---------------------------------------------
+            // 7. Resolve effective access & permissions
+            // ---------------------------------------------
+            const [
+                userPermissions,
+                accessibleOrgIds,
+                deviceIds,
+                assetIds,
+            ] = await Promise.all([
+                AccessProfileController.getUserPermissions(updatedUser!),
+                AccessProfileController.computeAccessibleOrganisationIds(
+                    updatedUser!.organisation_id,
+                    updatedUser!.id
+                ),
+                getAccessibleDeviceIdsForUser(updatedUser!),
+                getAccessibleAssetIdsForUser(updatedUser!),
+            ]);
+
+
+            // ---------------------------------------------
+            // 8. Successful response
+            // ---------------------------------------------
+            return reply.send({
+                success: true,
+                message: "User updated successfully.",
+                data: {
+                    user: userToPublic(updatedUser!),
+                    user_permissions: userPermissions,
+                    organisations: accessibleOrgIds,
+                    assets: assetIds,
+                    devices: deviceIds,
+                },
+            } as ApiResponse);
+
+
+
+
+
+        } catch (err) {
+            logger.error({ err }, "! UserController update !");
+
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to update user.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error:
+                        process.env.DEBUG === "true" && err instanceof Error
+                            ? err.message
+                            : undefined,
+                },
+            });
+        }
+    }
+
+
+
+    // -----------------------------------------------------------------
+
+
     static async permissions(request: FastifyRequest, reply: FastifyReply) {
         try {
             const { id: userID } = request.params as { id: string };
@@ -371,41 +687,13 @@ class UserController {
                 });
             }
 
-            // 2. Fetch user-specific asset access overrides
-            //    (explicit allow / deny rules)
-            const overrides = await UserAssetAccess.getByUserID(user.id);
-
-            const allow: string[] = [];
-            const deny: string[] = [];
-
-            for (const override of overrides) {
-                (override.is_allowed ? allow : deny).push(override.asset_id);
-            }
-
-            // 3. Determine all organisation IDs the user can access
-            const accessibleOrgIds =
-                await AccessProfileController.computeAccessibleOrganisationIds(
-                    user.organisation_id,
-                    // user.id
-                    "1"
-                );
-
-            // 4. Fetch all assets belonging to those organisations
-            const assets = await Asset.getByOrganisationsIDs(accessibleOrgIds);
-
-            // 5. Remove assets explicitly denied to the user
-            const accessibleAssets = assets.filter(
-                (asset: AssetType) => !deny.includes(asset.id)
-            );
-
-            // 6. Return asset IDs only (lightweight payload)
-            const accessibleAssetIds = accessibleAssets.map(asset => asset.id);
+            const assetIds = await getAccessibleAssetIdsForUser(user);
 
             return reply.send({
                 success: true,
                 message: "User assets retrieved successfully.",
                 data: {
-                    assets: accessibleAssetIds,
+                    assets: assetIds,
                 },
             });
 
@@ -425,7 +713,6 @@ class UserController {
             });
         }
     }
-
     static async devices(request: FastifyRequest, reply: FastifyReply) {
         try {
             const { id: userID } = request.params as { id: string };
@@ -440,43 +727,13 @@ class UserController {
                 });
             }
 
-            // 2. Fetch user-specific device access overrides
-            //    (explicit allow / deny rules)
-            const overrides = await UserDeviceAccess.getByUserID(user.id);
-
-            const allow: string[] = [];
-            const deny: string[] = [];
-
-            for (const override of overrides) {
-                (override.is_allowed ? allow : deny).push(override.device_id);
-            }
-
-            // 3. Determine all organisation IDs the user can access
-            const accessibleOrgIds =
-                await AccessProfileController.computeAccessibleOrganisationIds(
-                    user.organisation_id,
-                    // user.id
-                    "1"
-                );
-
-  
-            // 4. Fetch all devices belonging to those organisations
-            const devices = await Device.getByOrganisationsIDs(accessibleOrgIds);
-
-
-            // 5. Remove devices explicitly denied to the user
-            const accessibleDevices = devices.filter(
-                (device: DeviceType) => !deny.includes(device.id)
-            );
-
-            // 6. Return device IDs only (lightweight payload)
-            const accessibleDeviceIds = accessibleDevices.map(device => device.id);
+            const deviceIds = await getAccessibleDeviceIdsForUser(user);
 
             return reply.send({
                 success: true,
                 message: "User devices retrieved successfully.",
                 data: {
-                    devices: accessibleDeviceIds,
+                    devices: deviceIds,
                 },
             });
 
@@ -496,8 +753,75 @@ class UserController {
             });
         }
     }
+}
 
 
+
+
+async function getAccessibleAssetIdsForUser(user: UserType): Promise<string[]> {
+
+    // 1. Fetch user-specific asset access overrides
+    const overrides = await UserAssetAccess.getByUserID(user.id);
+
+    const deny: string[] = [];
+
+    for (const override of overrides) {
+        if (!override.is_allowed) {
+            deny.push(override.asset_id);
+        }
+    }
+
+    // 2. Determine all organisation IDs the user can access
+    const accessibleOrgIds =
+        await AccessProfileController.computeAccessibleOrganisationIds(
+            user.organisation_id,
+            // user.id
+            "1"
+        );
+
+    // 3. Fetch all assets belonging to those organisations
+    const assets = await Asset.getByOrganisationsIDs(accessibleOrgIds);
+
+    // 4. Remove explicitly denied assets
+    const accessibleAssets = assets.filter(
+        (asset: AssetType) => !deny.includes(asset.id)
+    );
+
+    // 5. Return asset IDs only
+    return accessibleAssets.map(asset => asset.id);
+}
+
+async function getAccessibleDeviceIdsForUser(user: UserType): Promise<string[]> {
+
+    // 1. Fetch user-specific device access overrides
+    const overrides = await UserDeviceAccess.getByUserID(user.id);
+
+    const deny: string[] = [];
+
+    for (const override of overrides) {
+        if (!override.is_allowed) {
+            deny.push(override.device_id);
+        }
+    }
+
+    // 2. Determine all organisation IDs the user can access
+    const accessibleOrgIds =
+        await AccessProfileController.computeAccessibleOrganisationIds(
+            user.organisation_id,
+            // user.id
+            "1"
+        );
+
+    // 3. Fetch all devices belonging to those organisations
+    const devices = await Device.getByOrganisationsIDs(accessibleOrgIds);
+
+    // 4. Remove explicitly denied devices
+    const accessibleDevices = devices.filter(
+        (device: DeviceType) => !deny.includes(device.id)
+    );
+
+    // 5. Return device IDs only
+    return accessibleDevices.map(device => device.id);
 }
 
 // =====================================================================

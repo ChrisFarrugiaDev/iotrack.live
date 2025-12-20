@@ -3,6 +3,7 @@ import { bigIntToString } from '../utils/utils';
 
 import prisma from '../config/prisma.config';
 
+export type UserAssetAccessType = user_asset_access;
 export class UserAssetAccess {
 
     static async getByUserID (userID: string) {
@@ -42,5 +43,18 @@ export class UserAssetAccess {
         })
 
         return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async deleteByUserID(
+        userID: string, 
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ) {
+        const result = await prismaClient.user_asset_access.deleteMany({
+            where: { 'user_id': BigInt(userID) }
+        })
+
+        return result;
     }
 }

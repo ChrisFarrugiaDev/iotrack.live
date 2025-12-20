@@ -1,7 +1,9 @@
-import { Prisma, PrismaClient} from '../../generated/prisma';
+import { Prisma, PrismaClient, user_device_access} from '../../generated/prisma';
 import { bigIntToString } from '../utils/utils';
 
 import prisma from '../config/prisma.config';
+
+export type UserDeviceAccessType = user_device_access;
 
 export class UserDeviceAccess {
 
@@ -42,5 +44,18 @@ export class UserDeviceAccess {
         })
 
         return bigIntToString(result);
+    }
+
+    // -----------------------------------------------------------------
+
+    static async deleteByUserID(
+        userID: string, 
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ) {
+        const result = await prismaClient.user_device_access.deleteMany({
+            where: { 'user_id': BigInt(userID) }
+        })
+
+        return result;
     }
 }

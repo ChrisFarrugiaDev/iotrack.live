@@ -207,6 +207,29 @@ export const useUserStore = defineStore('userStore', () => {
         }
     }
 
+    async function updateUser(userId: string, payload: Record<string, any>) {
+        try {
+            const url = `${appStore.getAppUrl}/api/user/${userId}`;
+
+            console.log(url)
+
+            const result = await axios.request({
+                method: 'patch',
+                url,
+                data: payload,
+            });
+
+            return result;
+
+        } catch (err) {
+            console.error('! userStore updateUser !\n', err);
+            throw err;
+        }
+    }
+
+
+    
+
 
     // ---- Expose -----------------------------------------------------
     return {
@@ -230,6 +253,7 @@ export const useUserStore = defineStore('userStore', () => {
 
         createUser,
         deleteUsers,
+        updateUser,
 
         addUserToStore,
         removeUserFromStore,

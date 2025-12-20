@@ -69,3 +69,23 @@ export const storeSchema = z.object({
 export const destroySchema = z.object({
     user_ids: z.array(numericString, "Field is required.").min(1, "Provide at least one user id.")
 });
+
+
+
+export const updateSchema = z.object({
+
+    first_name: nonEmptyString.optional(),                     
+    last_name: nonEmptyString.optional(),                     
+    email: emailField.optional(),                              
+    password: nonEmptyString.optional().optional(),         
+    role: requiredNumber.optional(),                          
+    active: requiredBoolean.optional(),                
+    organisation_id: numericString.optional(),              
+    user_permissions: booleanRecord.optional(),               
+    user_organisation_access: booleanRecord.optional(),       
+    user_asset_access: booleanRecord.optional(),            
+    user_device_access: booleanRecord.optional(),             
+
+}).refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided to update",
+});

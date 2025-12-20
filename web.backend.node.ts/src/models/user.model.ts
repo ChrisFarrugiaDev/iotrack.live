@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.config';
-import { Prisma, PrismaClient, users } from "../../generated/prisma";
+import { Prisma, PrismaClient, users, organisations, roles } from "../../generated/prisma";
 import { bigIntToString } from '../utils/utils';
 
 
@@ -7,6 +7,8 @@ import { bigIntToString } from '../utils/utils';
 export type UserType = Omit<users, 'id' | 'organisation_id'> & {
     id: string;
     organisation_id: string;
+    organisations?: organisations,
+    roles?: roles
 };
 
 // Supported user relations for eager loading in Prisma queries
@@ -38,7 +40,7 @@ export class User {
 
 
 
-    static async getByID(id: string, relations?: UserRelation[]) {
+    static async getByID(id: string, relations?: UserRelation[]):Promise<UserType | null>  {
         // Convert array of relation names to Prisma's expected include object
         const includeObj = relations
             ? Object.fromEntries(relations.map(relation => [relation, true]))
@@ -139,6 +141,23 @@ export class User {
             }
         })
         return result;
+    }
+
+
+    // -----------------------------------------------------------------
+
+    static async updateByID(
+        orgID: string,
+        data: Prisma.usersUpdateInput,
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ): Promise<UserType> {
+
+        const result = await prismaClient.users.update({
+            where: { id: BigInt(orgID) },
+            data
+        });
+
+        return bigIntToString(result);
     }
 }
 
