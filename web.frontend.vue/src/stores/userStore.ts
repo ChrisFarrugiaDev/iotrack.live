@@ -211,8 +211,6 @@ export const useUserStore = defineStore('userStore', () => {
         try {
             const url = `${appStore.getAppUrl}/api/user/${userId}`;
 
-            console.log(url)
-
             const result = await axios.request({
                 method: 'patch',
                 url,
@@ -227,7 +225,44 @@ export const useUserStore = defineStore('userStore', () => {
         }
     }
 
+    function setUserPermissions(userId: string, permissions: number[]) {
+        usersPermissions.value[userId] = permissions;
+    }
 
+    function setUserOrganisations(userId: string, organisations: string[]) {
+        usersOrganisations.value[userId] = organisations;
+    }
+
+    function setUserAssets(userId: string, assets: string[]) {
+        usersAssets.value[userId] = assets;
+    }
+
+    function setUserDevices(userId: string, devices: string[]) {
+        usersDevices.value[userId] = devices;
+    }
+
+    function setUserAccessState(
+    userId: string,
+    payload: {
+        user_permissions?: number[];
+        organisations?: string[];
+        assets?: string[];
+        devices?: string[];
+    }
+    ) {
+        if (payload.user_permissions) {
+            usersPermissions.value[userId] = payload.user_permissions;
+        }
+        if (payload.organisations) {
+            usersOrganisations.value[userId] = payload.organisations;
+        }
+        if (payload.assets) {
+            usersAssets.value[userId] = payload.assets;
+        }
+        if (payload.devices) {
+            usersDevices.value[userId] = payload.devices;
+        }
+    }
     
 
 
@@ -263,5 +298,7 @@ export const useUserStore = defineStore('userStore', () => {
         // utils
         setUserScope,
         clear,
+
+        setUserAccessState,
     }
 });

@@ -501,9 +501,20 @@ async function updateUser() {
             return;
         }
 
-        const res = await userStore.updateUser(user.value!.id, payload);
+        const r = await userStore.updateUser(user.value!.id, payload);
 
-        console.log(res);
+
+        userStore.setUserAccessState(user.value?.id!, r.data.data);
+        userStore.addUserToStore(r.data.data.user);
+
+
+        // Success message
+        messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+
+
+
+
 
     } catch (err) {
         handleFormError(err);
