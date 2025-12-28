@@ -19,6 +19,8 @@ export const useMapStore = defineStore('mapStore', () => {
     const mapLat = useSessionStorage<number | null>("map-lat", null);
     const mapLng = useSessionStorage<number | null>("map-lng", null);
 
+    
+
     // ---- Getters ----------------------------------------------------
     const getActiveInfoWindow = computed(() => {
         return activeInfoWindow.value;

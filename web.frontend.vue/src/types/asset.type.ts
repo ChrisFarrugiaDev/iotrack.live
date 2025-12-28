@@ -7,6 +7,7 @@ export interface Asset {
   name: string 
   asset_type: string 
   devices: any[]
+  vehicle?: any
 
   attributes: Record<string, any> | null; // jsonb
 

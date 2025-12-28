@@ -19,10 +19,12 @@
 
 				<InfoWindow v-if="getActiveInfoWindow == asset.id" :asset="asset"
 					:telemetry="asset.devices[0].last_telemetry"></InfoWindow>
-
-			</div>
-		</GoogleMap>
-		<div v-else>Loading map...</div>
+				
+					
+				</div>
+			</GoogleMap>
+			<div v-else>Loading map...</div>
+			<MapSidebar></MapSidebar>
 	</div>
 </template>
 <!-- v-if="asset.asset_type == 'vehicle'" -->
@@ -39,6 +41,7 @@ import MarkerPersonal from "./MarkerPersonal.vue";
 import MarkerAsset from "./MarkerAsset.vue";
 import InfoWindow from "./info_window/InfoWindow.vue";
 import { useMapStore, type MapCenterType } from "@/stores/mapStore";
+import MapSidebar from "./map_sidebar/MapSidebar.vue";
 
 // -- store ------------------------------------------------------------
 const settingsStore = useSettingsStore();

@@ -44,6 +44,8 @@ onMounted(() => {
 })
 onBeforeUnmount(() => ro?.disconnect())
 
+
+
 /**
  * Build style:
  * - If no coordinates: normal cover.
@@ -108,7 +110,7 @@ const imgStyle = computed<CSSProperties>(() => {
 .smart-image img {
   display: block;
   will-change: transform;
-  transition: transform .15s ease;
+  // transition: transform .15s ease;
   
 }
 </style>

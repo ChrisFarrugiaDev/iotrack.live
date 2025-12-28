@@ -37,7 +37,7 @@
                         </div>
 
                         <div class="info-window__data-row" v-if="getLastEventTimeElapsed">
-                            <span class="info-window__key">Last Event</span>
+                            <span class="info-window__key">Last Update</span>
                             <span class="info-window__value" v-if="getDevice?.last_telemetry_ts">
                                 <div>{{ getLastEventTimeElapsed }}</div>
                                 <div>{{ formatDateTime(getDevice?.last_telemetry_ts, tz ) }}</div>
@@ -78,6 +78,8 @@ import { useNowTick } from '@/composables/useNowTick'
 import ActionButtons from './ActionButtons.vue'
 import SmartImage from './SmartImage.vue'
 import { useMapStore } from '@/stores/mapStore'
+
+
 
 
 // - store -------------------------------------------------------------
@@ -146,7 +148,7 @@ const getLastEventTimeElapsed = computed(() => {
     const ts = getDevice.value?.last_telemetry_ts
     if (!ts) return null
     void now.value
-    return timeElapsed(ts, now.value)
+    return timeElapsed(ts, now.value).label;
 })
 
 
@@ -260,8 +262,8 @@ onUnmounted(() => {
     &__data-row {
         margin-bottom: .3rem;
         display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: .5rem;
+        grid-template-columns: 1.15fr 2fr;
+        gap: .35rem;
         margin-bottom: 6px;
     }
 
