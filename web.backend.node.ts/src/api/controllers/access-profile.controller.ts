@@ -66,15 +66,11 @@ export class AccessProfileController {
 
             // 6 fetch permissoins
             // TODO:  cache these values
-            const roles = await Role.getAll();
-            const perm = await Permissions.getAll();
-            const role_permissions = await RolePermissions.getGroupedByRole(true);
+            const appRoles = await Role.getAll();
+            const appPermissions = await Permissions.getAll();
+            const appRolePermissions = await RolePermissions.getGroupedByRole(true);
 
-            const permissoins: Record<string, any> = {
-                roles,
-                permissoins: perm,
-                role_permissions,
-            };
+
 
             // 7. Construct the access profile object
             const profile: AccessProfile = {
@@ -92,10 +88,16 @@ export class AccessProfileController {
                     name: user.organisations!.name,
                 },
                 organisation_scope: organisationScope,
-                assets,
-                devices,
-                settings,
-                permissoins,
+                access: {
+                    assets,
+                    devices,
+                    settings,
+                },
+                authorization: {
+                    roles: appRoles,
+                    permissoins: appPermissions,
+                    role_permissions: appRolePermissions,
+                },
             };
 
 
@@ -273,16 +275,28 @@ export class AccessProfileController {
     }
 
 
-    static async getUserPermissions(user: UserType) {
+    static async getUserPermissions(user: UserType, forceRefresh = false): Promise<number[]> {
 
-        const [permissions, rolePermissions, userPermissions] = await Promise.all([
-            Permissions.getAll(),                      // full permission list
+
+        const cacheKey = `user:permissions:${user.id}`;
+
+        // 1️ - Try cache first (unless forced)
+        if (!forceRefresh) {
+            const cached = await redisUtils.get(cacheKey, "iotrack.live:");
+            if (cached) {
+                return JSON.parse(cached) as number[];
+            }
+        }
+
+        // 2 - Fallback to DB
+        const [rolePermissions, userPermissions] = await Promise.all([
+
             RolePermissions.getByRoleID(user.role_id), // { role_id, perm_id }
             UserPermissions.getByUserID(user.id)       // { user_id, perm_id, is_allowed }
         ]);
 
 
-        // Build a Set from role permissions
+        // 3 - Build a Set from role permissions
         const effectivePermIds = new Set<number>(
             rolePermissions.map((rp: RolePermissionsType) => Number(rp.perm_id))
         );
@@ -298,14 +312,16 @@ export class AccessProfileController {
             }
         }
 
-        // // Return full permission objects
-        // const effectivePermissions = permissions.filter(p =>
-        //     effectivePermIds.has(Number(p.perm_id))
-        // );
-        // return effectivePermissions;
+        const result = Array.from(effectivePermIds);
 
+        // 4 - Cache result
+        await redisUtils.set(
+            cacheKey,
+            JSON.stringify(result),
+            900, // 15 minutes (optional but recommended)
+            "iotrack.live:"
+        );
 
-
-        return Array.from(effectivePermIds);
+        return result;
     }
 }

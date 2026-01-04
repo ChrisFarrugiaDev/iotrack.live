@@ -44,7 +44,7 @@ import { useOrganisationStore } from './stores/organisationStore';
 import { useSettingsStore } from './stores/settingsStore';
 import type { AuthenticatedUser } from './types/authenticated.user.type';
 import SocketIo from './components/socketio/SocketIo.vue';
-import { usePermissionStore } from './stores/permissionStore';
+import { useAuthorizationStore } from './stores/authorizationStore';
 
 
 // - Store -------------------------------------------------------------
@@ -65,7 +65,7 @@ const deviceStore = useDeviceStore();
 const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
 const settingsStore = useSettingsStore();
-const permissionStore = usePermissionStore();
+const authorizationStore = useAuthorizationStore();
 
 
 // - Routes ------------------------------------------------------------
@@ -150,14 +150,16 @@ async function fetchAccessProfile() {
         if (response.status === 200) {
             const profile = response.data.data.access_profile; // controller returns { success, data: profile }
 
-            deviceStore.setDevices(profile.devices);
-            assetStore.setAssets(profile.assets);
+            deviceStore.setDevices(profile.access.devices);
+            assetStore.setAssets(profile.access.assets);            
+            settingsStore.setMapsApiKey(profile.access.settings?.maps_api_key);
+
             organisationStore.setOrganisation(profile.organisation);
             organisationStore.setOrganisationScope(profile.organisation_scope);
-            settingsStore.setMapsApiKey(profile.settings?.maps_api_key);
-            permissionStore.setRoles(profile.permissoins.roles);
-            permissionStore.setPermissions(profile.permissoins.permissoins);
-            permissionStore.setRolePermissions(profile.permissoins.role_permissions);
+            
+            authorizationStore.setRoles(profile.authorization.roles);
+            authorizationStore.setPermissions(profile.authorization.permissoins);
+            authorizationStore.setRolePermissions(profile.authorization.role_permissions);
        
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,
@@ -165,7 +167,6 @@ async function fetchAccessProfile() {
                 email: profile.email,
                 role: profile.role,
                 organisation: profile.organisation,
-                accessible_devices: Object.values(profile.devices).map((d: any) => d.id),
             };
         
             settingsStore.setAuthenticatedUser(autUserPayload)

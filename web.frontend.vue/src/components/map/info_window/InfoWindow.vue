@@ -17,7 +17,7 @@
                         :src="`${getAppUrl}/${getPrimaryImg.url}`"
                         alt="Primary image" />
 
-                    <SmartImage v-if="getPrimaryImg" :image="getPrimaryImg"></SmartImage>
+                    <SmartImage v-if="getPrimaryImg" :image="getPrimaryImg" :is-favorite="assetStore.isFavorite(asset.id)"></SmartImage>
 
                     <div class="info-window__data" >
 
@@ -47,7 +47,7 @@
                         <div class="info-window__data-row" v-if="getSpeed != null">
                             <span class="info-window__key">Speed</span>
                             <span class="info-window__value">
-                                <span>{{ getSpeed }} km/hr</span>
+                                <span>{{ getSpeed }}</span>
                             </span>
                         </div>
                     </div>
@@ -78,6 +78,7 @@ import { useNowTick } from '@/composables/useNowTick'
 import ActionButtons from './ActionButtons.vue'
 import SmartImage from './SmartImage.vue'
 import { useMapStore } from '@/stores/mapStore'
+import { useAssetStore } from '@/stores/assetStore'
 
 
 
@@ -89,6 +90,7 @@ const appStore = useAppStore();
 const { getAppUrl } = storeToRefs(appStore);
 
 const deviceStore = useDeviceStore();
+const assetStore = useAssetStore();
 
 const mapStore = useMapStore();
 
@@ -152,10 +154,35 @@ const getLastEventTimeElapsed = computed(() => {
 })
 
 
-const getSpeed = computed(() => {
-    return getDevice.value?.last_telemetry?.speed
-})
+// const getSpeed = computed(() => {
+//     return getDevice.value?.last_telemetry?.speed
+// })
 
+
+
+const getSpeed = computed(() => {
+    const SPEED_CONVERSIONS: Record<string, { factor: number; label: string }> = {
+        kmh: { factor: 1, label: 'km/h' },
+        mph: { factor: 0.621371, label: 'mph' },
+        knots: { factor: 0.539957, label: 'kn' },
+        ms: { factor: 0.277778, label: 'm/s' },
+    };
+
+    const round1 = (value: number) => Math.round(value * 10) / 10;
+
+    if (!getDevice.value?.last_telemetry) return null;
+
+    const baseSpeed = getDevice.value?.last_telemetry?.speed; // km/h   
+    
+    
+    
+    const speedUnit = props.asset?.attributes?.speed_units ?? 'kmh';
+    const conversion = SPEED_CONVERSIONS[speedUnit] ?? SPEED_CONVERSIONS.kmh;
+
+    const convertedSpeed = round1(baseSpeed * conversion.factor);
+
+    return `${convertedSpeed} ${conversion.label}`;
+});
 
 const getRegNum = computed(() => {
     return props.asset?.attributes?.vehicle?.registration_number;

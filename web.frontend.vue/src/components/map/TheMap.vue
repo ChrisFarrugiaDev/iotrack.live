@@ -3,7 +3,7 @@
 		<GoogleMap v-if="apiKey" :api-key="apiKey" :center="initMapCenter" :zoom="initMapZoom"
 			style="width: 100%; height: 100vh" :mapId="'9e8ca8994cbac798'" ref="mapRef"
 			@zoom_changed="handleZoomChanged" @center_changed="handleCenterChanged">
-			<div v-for="asset in getAssetsWithDevice">
+			<div v-for="asset in getAssetsWithDevice" :key="`maker_id_${asset.id}`">
 
 				<MarkerVehicle v-if="asset.asset_type == 'vehicle'" :asset="asset" :map-zoom="getMapZoomLevel ?? 15"
 					:telemetry="asset.devices[0].last_telemetry">
@@ -17,7 +17,7 @@
 					:telemetry="asset.devices[0].last_telemetry">
 				</MarkerAsset>
 
-				<InfoWindow v-if="getActiveInfoWindow == asset.id" :asset="asset"
+				<InfoWindow v-if="getActiveInfoWindow == asset.id" :asset="asset" :key="`info_w_id_${asset.id}`"
 					:telemetry="asset.devices[0].last_telemetry"></InfoWindow>
 				
 					

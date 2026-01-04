@@ -71,25 +71,25 @@ EXECUTE FUNCTION app.set_organisation_path();
 -- ALTER TABLE app.organisations
 -- ADD COLUMN path TEXT;
 
--- WITH RECURSIVE org_paths AS (
---     SELECT 
---         id, 
---         parent_org_id, 
---         id::TEXT AS path
---     FROM app.organisations
---     WHERE parent_org_id IS NULL
---     UNION ALL
---     SELECT 
---         o.id, 
---         o.parent_org_id, 
---         op.path || ',' || o.id::TEXT AS path
---     FROM app.organisations o
---     INNER JOIN org_paths op ON o.parent_org_id = op.id
--- )
--- UPDATE app.organisations o
--- SET path = op.path
--- FROM org_paths op
--- WHERE o.id = op.id;
+WITH RECURSIVE org_paths AS (
+    SELECT 
+        id, 
+        parent_org_id, 
+        id::TEXT AS path
+    FROM app.organisations
+    WHERE parent_org_id IS NULL
+    UNION ALL
+    SELECT 
+        o.id, 
+        o.parent_org_id, 
+        op.path || ',' || o.id::TEXT AS path
+    FROM app.organisations o
+    INNER JOIN org_paths op ON o.parent_org_id = op.id
+)
+UPDATE app.organisations o
+SET path = op.path
+FROM org_paths op
+WHERE o.id = op.id;
 
 
 
@@ -172,28 +172,28 @@ CREATE TABLE app.telemetry (
     device_id         BIGINT NOT NULL,
     asset_id          BIGINT,
     organisation_id   BIGINT,
-    timestamp         TIMESTAMPTZ NOT NULL,
+    happened_at         TIMESTAMPTZ NOT NULL,
     protocol          VARCHAR(32) NOT NULL,
     vendor            VARCHAR(64),
     model             VARCHAR(64),
     telemetry         JSONB NOT NULL,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (id, timestamp)
+    PRIMARY KEY (id, happened_at)
 );
 
--- Convert to hypertable (partitioned by timestamp)
-SELECT create_hypertable('app.telemetry', 'timestamp');
+-- Convert to hypertable (partitioned by happened_at)
+SELECT create_hypertable('app.telemetry', 'happened_at');
 
 -- Useful indexes
 CREATE INDEX idx_teltonika_telemetry_device_id ON app.telemetry (device_id);
 CREATE INDEX idx_teltonika_telemetry_asset_id ON app.telemetry (asset_id);
-CREATE INDEX idx_teltonika_telemetry_timestamp ON app.telemetry (timestamp);
+CREATE INDEX idx_teltonika_telemetry_happened_at ON app.telemetry (happened_at);
 
 -- Enable compression
 ALTER TABLE app.telemetry SET (timescaledb.compress = true);
 
 -- Compression settings (segment by device or asset)
-ALTER TABLE app.telemetry SET (timescaledb.compress_orderby = 'timestamp');
+ALTER TABLE app.telemetry SET (timescaledb.compress_orderby = 'happened_at');
 ALTER TABLE app.telemetry SET (timescaledb.compress_segmentby = 'device_id');
 
 -- Add a compression policy (example: compress rows older than 1 month)

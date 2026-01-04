@@ -6,6 +6,8 @@ curl -X DELETE http://iotrack.live/img/image/37
 
 curl -X DELETE http://iotrack.live/img/images  -H "Content-Type: application/json"  -d '{"entity_type":"asset","entity_id":74}'
 
+go build -o file-server cmd/web/* 
+
 <!-- --------------------------------------------------------------- -->
 
 # 1) Upload (multipart)

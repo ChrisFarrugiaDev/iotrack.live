@@ -84,5 +84,12 @@ func (c *Codec12Command) SetToSync(status, response string) error {
 	c.Response = response
 
 	err := cache.AppCache.HSet("codec12:sync-commands", c.UUID, c)
+
+	// TODO:  telemetry.db.writer node must:
+	// 1. Periodically read codec12:sync-commands from Redis
+	// 2. UPSERT command status in PostgreSQL (pending → inflight → complete/failed)
+	// 3. Remove the command from codec12:sync-commands after successful DB update
+	// This keeps Redis as the transient state store and PostgreSQL as the durable source of truth.
+
 	return err
 }

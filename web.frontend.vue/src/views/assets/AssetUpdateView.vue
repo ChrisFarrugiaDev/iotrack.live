@@ -38,6 +38,34 @@
             </div>
         </div>
 
+
+        <div class="vheading--4 mt-12 mb-2">Settings</div>
+		<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+			<div class="vform__group mt-7">
+				<label class="vform__label">
+					Speed Units<span class="vform__required">*</span>
+				</label>
+
+				<VueSelect
+					v-model="form.speed_units"
+					:shouldAutofocusOption="false"
+					:isDisabled="confirmOn"
+					:style="[vueSelectStyles, selectErrorStyle(!!errors.speed_units)]"
+					class="vform__group"
+					:options="[
+						{ label: 'km/h', value: 'kmh' },
+						{ label: 'mph', value: 'mph' },
+						{ label: 'knots', value: 'knots' },
+						{ label: 'm/s', value: 'ms' }
+					]"
+					placeholder=""
+				/>
+
+				<p class="vform__error">{{ errors.speed_units }}</p>
+			</div>
+			<div class="vform__group mt-7"></div>
+		</div>
+
         <!-- Vehicle fields -->
         <div v-if="form.asset_type == 'vehicle'">
             <div class="vheading--4 mt-12 mb-2">Vehicle</div>
@@ -182,6 +210,8 @@ const form = reactive({
     device_id: null as null | string,     // optional: attach a device
     _device_id: null as null | string,
 
+    speed_units: '' as string,
+
     vehicle: {
         registration_number: null as string | null,
         make: null as string | null,
@@ -322,7 +352,9 @@ watch(
 
 
         // Attributes - load safely with fallback for missing keys
-        const attrs = a.attributes ?? {};
+        const attrs = a.attributes ?? {}; 
+
+        form.speed_units = attrs?.speed_units ?? 'kmh'
 
         Object.assign(form.vehicle, {
             registration_number: attrs.vehicle?.registration_number ?? null,
@@ -422,22 +454,26 @@ function buildUpdatePayload(form: Form, current: Asset) {
 
 
     // 2) Attributes merge/diff (preserve unknown attrs, update/remove iccid/msisdn)
-    const curAttrs = { ...(current.attributes ?? {}) };
+    const nextAttrs = { ...(current.attributes ?? {
+
+    }) };
 
     if (form.asset_type === 'vehicle') {
-        curAttrs.vehicle = { ...form.vehicle };
+        nextAttrs.vehicle = { ...form.vehicle };
     } else if (form.asset_type === 'personal') {
-        curAttrs.personal = { ...form.personal };
+        nextAttrs.personal = { ...form.personal };
     } else if (form.asset_type === 'asset') {
-        curAttrs.asset = { ...form.asset };
+        nextAttrs.asset = { ...form.asset };
     }
+     nextAttrs.speed_units = form.speed_units;
 
+     
 
     // only include attributes if they actually changed
     const prevAttrsJson = JSON.stringify(current.attributes ?? {});
-    const nextAttrsJson = JSON.stringify(curAttrs);
+    const nextAttrsJson = JSON.stringify(nextAttrs);
     if (prevAttrsJson !== nextAttrsJson) {
-        payload.attributes = curAttrs;
+        payload.attributes = nextAttrs;
     }
 
     return payload;

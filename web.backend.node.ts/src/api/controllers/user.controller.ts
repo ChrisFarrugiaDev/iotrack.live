@@ -16,6 +16,7 @@ import { UserAssetAccess, UserAssetAccessType } from "../../models/user-asset-ac
 import { UserDeviceAccess, UserDeviceAccessType } from "../../models/user-device-access.model";
 import { Asset, AssetType } from "../../models/asset.model";
 import { Device, DeviceType } from "../../models/device.model";
+import * as redisUtils from "../../utils/redis.utils";
 
 
 // UserController: Handles all user-related endpoints
@@ -535,7 +536,7 @@ class UserController {
                 deviceIds,
                 assetIds,
             ] = await Promise.all([
-                AccessProfileController.getUserPermissions(updatedUser!),
+                AccessProfileController.getUserPermissions(updatedUser!, true),
                 AccessProfileController.computeAccessibleOrganisationIds(
                     updatedUser!.organisation_id,
                     updatedUser!.id
@@ -545,8 +546,29 @@ class UserController {
             ]);
 
 
+            const shouldInvalidateAuth =
+                password !== undefined ||
+                role !== undefined ||
+                active !== undefined ||
+                organisation_id !== undefined ||
+                user_permissions !== undefined ||
+                user_organisation_access !== undefined ||
+                user_asset_access !== undefined ||
+                user_device_access !== undefined;
+
+            if (shouldInvalidateAuth) {
+                const newTokenVersion = await User.bumpTokenVersion(userID);
+
+                await redisUtils.set(
+                    `user:token_version:${userID}`,
+                    newTokenVersion,
+                    null,
+                    "iotrack.live:"
+                );
+            }
+
             // ---------------------------------------------
-            // 8. Successful response
+            // 9. Successful response
             // ---------------------------------------------
             return reply.send({
                 success: true,
@@ -602,7 +624,7 @@ class UserController {
 
             // 2. Resolve effective permissions (role + user overrides)
             const userPermissions =
-                await AccessProfileController.getUserPermissions(user);
+                await AccessProfileController.getUserPermissions(user, true);
 
             // 3. Respond
             return reply.send({

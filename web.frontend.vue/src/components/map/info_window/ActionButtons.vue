@@ -1,9 +1,10 @@
 <template>
 	<div class="action-buttons">
 
-		<button class="action-buttons__btn" title="Toggle Favorite">
+		<button class="action-buttons__btn" title="Toggle Favorite" @click="assetStore.toggleFavorites(props.asset.id)">
 			<svg class="action-buttons__icon">
-				<use xlink:href="@/ui/svg/sprite.svg#icon-star-1"></use>
+				<use xlink:href="@/ui/svg/sprite.svg#icon-star-2" v-if="assetStore.isFavorite(props.asset.id)"></use>
+				<use xlink:href="@/ui/svg/sprite.svg#icon-star-1" v-else></use>
 			</svg>
 		</button>
 
@@ -19,7 +20,7 @@
 			</svg>
 		</button>
 
-		<button class="action-buttons__btn" title="Edit Asset">
+		<button class="action-buttons__btn" title="Edit Asset" @click="goToAssetEdit(asset.uuid)">
 			<svg class="action-buttons__icon">
 				<use xlink:href="@/ui/svg/sprite.svg#icon-edit-2"></use>
 			</svg>
@@ -35,15 +36,22 @@
 </template>
 
 <script setup lang="ts">
+import { useAssetStore } from '@/stores/assetStore';
 import { useDeviceStore } from '@/stores/deviceStore';
 import { useMapStore } from '@/stores/mapStore';
 import type { Asset } from '@/types/asset.type';
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 const deviceStore = useDeviceStore();
+const assetStore = useAssetStore();
 const mapStore = useMapStore();
 
-// - props -------------------------------------------------------------
+// - Router ------------------------------------------------------------
+
+const router = useRouter();
+
+// - Props -------------------------------------------------------------
 const props = defineProps<{
     asset: Asset
 }>();
@@ -55,6 +63,20 @@ const getDevice = computed(()=>{
 const getIsFollowed = computed(()=>{
 	return props.asset.id == mapStore.getFollow;
 });
+
+
+// - Methods -----------------------------------------------------------
+
+
+function goToAssetEdit(uuid: string) {
+	router.push({
+		name: 'assets.list',
+		query: {
+			update: 'true',
+			asset_uuid: uuid
+		}
+	});
+}
 
 function navigateToAsset() {
 

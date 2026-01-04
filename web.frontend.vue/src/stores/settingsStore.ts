@@ -15,8 +15,6 @@ export const useSettingsStore = defineStore('settingsStore', () => {
     });
 
     const getAuthenticatedUser = computed( ()=> authenticatedUser.value);
-    const accessibleDevices = computed( () => authenticatedUser.value?.accessible_devices);
-
 
     // ---- Actions ----------------------------------------------------
     function setMapsApiKey(key: string | undefined) {
@@ -38,6 +36,6 @@ export const useSettingsStore = defineStore('settingsStore', () => {
         setMapsApiKey,
         getAuthenticatedUser,
         setAuthenticatedUser,
-        accessibleDevices,
+
     };
 });

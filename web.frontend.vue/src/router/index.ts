@@ -67,7 +67,7 @@ const router = createRouter({
 				{ path: '', name: 'assets.list', component: AssetListView },
 				{ path: 'new', name: 'assets.create', component: AssetCreateView },
 				// { path: ':id', name: 'Assets.detail', component: AssetDetailView, props: true },
-				{ path: ':id/edit', name: 'assets.edit', component: AssetEditView, props: true },
+				// { path: ':id/edit', name: 'assets.edit', component: AssetEditView, props: true },
 			],
 		},
 

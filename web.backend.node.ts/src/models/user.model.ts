@@ -87,34 +87,34 @@ export class User {
 
     // -----------------------------------------------------------------
 
-    // Increments the user's token_version by 1. 
-    // If result > 1000, resets to 1.
-    // Returns the new token_version.
-    static async updateLoginSession(userId: number): Promise<number> {
-        // Use a transaction for consistency
-        const result = await prisma.$transaction(async (tx) => {
-            // First, get the current version
-            const user = await tx.users.findUnique({
-                where: { id: userId },
-                select: { token_version: true },
-            });
 
-            if (!user) {
-                throw new Error('User not found');
-            }
+    static async markLogin(userId: number): Promise<void> {
+        await prisma.users.update({
+            where: { id: userId },
+            data: { last_login_at: new Date() },
+        });
+    }
 
-            let newVersion = user.token_version + 1;
-            if (newVersion > 1000) newVersion = 1;
 
-            await tx.users.update({
-                where: { id: userId },
-                data: { token_version: newVersion, last_login_at: new Date() },
-            });
-
-            return newVersion;
+    static async bumpTokenVersion(userId: number): Promise<number> {
+        const user = await prisma.users.findUnique({
+            where: { id: userId },
+            select: { token_version: true },
         });
 
-        return result;
+        if (!user) throw new Error("User not found");
+
+        const newVersion = user.token_version >= 1000
+            ? 1
+            : user.token_version + 1;
+
+        const updated = await prisma.users.update({
+            where: { id: userId },
+            data: { token_version: newVersion },
+            select: { token_version: true },
+        });
+
+        return updated.token_version;
     }
 
     // -----------------------------------------------------------------

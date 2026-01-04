@@ -71,6 +71,12 @@ teltonika-parser-build:
 	cd teltonika.parser.go && \
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o teltonika-parser ./cmd/parser
 
+file-server-build:
+	cd file.server.go && \
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o file-server ./cmd/web
+
+
+	
 # api-docker-build:
 # 	cd web.backend.node.ts && \
 # 	docker build --no-cache -t iotrack .

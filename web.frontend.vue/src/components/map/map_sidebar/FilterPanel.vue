@@ -20,23 +20,23 @@
 			</div>
 
 			<ul class="filter-panel__list">
-				<li class="filter-panel__option" @click="setMode('none')">
+				<li class="filter-panel__option" @click="filterStore.setActivityMode('none')">
 					<svg class="filter-panel__radio">
-						<use href="@/ui/svg/sprite.svg#icon-radio-active" v-if="mode === 'none'" />
+						<use href="@/ui/svg/sprite.svg#icon-radio-active" v-if="filterStore.activityMode === 'none'" />
 						<use href="@/ui/svg/sprite.svg#icon-radio-passive" v-else />
 					</svg>
 					<span class="filter-panel__text">No activity filter</span>
 				</li>
-				<li class="filter-panel__option" @click="setMode('inactive')">
+				<li class="filter-panel__option" @click="filterStore.setActivityMode('inactive')">
 					<svg class="filter-panel__radio">
-						<use href="@/ui/svg/sprite.svg#icon-radio-active" v-if="mode === 'inactive'" />
+						<use href="@/ui/svg/sprite.svg#icon-radio-active" v-if="filterStore.activityMode === 'inactive'" />
 						<use href="@/ui/svg/sprite.svg#icon-radio-passive" v-else />
 					</svg>
 					<span class="filter-panel__text">Inactive since</span>
 				</li>
-				<li class="filter-panel__option" @click="setMode('active')">
+				<li class="filter-panel__option" @click="filterStore.setActivityMode('active')">
 					<svg class="filter-panel__radio">
-						<use href="@/ui/svg/sprite.svg#icon-radio-active" v-if="mode === 'active'" />
+						<use href="@/ui/svg/sprite.svg#icon-radio-active" v-if="filterStore.activityMode === 'active'" />
 						<use href="@/ui/svg/sprite.svg#icon-radio-passive" v-else />
 					</svg>
 					<span class="filter-panel__text">Active since</span>
@@ -45,11 +45,9 @@
 			</ul>
 
 			<div class="fdate">
-				<VDatePicker v-model="date" expanded borderless transparent></VDatePicker>
+				<VDatePicker v-model="filterStore.activityDateISO" expanded borderless transparent :timezone="timezone" ></VDatePicker>
 			</div>
 		</section>
-
-
 	</div>
 </template>
 
@@ -63,22 +61,17 @@ import FilterSection from './FilterSection.vue';
 import { computed, ref, watch } from 'vue';
 import { useFilterStore } from '@/stores/filterStore';
 
-
-
 // - Store -------------------------------------------------------------
 
 const orgStore = useOrganisationStore();
-const filterStore = useFilterStore()
+const filterStore = useFilterStore();
+
 
 // - Data --------------------------------------------------------------
 
-const date = ref(new Date());
-type ActivityMode = 'none' | 'active' | 'inactive';
-const mode = ref<ActivityMode>('none'); // default
+const timezone = ref('Europe/Malta');
 
-watch(date, (val) => {
-	console.log(val)
-})
+
 // - Computed ----------------------------------------------------------
 
 const getOrgFilterOptions = computed(() => {
@@ -100,9 +93,7 @@ const getAssetTypeFilterOptions = computed(() => {
 	]
 });
 
-function setMode(next: ActivityMode) {
-	mode.value = next;
-}
+
 </script>
 
 <!-- --------------------------------------------------------------- -->
@@ -131,10 +122,8 @@ function setMode(next: ActivityMode) {
 		
 		padding: .5rem;
 
-
 		border: 1px solid var(--color-zinc-300);
 		border-radius: var(--radius-sm);
-	
 		
 	}
 
@@ -256,5 +245,30 @@ function setMode(next: ActivityMode) {
 		box-shadow: none;
 	}
 
+	/* .vc-time-weekday { color: var(--color-zinc-400); }
+	.vc-time-year { color: var(--color-zinc-600); }
+	.vc-time-month, .vc-time-day { color: var(--color-sky-500); }
+	.vc-time-select-group {
+		background-color: var(--color-zinc-100);
+		border-color: var(--color-zinc-300);
+
+		svg {
+			color: var(--color-sky-500);
+		}
+	}
+	.vc-base-select select:hover {
+		background-color: var(--color-zinc-200);
+	}
+	.vc-base-select select {
+		color: var(--color-zinc-800);
+		border-color: var(--color-zinc-300);
+
+		option {
+					color:var(--color-zinc-800);
+					background-color: var(--color-zinc-100);
+					
+	
+		}
+	} */
 }
 </style>

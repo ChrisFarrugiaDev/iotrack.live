@@ -6,7 +6,7 @@ import { useDeviceStore } from "@/stores/deviceStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { storeToRefs } from "pinia";
 import { io } from "socket.io-client";
-import { onDeactivated, onUnmounted, watch } from "vue";
+import { computed, onDeactivated, onUnmounted, watch } from "vue";
 
 
 // - Store -------------------------------------------------------------
@@ -14,11 +14,15 @@ import { onDeactivated, onUnmounted, watch } from "vue";
 const authStore = useAuthStore();
 const { isAuthenticated } = storeToRefs(authStore);
 
-const settingsStore = useSettingsStore();
-const { accessibleDevices } = storeToRefs(settingsStore);
 
 const devicesStore = useDeviceStore();
 
+// - Computed ----------------------------------------------------------
+
+const accessibleDevices = computed(()=>{
+    if (!devicesStore.getDevices) return [];
+    return Object.values(devicesStore.getDevices).map((d: any) => d.id)
+})
 
 // - Socket-io Setup ---------------------------------------------------
 

@@ -6,7 +6,6 @@ import { User, UserType } from "../../models/user.model";
 
 import { ApiResponse } from "../../types/api-response.type";
 import { UserJWT } from "../../types/user-jwt.type";
-import * as redisUtils from "../../utils/redis.utils";
 import { logger } from "../../utils/logger.utils";
 
 // -----------------------------------------------------------------------------
@@ -62,8 +61,11 @@ class AuthController {
             }
 
             // 3. Bump and store token version for invalidating old tokens and update login datetime
-            user.token_version = await User.updateLoginSession(user.id);
-            await redisUtils.set(`user:token_version:${user.id}`, user.token_version, null, "iotrack.live:");
+
+            User.markLogin(user.id)
+
+            // user.token_version = await User.bumpTokenVersion(user.id);
+            // await redisUtils.set(`user:token_version:${user.id}`, user.token_version, null, "iotrack.live:");
 
             // 4. Build the JWT payload and sign a new token
             const tokenPayload: UserJWT = {

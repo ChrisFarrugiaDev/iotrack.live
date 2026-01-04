@@ -16,7 +16,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 	const theme = computed({
 		get: () => themeLocal.value,
 		set: (theme: Theme) => themeLocal.value = theme,
-	})
+	});
 
 
 	// ---- Getters ----------------------------------------------------

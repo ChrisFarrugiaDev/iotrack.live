@@ -65,7 +65,7 @@
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useMessageStore } from '@/stores/messageStore';
 import { useOrganisationStore } from '@/stores/organisationStore';
-import { usePermissionStore } from '@/stores/permissionStore';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 import { useUserStore } from '@/stores/userStore';
 import type { TableColumn } from '@/types/table.column.type';
 import { VSearch, ThePager, VTable, VIconButton, VModal } from '@/ui';
@@ -88,8 +88,8 @@ const { getUserScope } = storeToRefs(userStore);
 const organisationStore = useOrganisationStore();
 const {getOrganisationScope} = storeToRefs(organisationStore);
 
-const permissionStore = usePermissionStore();
-const { getRoles } = storeToRefs(permissionStore);
+const authorizationStore = useAuthorizationStore();
+const { getRoles } = storeToRefs(authorizationStore);
 
 const messageStore = useMessageStore();
 const dashboardStore = useDashboardStore();

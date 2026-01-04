@@ -43,6 +43,34 @@
 
 		</div>
 
+		<div class="vheading--4 mt-12 mb-2">Settings</div>
+		<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+			<div class="vform__group mt-7">
+				<label class="vform__label">
+					Speed Units<span class="vform__required">*</span>
+				</label>
+
+				<VueSelect
+					v-model="form.speed_units"
+					:shouldAutofocusOption="false"
+					:isDisabled="confirmOn"
+					:style="[vueSelectStyles, selectErrorStyle(!!errors.speed_units)]"
+					class="vform__group"
+					:options="[
+						{ label: 'km/h', value: 'kmh' },
+						{ label: 'mph', value: 'mph' },
+						{ label: 'knots', value: 'knots' },
+						{ label: 'm/s', value: 'ms' }
+					]"
+					placeholder=""
+				/>
+
+				<p class="vform__error">{{ errors.speed_units }}</p>
+			</div>
+			<div class="vform__group mt-7"></div>
+		</div>
+		
+
 		<div v-if="form.asset_type == 'vehicle'">
 			<div class="vheading--4 mt-12 mb-2">Vehicle</div>
 
@@ -177,6 +205,7 @@ const form = reactive({
 	asset_type: 'vehicle' as string,      // default
 	organisation_id: null as null | string,
 	device_id: null as null | string,     // optional: attach a device
+	speed_units: 'kmh',
 	vehicle: {
 		registration_number: null as string | null,
 		make: null as string | null,
@@ -288,11 +317,12 @@ async function createAsset() {
 			vehicle,
 			personal,
 			asset,
+			speed_units,
 			...coreFields
 		} = form;
 
 		// Build 'attributes' only if fields are present 
-		const attributes: Record<string, any> = {};
+		const attributes: Record<string, any> = { speed_units };
 
 		switch (form.asset_type) {
 			case 'vehicle':

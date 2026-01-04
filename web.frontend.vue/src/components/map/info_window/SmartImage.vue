@@ -6,6 +6,10 @@
       :style="imgStyle"
       :draggable="false"
     />
+
+    <svg class="smart-image__favorite" v-if="isFavorite">
+				<use xlink:href="@/ui/svg/sprite.svg#icon-star-2" ></use>				
+    </svg>
   </div>
 </template>
 
@@ -19,7 +23,15 @@ interface Flip { horizontal?: boolean; vertical?: boolean }
 interface Transforms { rotate?: number; flip?: Flip }
 interface ImageData { url: string; coordinates?: Coordinates; transforms?: Transforms }
 
-const props = defineProps<{ image: ImageData }>()
+const props = withDefaults(
+	defineProps<{
+		image: ImageData
+		isFavorite?: boolean
+	}>(),
+	{
+		isFavorite: false,
+	}
+);
 const appStore = useAppStore()
 const { getAppUrl } = storeToRefs(appStore)
 
@@ -113,4 +125,27 @@ const imgStyle = computed<CSSProperties>(() => {
   // transition: transform .15s ease;
   
 }
+
+.smart-image__favorite {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 100;
+
+  width: 1.1rem;
+  height: 1.1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #f5c451;
+  fill: currentColor;
+
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  padding: 2px;
+}
+
+
 </style>

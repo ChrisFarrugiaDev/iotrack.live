@@ -18,28 +18,29 @@ ON CONFLICT (role_id) DO NOTHING;
 CREATE TABLE IF NOT EXISTS app.permissions (
   perm_id     SMALLINT    PRIMARY KEY,
   key         TEXT        NOT NULL UNIQUE,
-  description TEXT        NOT NULL
+  description TEXT        NOT NULL,
+  group_name  TEXT        -- nullable, e.g. 'user', 'org', 'device'
 );
 
 -- 2. Seed it with your initial permissions
-INSERT INTO app.permissions (perm_id, key, description) VALUES
-  ( 1,  'create_user',           'Create new users'                        ),
-  ( 2,  'update_user',           'Update existing users'                   ),
-  ( 3,  'delete_user',           'Delete users'                            ),
-  ( 4,  'create_org',            'Create new organisations'                ),
-  ( 5,  'update_org',            'Update existing organisations'           ),
-  ( 6,  'delete_org',            'Delete organisations'                    ),
-  ( 7,  'update_org_settings',   'Update organisation settings'            ),
-  ( 8,  'view_audit_logs',       'View system audit logs'                  ),
-  ( 9,  'view_asset',            'View assets'                             ),
-  (10,  'create_asset',          'Create new assets'                       ),
-  (11,  'update_asset',          'Update existing assets'                  ),
-  (12,  'delete_asset',          'Delete assets'                           ),
-  (13,  'view_device',           'View devices'                            ),
-  (14,  'create_device',         'Create new devices'                      ),
-  (15,  'update_device',         'Update existing devices'                 ),
-  (16,  'delete_device',         'Delete devices'                          ),
-  (17,  'assign_device',         'Assign devices to assets'                )
+INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
+  ( 1,  'create_user',           'Create new users',              'user'    ),
+  ( 2,  'update_user',           'Update existing users',         'user'    ),
+  ( 3,  'delete_user',           'Delete users',                  'user'    ),
+  ( 4,  'create_org',            'Create new organisations',      'org'     ),
+  ( 5,  'update_org',            'Update existing organisations', 'org'     ),
+  ( 6,  'delete_org',            'Delete organisations',          'org'     ),
+  ( 7,  'update_org_settings',   'Update organisation settings',  'org'     ),
+  ( 8,  'view_audit_logs',       'View system audit logs',        'admin'   ),
+  ( 9,  'view_asset',            'View assets',                   'asset'   ),
+  (10,  'create_asset',          'Create new assets',             'asset'   ),
+  (11,  'update_asset',          'Update existing assets',        'asset'   ),
+  (12,  'delete_asset',          'Delete assets',                 'asset'   ),
+  (13,  'view_device',           'View devices',                  'device'  ),
+  (14,  'create_device',         'Create new devices',            'device'  ),
+  (15,  'update_device',         'Update existing devices',       'device'  ),
+  (16,  'delete_device',         'Delete devices',                'device'  ),
+  (17,  'assign_device',         'Assign devices to assets',      'device'  )
 ON CONFLICT (perm_id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -137,10 +138,12 @@ ON CONFLICT (email) DO NOTHING;
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS app.user_organisation_access (
-  user_id           BIGINT     NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
-  organisation_uuid UUID       NOT NULL REFERENCES app.organisations(uuid) ON DELETE CASCADE,
-  is_allowed        BOOLEAN    NOT NULL DEFAULT TRUE,
-  PRIMARY KEY (user_id, organisation_uuid)
+  user_id         BIGINT      NOT NULL
+    REFERENCES app.users(id) ON DELETE CASCADE,
+  organisation_id BIGINT      NOT NULL
+    REFERENCES app.organisations(id) ON DELETE CASCADE,
+  is_allowed      BOOLEAN     NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (user_id, organisation_id)
 );
 
 
@@ -150,8 +153,8 @@ SELECT
     u.email              AS user_email,
     u.first_name,
     u.last_name,
-    uoa.organisation_uuid,
-    o.id                 AS organisation_id,
+    uoa.organisation_id,
+    o.uuid               AS organisation_uuid,
     o.name               AS organisation_name,
     uoa.is_allowed
 FROM
@@ -159,7 +162,7 @@ FROM
     JOIN app.users u
       ON u.id = uoa.user_id
     JOIN app.organisations o
-      ON o.uuid = uoa.organisation_uuid
+      ON o.id = uoa.organisation_id
 ORDER BY
     u.email,
     o.name;
@@ -288,3 +291,30 @@ CREATE TABLE app.files (
 
 );
 CREATE INDEX ix_files_entity ON app.files (entity_type, entity_id);
+
+
+-- ---------------------------------------------------------------------
+
+
+CREATE TABLE IF NOT EXISTS app.user_permissions (
+  user_id   BIGINT     NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,
+  perm_id   SMALLINT   NOT NULL REFERENCES app.permissions(perm_id) ON DELETE CASCADE,
+  is_allowed BOOLEAN   NOT NULL DEFAULT TRUE, -- TRUE=grant, FALSE=deny
+  PRIMARY KEY (user_id, perm_id)
+);
+
+CREATE OR REPLACE VIEW app.user_permissions_view AS
+SELECT
+    up.user_id,
+    u.email           AS user_email,
+    up.perm_id,
+    p.key             AS perm_key,
+    up.is_allowed
+FROM
+    app.user_permissions up
+    JOIN app.users u
+      ON u.id = up.user_id
+    JOIN app.permissions p
+      ON p.perm_id = up.perm_id
+ORDER BY
+    u.email, p.key;

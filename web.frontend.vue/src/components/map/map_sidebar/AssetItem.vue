@@ -3,7 +3,7 @@
         <KeepAlive>
 
             <SmartImage class="asset-item__thumb" v-if="asset?.attributes?.primary_image"
-                :image="asset?.attributes?.primary_image">
+                :image="asset?.attributes?.primary_image" :is-favorite="assetStore.isFavorite(asset.id)">
             </SmartImage>
         </KeepAlive>
 
@@ -17,8 +17,7 @@
             <div class="content__last_event">{{ formatDateTime(getDevice?.last_telemetry_ts!, tz ) }}</div>
             <div class="content__last_event">{{ getLastEventTimeElapsed }}</div>
 
-
-     
+    
             <!-- <div class="content__driver">Christoper Farrugis</div> -->
             <!-- <div class="content__fuel">Fuel 35%</div> -->
          
@@ -35,6 +34,7 @@ import { computed, inject, onMounted, ref } from 'vue';
 import { useNowTick } from '@/composables/useNowTick';
 import { formatDateTime, timeElapsed } from '@/utils/dateTimeUtils';
 import { useDeviceStore } from '@/stores/deviceStore';
+import { useAssetStore } from '@/stores/assetStore';
 
 
 // - provide & inject --------------------------------------------------
@@ -53,6 +53,7 @@ const props = defineProps<{
 // - Store -------------------------------------------------------------
 
 const deviceStore = useDeviceStore();
+const assetStore = useAssetStore();
 
 // - Data --------------------------------------------------------------
 
@@ -84,8 +85,8 @@ const getSpeed = computed(() => {
     const baseSpeed = getDevice.value?.last_telemetry?.speed; // km/h   
     
     
-
-    const speedUnit = props.asset?.attributes?.vehicle?.speed_unit ?? 'kmh';
+    
+    const speedUnit = props.asset?.attributes?.speed_units ?? 'kmh';
     const conversion = SPEED_CONVERSIONS[speedUnit] ?? SPEED_CONVERSIONS.kmh;
 
     const convertedSpeed = round1(baseSpeed * conversion.factor);
@@ -111,7 +112,12 @@ const getMinutesAgo = computed(() => {
 const getFlexOrder = computed(() => {
   const mins = getMinutesAgo.value;
   // push assets with no telemetry to the bottom
-  return mins == null ? 999999 : mins;
+  let a = mins == null ? 9999 : mins;
+
+  if (assetStore.favoriteAssets.includes(props.asset.id)) {
+    a = -9999999999 + a;
+  }
+  return a;
 });
 
 
@@ -128,6 +134,7 @@ const getFlexOrder = computed(() => {
     font-family: var(--font-action);
     font-size: .85rem;
     min-height: fit-content;
+    flex-shrink: 0;
 
     border-bottom: 1px var(--color-zinc-300) solid;
     padding-bottom: 1rem;
@@ -151,9 +158,9 @@ const getFlexOrder = computed(() => {
         }
     }
 
-    &__content {
-        // asset main info container
-    }
+    // &__content {
+    //     // asset main info container
+    // }
 }
 
 .content {

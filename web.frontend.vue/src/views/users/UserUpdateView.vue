@@ -118,7 +118,7 @@ import { storeToRefs } from 'pinia';
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, reactive, ref, toRaw, watch } from 'vue';
 import { useOrganisationStore } from "@/stores/organisationStore";
 import UserPermissions from "@/components/users/UserPermissions.vue";
-import { usePermissionStore } from "@/stores/permissionStore";
+import { useAuthorizationStore } from "@/stores/authorizationStore";
 import UserOrganisations from "@/components/users/UserOrganisations.vue";
 import UserDevices from "@/components/users/UserDevices.vue";
 import UserAssets from "@/components/users/UserAssets.vue";
@@ -161,7 +161,7 @@ const { getUserScopeByUuid } = storeToRefs(userStore);
 
 const organisationStore = useOrganisationStore();
 
-const permissionStore = usePermissionStore();
+const authorizationStore = useAuthorizationStore();
 
 const userAssignableStore = useUserAssignableStore();
 
@@ -345,11 +345,11 @@ watch(
 
         if (!roleChangedByUser.value) return;
 
-        if (!permissionStore.isLoaded) return;
+        if (!authorizationStore.isLoaded) return;
         if (!newRoleId) return;
         if (newRoleId === oldRoleId) return;
 
-        const rolePerms = permissionStore.getRolePermissions[newRoleId];
+        const rolePerms = authorizationStore.getRolePermissions[newRoleId];
 
         form.permissions = [...rolePerms];
         defaultPermissions.value = [...rolePerms];
@@ -396,7 +396,7 @@ async function updateUser() {
             delete coreFields.password;
         }
 
-        const rolePermissions = permissionStore.getRolePermissions[form.role_id!];
+        const rolePermissions = authorizationStore.getRolePermissions[form.role_id!];
 
         const assignableOrgs = userAssignableStore.getAssignableResources[form.organisation_id!]?.organisation ?? {};
         const assignableOrgsIDs = Object.keys(assignableOrgs);

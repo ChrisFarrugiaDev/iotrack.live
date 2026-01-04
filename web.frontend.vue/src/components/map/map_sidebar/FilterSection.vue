@@ -40,8 +40,6 @@ import { options } from 'floating-vue';
 import { compile, computed, ref, watch } from 'vue';
 
 
-
-
 // - Props & Emits -----------------------------------------------------
 const props = defineProps<{
 	title: string
@@ -109,8 +107,6 @@ function toggleOption(id: string | number) {
 	}
 
 
-
-
 	&__title {
 		display: flex;
 		align-items: center;
@@ -136,7 +132,7 @@ function toggleOption(id: string | number) {
 	}
 
 	&__section--open &__chevron {
-		transform: rotate(0deg);
+		transform: rotate(-180deg);
 	}
 
 

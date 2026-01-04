@@ -154,7 +154,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		switch dataPacket.GetCodecType() {
 		case "GPRS messages":
 			// Codec 12 response: command completed successfully
-			s.App.Cache.Delete(inflightKey)
+			s.App.Cache.Delete(inflightKey) // (456A)
 			codec12Message := dataPacket.(*apptypes.Codec12Message)
 			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
 			// (Send to DB or sync cache later)
@@ -171,7 +171,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				}
 
 			} else {
-				s.App.Cache.Delete(inflightKey)
+				s.App.Cache.Delete(inflightKey) // (456A)
 				inflightCommand.SetToSync("failed", "no_response")
 			}
 		}
@@ -180,7 +180,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	// If no inflight command, check for pending commands for this device
 	pendingKey := "codec12:pending-commands:" + deviceMeta.IMEI
 	pendingExist := false
-	inflightExist, err = s.App.Cache.Exists(inflightKey)
+	inflightExist, err = s.App.Cache.Exists(inflightKey) // TODO: just update inflightExist to false when s.App.Cache.Delete(inflightKey) (456A)
 
 	if err != nil {
 		fail("Redis error while checking inflight command existence (pending check)", err)

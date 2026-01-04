@@ -115,7 +115,7 @@ import UserOrganisations from "@/components/users/UserOrganisations.vue";
 import UserAssets from "@/components/users/UserAssets.vue";
 import UserDevices from "@/components/users/UserDevices.vue";
 
-import { usePermissionStore } from "@/stores/permissionStore";
+import { useAuthorizationStore } from "@/stores/authorizationStore";
 import { useOrganisationStore } from "@/stores/organisationStore";
 import * as utils from "@/utils/utils";
 import { useUserStore } from "@/stores/userStore";
@@ -144,7 +144,7 @@ const {handleFormError} = useFormErrorHandler(errors);
 
 const userStore = useUserStore();
 const messageStore = useMessageStore();
-const permissionStore = usePermissionStore();
+const authorizationStore = useAuthorizationStore();
 const dashboardStore = useDashboardStore();
 const organisationStore = useOrganisationStore();
 const userAssignableStore = useUserAssignableStore();
@@ -223,13 +223,13 @@ watch(()=>userAssignableStore.getSelectedOrgId, (id)=>{
 	deep: true
 });
 
-watch(() => [form.role, permissionStore.isLoaded], ([_, loaded]) => {
+watch(() => [form.role, authorizationStore.isLoaded], ([_, loaded]) => {
 
 	if (!loaded) return;
 
 	if (form.role && Number(form.role) > 0) {
 
-		let rp = permissionStore.getRolePermissions[form.role];
+		let rp = authorizationStore.getRolePermissions[form.role];
 
 		defaultPermissions.value = rp;
 		form.permissions = rp;
@@ -247,11 +247,6 @@ watch(()=>organisationStore.getOrganisation, (org) => {
 	deep: true
 });
 
-
-watch(()=>form.organisations, (v) => {
-	console.log(v)
-	console.log()
-})
 
 
 // - Methods -----------------------------------------------------------
@@ -294,7 +289,7 @@ async function createUser() {
 			delete coreFields.password;
 		}
 
-		const rolePermissions = permissionStore.getRolePermissions[form.role];
+		const rolePermissions = authorizationStore.getRolePermissions[form.role];
 
 		const user_permissions = utils.diffArraysToBooleanMap(rolePermissions, permissions);
 		const user_organisation_access = utils.diffArraysToBooleanMap(defaultOrganisations.value, organisations);

@@ -43,8 +43,6 @@ const emit = defineEmits<{
 
 
 // - Store -------------------------------------------------------------
-const deviceStore = useDeviceStore();
-const { getGroupedDevices } = storeToRefs(deviceStore);
 
 const userAssignableStore = useUserAssignableStore();
 

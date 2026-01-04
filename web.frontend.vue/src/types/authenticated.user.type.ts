@@ -11,5 +11,4 @@ export type AuthenticatedUser = {
         id: number,
         name: string,
     },
-    accessible_devices: string[]
 }

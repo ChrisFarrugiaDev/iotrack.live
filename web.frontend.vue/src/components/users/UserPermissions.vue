@@ -20,15 +20,15 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { usePermissionStore } from '@/stores/permissionStore';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
 import Treeselect from 'vue3-treeselect';
 import 'vue3-treeselect/dist/vue3-treeselect.css';
 
 // - Store -------------------------------------------------------------
-const permissionStore = usePermissionStore();
-const { getGroupedPermissions } = storeToRefs(permissionStore);
+const authorizationStore = useAuthorizationStore();
+const { getGroupedPermissions } = storeToRefs(authorizationStore);
 
 // - Props -------------------------------------------------------------
 const props = defineProps<{
