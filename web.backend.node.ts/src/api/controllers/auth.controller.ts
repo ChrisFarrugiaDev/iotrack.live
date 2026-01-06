@@ -7,6 +7,7 @@ import { User, UserType } from "../../models/user.model";
 import { ApiResponse } from "../../types/api-response.type";
 import { UserJWT } from "../../types/user-jwt.type";
 import { logger } from "../../utils/logger.utils";
+import { AccessProfileController } from "./access-profile.controller";
 
 // -----------------------------------------------------------------------------
 
@@ -63,6 +64,7 @@ class AuthController {
             // 3. Bump and store token version for invalidating old tokens and update login datetime
 
             User.markLogin(user.id)
+            const userPermissions = await AccessProfileController.getUserPermissionKeys(user, true);
 
             // user.token_version = await User.bumpTokenVersion(user.id);
             // await redisUtils.set(`user:token_version:${user.id}`, user.token_version, null, "iotrack.live:");

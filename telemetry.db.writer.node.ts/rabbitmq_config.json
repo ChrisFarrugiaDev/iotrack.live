@@ -11,6 +11,7 @@
     {
       "name": "telemetry",
       "durable": true,
+      "type": "quorum",
       "batch": {
         "max_size": 500,
         "max_wait_seconds": 5

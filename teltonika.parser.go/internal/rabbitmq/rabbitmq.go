@@ -17,6 +17,7 @@ type Exchange struct {
 type Queue struct {
 	Name    string `json:"name"`
 	Durable bool   `json:"durable"`
+	Type    string `json:"type"` // classic | quorum | stream
 }
 
 type RoutingKey struct {

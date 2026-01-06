@@ -24,23 +24,27 @@ CREATE TABLE IF NOT EXISTS app.permissions (
 
 -- 2. Seed it with your initial permissions
 INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
-  ( 1,  'create_user',           'Create new users',              'user'    ),
-  ( 2,  'update_user',           'Update existing users',         'user'    ),
-  ( 3,  'delete_user',           'Delete users',                  'user'    ),
-  ( 4,  'create_org',            'Create new organisations',      'org'     ),
-  ( 5,  'update_org',            'Update existing organisations', 'org'     ),
-  ( 6,  'delete_org',            'Delete organisations',          'org'     ),
-  ( 7,  'update_org_settings',   'Update organisation settings',  'org'     ),
-  ( 8,  'view_audit_logs',       'View system audit logs',        'admin'   ),
-  ( 9,  'view_asset',            'View assets',                   'asset'   ),
-  (10,  'create_asset',          'Create new assets',             'asset'   ),
-  (11,  'update_asset',          'Update existing assets',        'asset'   ),
-  (12,  'delete_asset',          'Delete assets',                 'asset'   ),
-  (13,  'view_device',           'View devices',                  'device'  ),
-  (14,  'create_device',         'Create new devices',            'device'  ),
-  (15,  'update_device',         'Update existing devices',       'device'  ),
-  (16,  'delete_device',         'Delete devices',                'device'  ),
-  (17,  'assign_device',         'Assign devices to assets',      'device'  )
+  ( 1,  'user.create',           'Create new users',              'user'   ),
+  ( 2,  'user.update',           'Update existing users',         'user'   ),
+  ( 3,  'user.delete',           'Delete users',                  'user'   ),
+
+  ( 4,  'org.create',            'Create new organisations',      'org'    ),
+  ( 5,  'org.update',            'Update existing organisations', 'org'    ),
+  ( 6,  'org.delete',            'Delete organisations',          'org'    ),
+  ( 7,  'org.settings.update',   'Update organisation settings',  'org'    ),
+
+  ( 8,  'audit.view',            'View system audit logs',        'admin'  ),
+
+  ( 9,  'asset.view',            'View assets',                   'asset'  ),
+  (10,  'asset.create',          'Create new assets',             'asset'  ),
+  (11,  'asset.update',          'Update existing assets',        'asset'  ),
+  (12,  'asset.delete',          'Delete assets',                 'asset'  ),
+
+  (13,  'device.view',           'View devices',                  'device' ),
+  (14,  'device.create',         'Create new devices',            'device' ),
+  (15,  'device.update',         'Update existing devices',       'device' ),
+  (16,  'device.delete',         'Delete devices',                'device' ),
+  (17,  'device.assign',         'Assign devices to assets',      'device' )
 ON CONFLICT (perm_id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------------------------------------------------

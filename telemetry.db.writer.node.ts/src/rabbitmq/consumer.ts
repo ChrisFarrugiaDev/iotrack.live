@@ -12,6 +12,7 @@ type BatchSettings = {
 type QueueConfig = {
     name: string;
     durable: boolean;
+    type?: 'classic' | 'quorum' | 'stream';
     batch: BatchSettings;
 };
 
@@ -62,6 +63,15 @@ export class RabbitBatchConsumer {
         this.connection = await amqp.connect(this.config.url)
         this.channel = await this.connection.createChannel();
 
+        // IMPORTANT:
+        // Limit the number of unacknowledged messages RabbitMQ can deliver to this consumer.
+        // This is especially important when batching messages and when using quorum queues,
+        // to prevent memory pressure and ensure fair message distribution.
+        //
+        // We set this to 500 to align with batch.max_size, so the consumer never receives
+        // more messages than it can process in a single batch.
+        await this.channel.prefetch(500);
+
         logInfo(`RabbitMQ connected successfully on port ${process.env.RABBITMQ_PORT}`);
 
         this.connection.on('close', async () => {
@@ -88,7 +98,37 @@ export class RabbitBatchConsumer {
     // -----------------------------------------------------------------
 
     private async setupQueue(q: QueueConfig) {
-        await this.channel.assertQueue(q.name, { durable: q.durable });
+        const args: any = {};
+
+        switch (q.type) {
+            case undefined:
+            case 'classic':
+                // default → no args
+                break;
+
+            case 'quorum':
+                if (!q.durable) {
+                    throw new Error(`Quorum queue ${q.name} must be durable`);
+                }
+                args['x-queue-type'] = 'quorum';
+                break;
+
+            case 'stream':
+                if (!q.durable) {
+                    throw new Error(`Stream queue ${q.name} must be durable`);
+                }
+                args['x-queue-type'] = 'stream';
+                break;
+
+            default:
+                throw new Error(`Unknown queue type '${q.type}' for queue ${q.name}`);
+        }
+        await this.channel.assertQueue(q.name, {
+            durable: q.durable,
+            autoDelete: false,
+            exclusive: false,
+            arguments: args
+        });
         this.batches[q.name] = [];
     }
 
@@ -178,21 +218,57 @@ export class RabbitBatchConsumer {
                 // Log that a batch was processed (for observability)
                 logDebug(`[${queueName}] Processing batch of ${messages.length} messages`);
 
-                // Acknowledge (ACK) each message in RabbitMQ as successfully processed
-                for (const msg of messages) {
-                    this.channel.ack(msg, false);
-                }
+
 
                 // If there are still messages waiting, immediately schedule the next flush
                 if (this.batches[queueName].length > 0) {
                     setImmediate(() => this.flushBatch(queueName, batch));
                 }
 
+                // Acknowledge (ACK) each message in RabbitMQ as successfully processed
+                for (const msg of messages) {
+                    this.channel.ack(msg, false);
+                }
+
             } catch (err) {
 
                 // If batch processing fails, NACK only the current batch to requeue them
                 if (messages && messages.length > 0) {
-                    messages.forEach((msg) => this.channel.nack(msg, false, true));
+
+                    // Retry logic:
+                    // - We re-publish the message with an incremented retry counter
+                    // - ACK the original message to avoid infinite requeue loops
+                    // - After 3 retries, the message is dropped ( TODO:  no DLQ for now)
+                    messages.forEach((msg) => {
+                        const headers = msg.properties.headers ?? {};
+                        const retryCount = (headers['x-retry-count'] ?? 0) as number;
+
+                        if (retryCount < 3) {
+                            // Re-publish with incremented retry count
+                            this.channel.publish(
+                                '', // default exchange
+                                msg.fields.routingKey,
+                                msg.content,
+                                {
+                                    persistent: true,
+                                    headers: {
+                                        ...headers,
+                                        'x-retry-count': retryCount + 1
+                                    }
+                                }
+                            );
+
+                            // ACK original message so it doesn't loop
+                            this.channel.ack(msg);
+                        } else {
+                            // Retry limit reached → drop message
+                            this.channel.reject(msg, false);
+                            logError(
+                                `[${queueName}] Dropped message after ${retryCount} retries`,
+                                msg.content.toString()
+                            );
+                        }
+                    });
                 }
                 // Log the error for debugging
                 logError(`! consumer.flushBatch ! Error processing batch for queue ${queueName}`, err);
@@ -228,3 +304,4 @@ export class RabbitBatchConsumer {
         if (this.connection) await this.connection.close();
     }
 }
+

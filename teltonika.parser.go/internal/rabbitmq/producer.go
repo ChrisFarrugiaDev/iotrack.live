@@ -108,7 +108,29 @@ func (p *RabbitMQProducer) setupExchangesAndQueues() error {
 
 	// Declare Queues
 	for _, queue := range p.config.Queues {
-		_, err := p.channel.QueueDeclare(queue.Name, queue.Durable, false, false, false, nil)
+		args := amqp.Table{}
+
+		switch queue.Type {
+		case "", "classic":
+			// default, no args needed
+
+		case "quorum":
+			if !queue.Durable {
+				return fmt.Errorf("quorum queue %s must be durable", queue.Name)
+			}
+			args["x-queue-type"] = "quorum"
+
+		case "stream":
+			if !queue.Durable {
+				return fmt.Errorf("stream queue %s must be durable", queue.Name)
+			}
+			args["x-queue-type"] = "stream"
+
+		default:
+			return fmt.Errorf("unknown queue type '%s' for queue %s", queue.Type, queue.Name)
+		}
+
+		_, err := p.channel.QueueDeclare(queue.Name, queue.Durable, false, false, false, args)
 		if err != nil {
 			return err
 		}
@@ -163,9 +185,10 @@ func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
 		false,         // mandatory
 		false,         // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(message),
-			MessageId:   p.UUID.Next().String(),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(message),
+			MessageId:    p.UUID.Next().String(),
 		},
 	)
 
@@ -202,9 +225,10 @@ func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, messa
 		false, // mandatory
 		false, // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(message),
-			MessageId:   p.UUID.Next().String(),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(message),
+			MessageId:    p.UUID.Next().String(),
 		},
 	)
 

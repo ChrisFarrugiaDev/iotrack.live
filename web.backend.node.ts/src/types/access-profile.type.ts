@@ -19,5 +19,6 @@ export interface AccessProfile {
 		assets: Record<string, AssetType>;
 		devices: Record<string, DeviceType>;
 		settings: Record<string, any>;
+		permissions: Record<string, any>;
 	}
 } 

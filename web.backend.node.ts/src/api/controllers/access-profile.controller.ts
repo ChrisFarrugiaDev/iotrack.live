@@ -59,17 +59,17 @@ export class AccessProfileController {
             // 4. Fetch metadata for all accessible organisations from cache
             const organisationScope = await AccessProfileController.buildOrganisationInfoMap(accessibleOrgIds);
 
-            // 5. Fetch all assets/devices/settings the user can access
+            // 5. Fetch all assets, devices, settings, etc the user can access
             const assets = await AccessProfileController.getAccessibleAssetsForUser(user.id, accessibleOrgIds);
             const devices = await AccessProfileController.getAccessibleDevicesForUser(user.id, accessibleOrgIds);
             const settings = await AccessProfileController.getUserSettings(user);
+            const permissions = await AccessProfileController.getUserPermissionKeys(user);
 
-            // 6 fetch permissoins
+            // 6 fetch authorization permissoins
             // TODO:  cache these values
             const appRoles = await Role.getAll();
             const appPermissions = await Permissions.getAll();
             const appRolePermissions = await RolePermissions.getGroupedByRole(true);
-
 
 
             // 7. Construct the access profile object
@@ -92,6 +92,7 @@ export class AccessProfileController {
                     assets,
                     devices,
                     settings,
+                    permissions,
                 },
                 authorization: {
                     roles: appRoles,
@@ -275,7 +276,7 @@ export class AccessProfileController {
     }
 
 
-    static async getUserPermissions(user: UserType, forceRefresh = false): Promise<number[]> {
+    static async getUserPermissions(user: Partial<UserType>, forceRefresh = false): Promise<number[]> {
 
 
         const cacheKey = `user:permissions:${user.id}`;
@@ -284,15 +285,15 @@ export class AccessProfileController {
         if (!forceRefresh) {
             const cached = await redisUtils.get(cacheKey, "iotrack.live:");
             if (cached) {
-                return JSON.parse(cached) as number[];
+                return cached;
             }
         }
 
         // 2 - Fallback to DB
         const [rolePermissions, userPermissions] = await Promise.all([
 
-            RolePermissions.getByRoleID(user.role_id), // { role_id, perm_id }
-            UserPermissions.getByUserID(user.id)       // { user_id, perm_id, is_allowed }
+            RolePermissions.getByRoleID(user.role_id!), // { role_id, perm_id }
+            UserPermissions.getByUserID(user.id!)       // { user_id, perm_id, is_allowed }
         ]);
 
 
@@ -323,5 +324,38 @@ export class AccessProfileController {
         );
 
         return result;
+    }
+
+    static async getUserPermissionKeys(
+        user: Partial<UserType>,
+        forceRefresh = false
+    ): Promise<string[]> {
+
+        const cacheKey = `user:permission_keys:${user.id}`;
+
+        if (!forceRefresh) {
+            const cached = await redisUtils.get(cacheKey, "iotrack.live:");
+            if (cached) {
+                return cached;
+            }
+        }
+
+        // reuse your existing logic
+        const permIds = await AccessProfileController.getUserPermissions(user, forceRefresh);
+
+        const idToKey = await Permissions.getIdToKeyMap();
+
+        const keys = permIds
+            .map(id => idToKey.get(id))
+            .filter((k): k is string => Boolean(k));
+
+        await redisUtils.set(
+            cacheKey,
+            JSON.stringify(keys),
+            900,
+            "iotrack.live:"
+        );
+
+        return keys;
     }
 }
