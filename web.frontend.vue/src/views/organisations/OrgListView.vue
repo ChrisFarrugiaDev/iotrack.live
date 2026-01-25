@@ -2,7 +2,7 @@
     <div>
         <div class="mt-16 flex">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
-            <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteOrganisationModal" />
+            <VIconButton v-if="authorizationStore.can('org.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteOrganisationModal" />
         </div>
 
         <VTable class="mt-4" 
@@ -24,7 +24,7 @@
             </template>
 
             <!-- Row action slot: view/edit button -->
-             <template #actions="{ row }">
+             <template #actions="{ row }" v-if="authorizationStore.can('org.update')">
                 <VIconButton icon="icon-view-more" @click="showUpdateOrganisationModal(row.uuid)" />
              </template>
         </VTable>
@@ -73,6 +73,7 @@ import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, watch } from 'vue';
 import OrgUpdateView from './OrgUpdateView.vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 
 // --- Router -------------------------------------------------------
@@ -85,6 +86,8 @@ const { getOrganisationScope, getOrganisation } = storeToRefs(organisationStore)
 
 const messageStore = useMessageStore();
 const dashboardStore = useDashboardStore();
+
+const authorizationStore = useAuthorizationStore();
 
 // --- Data ------------------------------------------------------------
 const searchTerm = ref("");

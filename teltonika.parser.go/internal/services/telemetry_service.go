@@ -31,12 +31,11 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 	merged.Timestamp = telemetry.Timestamp
 	merged.Priority = telemetry.Priority
 
-	if telemetry.Longitude > 0 {
+	if telemetry.Latitude != 0 && telemetry.Longitude != 0 {
+		merged.Latitude = telemetry.Latitude
 		merged.Longitude = telemetry.Longitude
 	}
-	if telemetry.Latitude > 0 {
-		merged.Latitude = telemetry.Latitude
-	}
+
 	merged.Altitude = telemetry.Altitude
 	merged.Angle = telemetry.Angle
 	merged.Satellites = telemetry.Satellites

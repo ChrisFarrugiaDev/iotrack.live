@@ -26,11 +26,13 @@ import { VTabs, Vview } from '@/ui';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { useRoute, useRouter } from 'vue-router';
-import { reactive } from 'vue';
+import { onBeforeMount, reactive, watch } from 'vue';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
+const authorizationStore = useAuthorizationStore();
 
 
 // - Route -------------------------------------------------------------
@@ -47,10 +49,24 @@ const tabsObjectData_1 = reactive({
     activeTab: 'organisations.list' as TabKey,
     tabs: {
         'organisations.list': 'Organisations List',
-        'organisations.create': 'Register new Organisation',
+        // 'organisations.create': '',
 
-    },
+    } as Record<TabKey, string>,
 });
+
+
+
+
+watch(
+  () => authorizationStore.getUserPermissions.size,
+  () => {
+    if (authorizationStore.can('org.create')) {
+      tabsObjectData_1.tabs['organisations.create'] =
+        'Register new Organisation'
+    } 
+  },
+  { immediate: true }
+)
 
 // - Methods -----------------------------------------------------------
 
@@ -62,6 +78,8 @@ function setActiveTab(e: any) {
 function clearMessage() {
     messageStore.clearFlashMessageList();
 }
+
+
 
 </script>
 

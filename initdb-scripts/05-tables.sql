@@ -24,27 +24,29 @@ CREATE TABLE IF NOT EXISTS app.permissions (
 
 -- 2. Seed it with your initial permissions
 INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
-  ( 1,  'user.create',           'Create new users',              'user'   ),
-  ( 2,  'user.update',           'Update existing users',         'user'   ),
-  ( 3,  'user.delete',           'Delete users',                  'user'   ),
+  ( 1,  'user.view',             'View users',                    'user'   ),
+  ( 2,  'user.create',           'Create new users',              'user'   ),
+  ( 3,  'user.update',           'Update existing users',         'user'   ),
+  ( 4,  'user.delete',           'Delete users',                  'user'   ),
 
-  ( 4,  'org.create',            'Create new organisations',      'org'    ),
-  ( 5,  'org.update',            'Update existing organisations', 'org'    ),
-  ( 6,  'org.delete',            'Delete organisations',          'org'    ),
-  ( 7,  'org.settings.update',   'Update organisation settings',  'org'    ),
+  ( 5,  'org.view',              'View organisations',            'organisations' ),
+  ( 6,  'org.switch',            'Switch organisation',           'organisations' ),
+  ( 7,  'org.create',            'Create new organisations',      'organisations' ),
+  ( 8,  'org.update',            'Update existing organisations', 'organisations' ),
+  ( 9,  'org.delete',            'Delete organisations',          'organisations' ),
 
-  ( 8,  'audit.view',            'View system audit logs',        'admin'  ),
+  (10,  'audit.view',            'View system audit logs',        'admin'  ),
 
-  ( 9,  'asset.view',            'View assets',                   'asset'  ),
-  (10,  'asset.create',          'Create new assets',             'asset'  ),
-  (11,  'asset.update',          'Update existing assets',        'asset'  ),
-  (12,  'asset.delete',          'Delete assets',                 'asset'  ),
+  (11,  'asset.view',            'View assets',                   'asset'  ),
+  (12,  'asset.create',          'Create new assets',             'asset'  ),
+  (13,  'asset.update',          'Update existing assets',        'asset'  ),
+  (14,  'asset.delete',          'Delete assets',                 'asset'  ),
 
-  (13,  'device.view',           'View devices',                  'device' ),
-  (14,  'device.create',         'Create new devices',            'device' ),
-  (15,  'device.update',         'Update existing devices',       'device' ),
-  (16,  'device.delete',         'Delete devices',                'device' ),
-  (17,  'device.assign',         'Assign devices to assets',      'device' )
+  (15,  'device.view',           'View devices',                  'device' ),
+  (16,  'device.create',         'Create new devices',            'device' ),
+  (17,  'device.update',         'Update existing devices',       'device' ),
+  (18,  'device.delete',         'Delete devices',                'device' ),
+  (19,  'device.assign',         'Assign devices to assets',      'device' )
 ON CONFLICT (perm_id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -59,34 +61,38 @@ CREATE TABLE IF NOT EXISTS app.role_permissions (
 );
 
 -- 2. (Optional) Seed defaults—for example:
---    sys_admin (0) gets every permission,
---    admin    (1) gets most organisation/admin perms,
---    user     (2) gets asset/device create/update/view,
---    viewer   (3) gets view-only perms.
+--    sys_admin (1) gets every permission,
+--    admin     (2) gets most organisation/admin perms,
+--    user      (3) gets asset/device create/update/view,
+--    viewer    (4) gets view-only perms.
 
 INSERT INTO app.role_permissions (role_id, perm_id)
-SELECT 1, perm_id FROM app.permissions  -- sys_admin: all perms
+-- sys_admin: all perms
+SELECT 1, perm_id FROM app.permissions
 UNION ALL
 -- admin defaults
 SELECT 2, perm_id FROM app.permissions
  WHERE key IN (
-   'create_user','update_user','delete_user',
-   'create_org','update_org','delete_org','update_org_settings','view_audit_logs',
-   'view_asset','create_asset','update_asset','delete_asset',
-   'view_device','create_device','update_device','delete_device','assign_device'
+   'user.view','user.create','user.update','user.delete',
+   'org.view','org.switch','org.create','org.update','org.delete',
+   'audit.view',
+   'asset.view','asset.create','asset.update','asset.delete',
+   'device.view','device.create','device.update','device.delete','device.assign'
  )
 UNION ALL
 -- user defaults
 SELECT 3, perm_id FROM app.permissions
  WHERE key IN (
-   'view_asset','create_asset','update_asset',
-   'view_device','assign_device'
+   'org.view','org.switch',
+   'asset.view','asset.create','asset.update',
+   'device.view','device.assign'
  )
 UNION ALL
 -- viewer defaults
 SELECT 4, perm_id FROM app.permissions
  WHERE key IN (
-   'view_asset','view_device'
+   'org.view',
+   'asset.view','device.view'
  )
 ON CONFLICT (role_id, perm_id) DO NOTHING;
 

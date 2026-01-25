@@ -1,5 +1,5 @@
 <template>
-    <section id="the-sidebar" class="sidebar v-ui" :data-theme="getSidebarTheme" :class="{ 'sidebar__open': getIsUserMenuOpen }">
+    <section v-if="authorizationStore.getUserPermissions.size" id="the-sidebar" class="sidebar v-ui" :data-theme="getSidebarTheme" :class="{ 'sidebar__open': getIsUserMenuOpen }">
 
         <div class="sidebar__space sidebar__space--top"></div>
 
@@ -21,7 +21,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('mapView')">
+        <div class="sidebar__item" @click="goToView('map.view')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-map"></use>
             </svg>
@@ -32,7 +32,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('organisations.list')">
+        <div v-if="authorizationStore.can('org.view')"  class="sidebar__item" @click="goToView('organisations.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-company"></use>
             </svg>
@@ -43,7 +43,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('users.list')">
+        <div v-if="authorizationStore.can('user.view')" class="sidebar__item" @click="goToView('users.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-users"></use>
             </svg>
@@ -143,6 +143,7 @@ import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import TheUserMenu from './TheUserMenu.vue';
 import { computed, onMounted } from 'vue';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 
 // - Router ------------------------------------------------------------
@@ -159,6 +160,7 @@ const getSidebarTheme = computed(() => {
     return getTheme.value == 'light' ? 'light' : 'dark';
 });
 
+const authorizationStore = useAuthorizationStore();
 
 // - Methods -----------------------------------------------------------
 

@@ -1,3 +1,18 @@
+/**
+ * userAssignableStore
+ *
+ * Used by User Create / User Edit forms to preload and manage
+ * assignable Organisations, Assets, and Devices.
+ *
+ * This store:
+ * - Fetches assignment options per organisation
+ * - Caches results to avoid refetching
+ * - Builds grouped/tree structures for selection components
+ *
+ * It is UI/workflow-specific and assumes permissions
+ * are already validated elsewhere.
+ */
+
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useAppStore } from './appStore'

@@ -160,6 +160,10 @@ async function fetchAccessProfile() {
             authorizationStore.setRoles(profile.authorization.roles);
             authorizationStore.setPermissions(profile.authorization.permissoins);
             authorizationStore.setRolePermissions(profile.authorization.role_permissions);
+
+            authorizationStore.setUserPermissions(
+                profile.access.permissions
+            );
        
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,

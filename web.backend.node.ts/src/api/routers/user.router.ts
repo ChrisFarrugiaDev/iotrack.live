@@ -4,6 +4,7 @@ import UserController from "../controllers/user.controller";
 import { validateBody } from "../middleware/validate-body.middleware";
 import { destroySchema, storeSchema, updateSchema } from "../schemas/user.schema";
 import UserAssignmentController from "../controllers/user-assignable.controller";
+import { requirePermissions } from "../middleware/permission.middleware";
 
 
 export default async function userRouter(fastify: FastifyInstance) {
@@ -16,19 +17,19 @@ export default async function userRouter(fastify: FastifyInstance) {
 
     fastify.post(
         "/",
-        { preHandler: [authMiddleware, validateBody(storeSchema)] },
+        { preHandler: [authMiddleware, validateBody(storeSchema), requirePermissions(["user.create"])] },
         UserController.store
     );
 
     fastify.delete(
         "/",
-        { preHandler: [authMiddleware, validateBody(destroySchema)] },
+        { preHandler: [authMiddleware, validateBody(destroySchema), requirePermissions(["user.delete"])] },
         UserController.destroy
     );
 
     
     fastify.patch("/:id", 
-        { preHandler: [authMiddleware, validateBody(updateSchema)] },
+        { preHandler: [authMiddleware, validateBody(updateSchema), requirePermissions(["user.update"])] },
         UserController.update
     );
 

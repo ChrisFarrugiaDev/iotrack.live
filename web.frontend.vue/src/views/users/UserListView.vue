@@ -2,7 +2,7 @@
     <div >
         <div class="mt-16 flex">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
-            <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteUserModal" />
+            <VIconButton v-if="authorizationStore.can('user.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteUserModal" />
         </div>
 
         <VTable 
@@ -22,7 +22,7 @@
             </template>
 
             <!-- Row action slot: view/edit button -->
-             <template #actions="{ row }">
+             <template #actions="{ row }" v-if="authorizationStore.can('user.update')">
                 <VIconButton icon="icon-view-more" @click="showUpdateUserModal(row.uuid)" />
              </template>
         </VTable>

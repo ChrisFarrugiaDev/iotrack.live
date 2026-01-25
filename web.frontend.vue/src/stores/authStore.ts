@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('authStore', () => {
         }
     });
 
-    const redirectTo = ref("mapView");
+    const redirectTo = ref("map.view");
 
     // ---- Getters ----------------------------------------------------
 
@@ -76,7 +76,6 @@ export const useAuthStore = defineStore('authStore', () => {
     })
     function updateLogCounter() {
         logCounter.value++;
-        console.log(logCounter.value)
     }
 
     // - Expose --------------------------------------------------------

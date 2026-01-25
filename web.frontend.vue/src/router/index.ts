@@ -31,12 +31,15 @@ import UserView from '@/views/users/UserView.vue'
 import UserListView from '@/views/users/UserListView.vue'
 import UserCreateView from '@/views/users/UserCreateView.vue'
 import UserUpdateView from '@/views/users/UserUpdateView.vue'
+import { useAuthorizationStore } from '@/stores/authorizationStore'
+
+
 
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [
-		{ path: '/', name: 'mapView', component: MapView },
+		{ path: '/', name: 'map.view', component: MapView },
 
 		{ path: '/login', name: 'login.view', component: AuthView, meta: { requiresAuth: false } },
 		{ path: '/logout', name: 'logout.view', component: LogoutView, meta: { requiresAuth: true } },
@@ -109,6 +112,16 @@ router.beforeEach(async (
 ) => {
 	// Note: We are access the Pinia store within the navigation guard by:
 	// useAuthStore() & useMessageStore() to ensure Pinia is properly initialized 
+
+	const authorizationStore = useAuthorizationStore();
+
+	if ( to.name == 'organisations.list' &&  !authorizationStore.can('org.view') ) {
+		return next({ name: 'map.view' });
+	}
+
+	if ( to.name == 'users.list' &&  !authorizationStore.can('user.view') ) {
+		return next({ name: 'map.view' });
+	}
 
 	const authStore = useAuthStore();
 	// const appStore = useAppStore();

@@ -29,14 +29,16 @@ import { VTabs, Vview } from '@/ui';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { useRoute, useRouter } from 'vue-router';
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, watch } from 'vue';
 import { useUserStore } from '@/stores/userStore';
 import { useDashboardStore } from '@/stores/dashboardStore';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
 const userStore = useUserStore();
 const dashboardStore = useDashboardStore();
+const authorizationStore = useAuthorizationStore();
 
 // - Route -------------------------------------------------------------
 
@@ -53,11 +55,22 @@ const tabsObjectData_1 = reactive({
     activeTab: 'users.list' as TabKey,
     tabs: {
         'users.list': 'Users List',
-        'users.create': 'Register new User',
+        // 'users.create': 'Register new User',
 
-    },
+    } as Record<TabKey, string>,
 });
 
+
+watch(
+    () => authorizationStore.getUserPermissions.size,
+    () => {
+        if (authorizationStore.can('user.create')) {
+            tabsObjectData_1.tabs['users.create'] =
+                'Register new User'
+        }
+    }, 
+    { immediate: true }
+)
 // - Methods -----------------------------------------------------------
 
 function setActiveTab(e: any) {

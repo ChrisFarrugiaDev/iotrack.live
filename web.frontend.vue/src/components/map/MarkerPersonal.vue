@@ -30,8 +30,7 @@
 import { useDeviceStore } from '@/stores/deviceStore';
 import { useMapStore } from '@/stores/mapStore';
 import type { Asset } from '@/types/asset.type';
-import { inject, ref, watch } from 'vue';
-import { computed, shallowRef } from 'vue';
+import { inject, ref, watch, computed, shallowRef } from 'vue';
 import { CustomMarker, AdvancedMarker } from 'vue3-google-map';
 
 // - Props -------------------------------------------------------------
@@ -42,21 +41,17 @@ const props = defineProps<{
 }>();
 
 // - provide & inject --------------------------------------------------
-
 const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow');
-
 const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
 
 // - Store -------------------------------------------------------------
-
 const deviceStore = useDeviceStore();
+const mapStore = useMapStore();
 const device = deviceStore.useDevice(props.asset.devices[0].id);
 
-const mapStore = useMapStore();
+// - Marker basics -----------------------------------------------------
 
-// - Data --------------------------------------------------------------
-
-//  NOTE:  Keep options in a shallowRef to replace sub-objects
+//  NOTE: Keep options in a shallowRef and REPLACE sub-objects (position) to force marker re-render
 const markerOptions = shallowRef<Record<string, any>>({
     position: {
         lat: device.value?.last_telemetry?.latitude ?? props.telemetry.latitude,
@@ -64,59 +59,76 @@ const markerOptions = shallowRef<Record<string, any>>({
     },
 });
 
-
-
 // - Computed ----------------------------------------------------------
 
 const markerSize = computed(() => {
-    // Tweak these values for your preferred scaling
-    const minSize = 18;      // minimum size in px
-    const maxSize = 78;      // maximum size in px
-    const baseZoom = 12;     // base zoom level (SVG size will be 24px here)
-    const sizePerZoom = 4;   // how much to grow per zoom level
+    const minSize = 18;
+    const maxSize = 78;
+    const baseZoom = 12;
+    const sizePerZoom = 4;
 
     let size = 24 + (props.mapZoom - baseZoom) * sizePerZoom;
     size = Math.max(minSize, Math.min(maxSize, size));
     return size;
-})
+});
 
-// - Change Color Loggic -----------------------------------------------
+// - Follow state ------------------------------------------------------
 
-const idleColor = ref("#ffbf00");
-const activeColor = ref("#3754fa");
+const isFollowed = computed(() => mapStore.getFollow === props.asset.id);
 
-const idleColorLine = ref("#ffffff");
-const activeColorLine = ref("#ffffff");
+// - Change Color Logic ------------------------------------------------
+// Goal:
+// 1) Default palette (idle/active)
+// 2) Follow palette (green)
+// 3) "Hot" window: after telemetry arrives, show active color for 300s then back to idle
 
-const fillColor = ref(idleColor.value);
-const lineColor = ref(idleColorLine.value);
+// --- Color palettes
+const DEFAULT_PALETTE = {
+    idleFill: "#ffbf00",
+    activeFill: "#3754fa",
+    idleLine: "#ffffff",
+    activeLine: "#ffffff",
+};
 
-const idleColorTimeout = ref<number | null>(null);
+const FOLLOW_PALETTE = {
+    idleFill: "#22c65e",
+    activeFill: "#22c65e",
+    idleLine: "#ffffff",
+    activeLine: "#ffffff",
+};
 
+// --- Pick palette based on follow
+const palette = computed(() => (isFollowed.value ? FOLLOW_PALETTE : DEFAULT_PALETTE));
+
+// --- "Hot" window (recent telemetry)
+const isHot = ref(false);
+const hotTimeout = ref<number | null>(null);
+
+// --- Final colors used by SVG
+const fillColor = computed(() => (isHot.value ? palette.value.activeFill : palette.value.idleFill));
+const lineColor = computed(() => (isHot.value ? palette.value.activeLine : palette.value.idleLine));
+
+// - Watchers ----------------------------------------------------------
+
+// --- Telemetry received -> set active color for 300s
 watch(
-    () => ({
-        timestamp: device.value?.last_telemetry?.timestamp ?? null, 
-    }),
-    (pos, prev) => {
-        if (pos.timestamp == null) return;
+    () => device.value?.last_telemetry?.timestamp ?? null,
+    (ts) => {
+        if (ts == null) return;
 
+        // mark active
+        isHot.value = true;
 
-        // 3) Your active/idle color timer
-        if (idleColorTimeout.value) clearTimeout(idleColorTimeout.value);
-        fillColor.value = activeColor.value;
-        lineColor.value = activeColorLine.value;
-
-        idleColorTimeout.value = setTimeout(() => {
-            fillColor.value = idleColor.value;
-            lineColor.value = idleColorLine.value;
+        // reset timer
+        if (hotTimeout.value) clearTimeout(hotTimeout.value);
+        hotTimeout.value = window.setTimeout(() => {
+            isHot.value = false;
         }, 300_000);
     }
     // { immediate: true }
 );
 
-// - Direction Loggic --------------------------------------------------
-
-//  NOTE:   Watch ONLY what matters and REPLACE the position object
+// --- Lat/Lng change -> update marker position (+ follow pan)
 watch(
     () => ({
         lat: device.value?.last_telemetry?.latitude ?? null,
@@ -126,8 +138,8 @@ watch(
         if (pos.lat == null || pos.lng == null) return;
 
         // 1) Update map center
-        if (mapStore.getFollow == props.asset.id) {            
-            updateMapCenter!(pos.lat, pos.lng)       
+        if (mapStore.getFollow == props.asset.id) {
+            updateMapCenter!(pos.lat, pos.lng)
         }
 
         // 2) Move the marker (new object -> re-render)

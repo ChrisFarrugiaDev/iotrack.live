@@ -460,7 +460,7 @@ class UserController {
                     }
 
                     await UserPermissions.deleteByUserID(userID, tx);
-                    await UserPermissions.createMany(userPermissions);
+                    await UserPermissions.createMany(userPermissions, tx);
                 }
 
                 // ─────────────────────────────────────────
@@ -480,7 +480,7 @@ class UserController {
                     }
 
                     await UserOrganisationAccess.deleteByUserID(userID, tx);
-                    await UserOrganisationAccess.createMany(userOrganisationAccess);
+                    await UserOrganisationAccess.createMany(userOrganisationAccess, tx);
                 }
 
                 // ─────────────────────────────────────────
@@ -500,7 +500,7 @@ class UserController {
                     }
 
                     await UserAssetAccess.deleteByUserID(userID, tx);
-                    await UserAssetAccess.createMany(userAssetAccess);
+                    await UserAssetAccess.createMany(userAssetAccess, tx);
                 }
 
                 // ─────────────────────────────────────────
@@ -520,7 +520,7 @@ class UserController {
                     }
 
                     await UserDeviceAccess.deleteByUserID(userID, tx);
-                    await UserDeviceAccess.createMany(userDeviceAccess);
+                    await UserDeviceAccess.createMany(userDeviceAccess, tx);
                 }
             });
 

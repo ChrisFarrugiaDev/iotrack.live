@@ -6,7 +6,7 @@
             :key="key"
             type="button"
             class="vtabs__item"
-			:class="{'is-active': key== activeTab}"
+			      :class="{'is-active': key== activeTab}"
             :aria-selected="activeTab === key"
             :tabindex="activeTab === key ? 0 : -1"
             role="tab"

@@ -57,12 +57,11 @@
 
 <script setup lang="ts">
 
-import { CustomMarker, AdvancedMarker } from 'vue3-google-map'
+import { CustomMarker} from 'vue3-google-map'
 import { computed, inject, ref, shallowRef, watch } from "vue";
 import { useDeviceStore } from "@/stores/deviceStore";
 import type { Asset } from "@/types/asset.type";
 import { useMapStore } from '@/stores/mapStore';
-
 
 
 // - Props -------------------------------------------------------------
@@ -73,22 +72,19 @@ const props = defineProps<{
 }>();
 
 // - provide & inject --------------------------------------------------
-
 const setActiveInfoWindow = inject<(id: string) => void>('setActiveInfoWindow');
-
 const updateMapCenter = inject<(lat:number, lng:number) => void>('updateMapCenter');
 
+
 // - Store -------------------------------------------------------------
-
 const deviceStore = useDeviceStore();
-
 const mapStore = useMapStore();
-
 const device = deviceStore.useDevice(props.asset.devices[0].id);
 
-// - Data --------------------------------------------------------------
 
-//  NOTE:  Keep options in a shallowRef to replace sub-objects
+// - Marker basics -----------------------------------------------------
+
+//  NOTE: Keep options in a shallowRef and REPLACE sub-objects (position) to force marker re-render
 const markerOptions = shallowRef<Record<string, any>>({
     position: {
         lat: device.value?.last_telemetry?.latitude ?? props.telemetry.latitude,
@@ -96,161 +92,105 @@ const markerOptions = shallowRef<Record<string, any>>({
     },
 });
 
-
 // - Computed ----------------------------------------------------------
 
-
-
-// (Optional) force-update fallback if needed
-// const markerKey = computed(() => device.value?.last_telemetry?.timestamp ?? 0);
-
+// Marker size scales with zoom (keep SVG readable across zoom levels)
 const markerSize = computed(() => {
-    // Tweak these values for your preferred scaling
-    const minSize = 18;      // minimum size in px
-    const maxSize = 78;      // maximum size in px
-    const baseZoom = 12;     // base zoom level (SVG size will be 24px here)
-    const sizePerZoom = 4;   // how much to grow per zoom level
+    const minSize = 18;
+    const maxSize = 78;
+    const baseZoom = 12;
+    const sizePerZoom = 4;
 
     let size = 24 + (props.mapZoom - baseZoom) * sizePerZoom;
     size = Math.max(minSize, Math.min(maxSize, size));
     return size;
 });
 
+
+// - Follow state (map "follow" mode) ----------------------------------
+
+const isFollowed = computed(() => mapStore.getFollow === props.asset.id);
+
+
+// - Movement state (stopped / moving + direction) ---------------------
+
+// Direction used to rotate the moving arrow marker (degrees from North)
+const direction = ref<number | null>(null);
+
+// Moving state derived from telemetry speed (with a small debounce/streak)
+const SPEED_THRESHOLD = 0.5;    // treat <= 0.5 as "stopped"
+const ZERO_STREAK_TO_STOP = 3;  // need N consecutive zeros to mark stopped
+const isMoving = ref(false);
+const zeroStreak = ref(0);
+
+// Stationary marker is shown if we are stopped OR we have no direction yet
 const showStationary = computed(() => !isMoving.value || direction.value == null);
 
 
+// - Color behaviour ---------------------------------------------------
+// Goal:
+// 1) Default palette (idle/active)
+// 2) Follow palette when user is following this asset
+// 3) "Hot" window: when telemetry arrives, show active color for 120s, then return to idle
 
-// - Change Color Loggic -----------------------------------------------
-// State
-const idleColor = ref("#ffbf00");
-const activeColor = ref("#3754fa");
+// --- Color palettes
+const DEFAULT_PALETTE = {
+    idleFill: "#ffbf00",
+    activeFill: "#3754fa",
+    idleLine: "#ffffff",
+    activeLine: "#ffffff",
+};
 
-const idleColorLine = ref("#ffffff");
-const activeColorLine = ref("#ffffff");
+const FOLLOW_PALETTE = {
+    idleFill: "#22c65e",
+    activeFill: "#22c65e",
+    idleLine: "#ffffff",
+    activeLine: "#ffffff",
+};
 
-// fillColor.value = "#22c65e";
-// fillColor.value = "#cc8899";    
-// fillColor.value = "#3754fa";
-// fillColor.value = "#15A773";
+// --- Palette selection (depends on follow state)
+const palette = computed(() => {
+    return isFollowed.value ? FOLLOW_PALETTE : DEFAULT_PALETTE;
+});
 
-const fillColor = ref(idleColor.value);
-const lineColor = ref(idleColorLine.value);
+// --- "Hot" window (recent telemetry)
+const isHot = ref(false);
+const hotTimeout = ref<number | null>(null);
 
-const idleColorTimeout = ref<number | null>(null);
-
-watch(
-    () => ({
-        timestamp: device.value?.last_telemetry?.timestamp ?? null, 
-    }),
-    (pos, prev) => {
-        if (pos.timestamp == null) return;
-        
-        // 3) Your active/idle color timer
-        if (idleColorTimeout.value) clearTimeout(idleColorTimeout.value);
-        fillColor.value = activeColor.value;
-        lineColor.value = activeColorLine.value;
-
-        idleColorTimeout.value = setTimeout(() => {
-            fillColor.value = idleColor.value;
-            lineColor.value = idleColorLine.value;
-
-            direction.value = null;
-            isMoving.value = false;
-        }, 120_000);
-    }
-    // { immediate: true }
-);
+// --- Final colors used by SVG
+const fillColor = computed(() => (isHot.value ? palette.value.activeFill : palette.value.idleFill));
+const lineColor = computed(() => (isHot.value ? palette.value.activeLine : palette.value.idleLine));
 
 
-// - Direction Loggic --------------------------------------------------
+// - Helpers (bearing calc) --------------------------------------------
 
-const direction = ref<number | null>(null); // degrees from North
-
-// Helpers 
 function toRad(d: number) { return (d * Math.PI) / 180; }
 function toDeg(r: number) { return (r * 180) / Math.PI; }
 
-// Initial bearing from (lat1,lng1) -> (lat2,lng2) in degrees from North 
+// Initial bearing from (lat1,lng1) -> (lat2,lng2) in degrees from North
 function bearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const φ1 = toRad(lat1), φ2 = toRad(lat2);
     const Δλ = toRad(lng2 - lng1);
     const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x = Math.cos(φ1) * Math.sin(φ2) -
+    const x =
+        Math.cos(φ1) * Math.sin(φ2) -
         Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 
-//  NOTE:   Watch ONLY what matters and REPLACE the position object
-watch(
-    () => ({
-        lat: device.value?.last_telemetry?.latitude ?? null,
-        lng: device.value?.last_telemetry?.longitude ?? null,
-    }),
-    (pos, prev) => {
-        if (pos.lat == null || pos.lng == null) return;
 
-        // 1) Update map center
-        if (mapStore.getFollow == props.asset.id) {            
-            updateMapCenter!(pos.lat, pos.lng)       
-        }
+// - Watchers ----------------------------------------------------------
 
-        // 2) Move the marker (new object -> re-render)
-        markerOptions.value = {
-            ...markerOptions.value,
-            position: { lat: pos.lat, lng: pos.lng },
-        };
-
-        // 3) Compute bearing if we have a previous point
-        if (
-            prev?.lat != null &&
-            prev?.lng != null &&
-            (prev.lat !== pos.lat || prev.lng !== pos.lng)
-        ) {
-            const brng = bearing(prev.lat, prev.lng, pos.lat, pos.lng);
-            direction.value = brng; // 0..360, 0 = North, 90 = East
-        }
-    }
-    // { immediate: true }
-);
-
-// - Map Center Panning Loggic --------------------------------------------------
-watch(
-    () => ({
-        lat: device.value?.last_telemetry?.latitude ?? null,
-        lng: device.value?.last_telemetry?.longitude ?? null,
-    }),
-    (pos, prev) => {
-        if (pos.lat == null || pos.lng == null) return;
-
-        if (mapStore.getFollow == props.asset.id) {            
-            updateMapCenter!(pos.lat, pos.lng)       
-        }
-    }
-    // { immediate: true }
-);
-
-// - Is Moving Loggic --------------------------------------------------
-
-// Tunables
-const SPEED_THRESHOLD = 0.5;   // treat <= 0.5 as "stopped" to avoid jitter
-const ZERO_STREAK_TO_STOP = 3; // need 3 consecutive zeros to mark stopped
-
-// State
-const isMoving = ref(false);
-const zeroStreak = ref(0);
-
+// --- Speed -> isMoving (with streak to avoid jitter)
 watch(
     () => device.value?.last_telemetry?.speed,
     (raw) => {
-        // Normalize: null/undefined/NaN -> 0
         const speed = Number.isFinite(Number(raw)) ? Number(raw) : 0;
 
         if (speed > SPEED_THRESHOLD) {
-            // any non-zero reading => moving immediately
             isMoving.value = true;
             zeroStreak.value = 0;
         } else {
-            // zero (or tiny) reading => increase streak; stop after N in a row
             zeroStreak.value += 1;
             if (zeroStreak.value >= ZERO_STREAK_TO_STOP) {
                 isMoving.value = false;
@@ -260,32 +200,84 @@ watch(
     { immediate: true }
 );
 
+// --- Telemetry received -> active color for 120s
+watch(
+    () => device.value?.last_telemetry?.timestamp ?? null,
+    (ts) => {
+        if (ts == null) return;
 
+        // mark as "hot" (active color)
+        isHot.value = true;
 
-const isFollowed = computed(()=>{
-    return mapStore.getFollow == props.asset.id;
-});
+        // restart the cooldown timer
+        if (hotTimeout.value) clearTimeout(hotTimeout.value);
+        hotTimeout.value = window.setTimeout(() => {
+            isHot.value = false;
 
-// ---------------------------------------------------------------------
-
-watch(isFollowed, (v) => {
- 
-    if (v) {
-        idleColor.value = "#22c65e";
-        activeColor.value = "#22c65e";
-        fillColor.value = '#22c65e';
-    } else {
-        idleColor.value = "#ffbf00";
-        activeColor.value = "#3754fa";
-        fillColor.value = idleColorTimeout.value ? activeColor.value : idleColor.value;
+            // keep your existing "go idle" behaviour
+            direction.value = null;
+            isMoving.value = false;
+        }, 120_000);
     }
-});
-// ---------------------------------------------------------------------
+);
+
+// --- Lat/Lng changes:
+// 1) update map center if followed
+// 2) update marker position (replace object to force re-render)
+// 3) compute direction (bearing) using previous point
+watch(
+    () => ({
+        lat: device.value?.last_telemetry?.latitude ?? null,
+        lng: device.value?.last_telemetry?.longitude ?? null,
+    }),
+    (pos, prev) => {
+        if (pos.lat == null || pos.lng == null) return;
+
+        // 1) Follow mode: keep map centered on this asset
+        if (mapStore.getFollow == props.asset.id) {
+            updateMapCenter!(pos.lat, pos.lng);
+        }
+
+        // 2) Move marker (new object -> re-render)
+        markerOptions.value = {
+            ...markerOptions.value,
+            position: { lat: pos.lat, lng: pos.lng },
+        };
+
+        // 3) Update direction if we actually moved
+        if (
+            prev?.lat != null &&
+            prev?.lng != null &&
+            (prev.lat !== pos.lat || prev.lng !== pos.lng)
+        ) {
+            direction.value = bearing(prev.lat, prev.lng, pos.lat, pos.lng);
+        }
+    }
+);
+
+// - (Existing) Map Center Panning Loggic ------------------------------
+// Kept as-is (even though lat/lng watcher already pans). You can remove later if redundant.
+watch(
+    () => ({
+        lat: device.value?.last_telemetry?.latitude ?? null,
+        lng: device.value?.last_telemetry?.longitude ?? null,
+    }),
+    (pos, prev) => {
+        if (pos.lat == null || pos.lng == null) return;
+
+        if (mapStore.getFollow == props.asset.id) {
+            updateMapCenter!(pos.lat, pos.lng);
+        }
+    }
+);
+
+
 // fillColor.value = "#22c65e";
-// fillColor.value = "#cc8899";    
+// fillColor.value = "#cc8899";
 // fillColor.value = "#3754fa";
 // fillColor.value = "#15A773";
 </script>
+
 
 <!-- --------------------------------------------------------------- -->
 
