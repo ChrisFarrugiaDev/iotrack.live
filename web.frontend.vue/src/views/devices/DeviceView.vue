@@ -31,9 +31,11 @@ import { useRoute, useRouter } from 'vue-router';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { VTabs, Vview } from '@/ui';
 import { useMessageStore } from '@/stores/messageStore';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
+const authorizationStore = useAuthorizationStore();
 
 // - Route -------------------------------------------------------------
 
@@ -49,11 +51,21 @@ const tabsObjectData_1 = reactive({
     activeTab: 'devices.list' as TabKey,
     tabs: {
         'devices.list': 'Devices List',
-        'devices.create': 'Register new Device',
-
-    },
+        // 'devices.create': 'Register new Device',
+    } as Record<TabKey, string>,
 });
 
+
+watch(
+  () => authorizationStore.getUserPermissions.size,
+  () => {
+    if (authorizationStore.can('device.create')) {
+      tabsObjectData_1.tabs['devices.create'] =
+        'Register new Device'
+    } 
+  },
+  { immediate: true }
+);
 
 
 // - Methods -----------------------------------------------------------

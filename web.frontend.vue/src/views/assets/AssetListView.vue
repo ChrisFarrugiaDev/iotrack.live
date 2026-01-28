@@ -3,7 +3,7 @@
         <!-- Search bar and delete button row -->
         <div class="mt-16 flex">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
-            <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteAssetModal" />
+            <VIconButton v-if="authorizationStore.can('asset.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteAssetModal" />
         </div>
 
         <VTable class="mt-4"
@@ -15,11 +15,13 @@
             :clearSelected="clearSelected"
             @update:page="currentPage = Number($emit)"
             @update:selectedKeys="selectedKeys = ($event as any)">
+
             <template #actions="{ row }"
         >          
-                <VIconButton icon="icon-image" @click="showUpdateImageModalOpen(row.id)"/>
-                <VIconButton icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
+                <VIconButton v-if="authorizationStore.can('asset.update')" icon="icon-image" @click="showUpdateImageModalOpen(row.id)"/>
+                <VIconButton v-if="authorizationStore.can('asset.update')" icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
             </template>
+
             <!-- Pagination slot for custom pager component -->
             <template #pagination="{ page, pageCount, setPage }">
                 <ThePager class="justify-center w-100" :page="page" :page-count="pageCount" :set-page="setPage" />
@@ -80,6 +82,7 @@ import axios from '@/axios';
 import { useAppStore } from '@/stores/appStore';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import UpdateImagesModal from '@/components/images/update_image_modal/UpdateImagesModal.vue';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 
 // - Store -------------------------------------------------------------
@@ -96,6 +99,8 @@ const messageStore = useMessageStore();
 const appStore = useAppStore();
 
 const dashboardStore = useDashboardStore();
+
+const authorizationStore = useAuthorizationStore();
 
 // --- Router -------------------------------------------------------
 const route = useRoute();

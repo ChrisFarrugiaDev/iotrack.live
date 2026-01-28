@@ -3,7 +3,7 @@
         <!-- Search bar and delete button row -->
         <div class="mt-16 flex">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
-            <VIconButton class="mr-2" type="red" icon="icon-delete" @click="showDeleteDeviceModal" />
+            <VIconButton v-if="authorizationStore.can('device.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteDeviceModal" />
         </div>
 
         <!-- Device table (with selection, pagination, actions) -->
@@ -26,7 +26,7 @@
                         </svg>
                     </RouterLink> -->
 
-                    <VIconButton icon="icon-view-more" @click="showUpdateDeviceModal(row.uuid)" />
+                    <VIconButton v-if="authorizationStore.can('device.update')" icon="icon-view-more" @click="showUpdateDeviceModal(row.uuid)" />
                 </div>
             </template>
         </VTable>
@@ -82,12 +82,13 @@ import DeviceUpdateView from './DeviceUpdateView.vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { useRoute, useRouter } from 'vue-router';
 import { useDashboardStore } from '@/stores/dashboardStore';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 // --- Router -------------------------------------------------------
 const route = useRoute();
 const router = useRouter();
 
-// --- Pinia Stores -------------------------------------------------
+// --- Stores ----------------------------------------------------------
 const deviceStore = useDeviceStore();
 const { getDevices } = storeToRefs(deviceStore);
 
@@ -100,6 +101,8 @@ const { getOrganisationScope } = storeToRefs(organisationStore);
 const messageStore = useMessageStore();
 
 const dashboardStore = useDashboardStore();
+
+const authorizationStore = useAuthorizationStore();
 
 // --- Reactive State -----------------------------------------------
 // Search/filter/pagination UI state

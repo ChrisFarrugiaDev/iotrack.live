@@ -65,7 +65,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('devices.list')">
+        <div v-if="authorizationStore.can('device.view')" class="sidebar__item" @click="goToView('devices.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-device"></use>
             </svg>
@@ -76,7 +76,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item" @click="goToView('assets.list')">
+        <div v-if="authorizationStore.can('asset.view')" class="sidebar__item" @click="goToView('assets.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-asset"></use>
             </svg>

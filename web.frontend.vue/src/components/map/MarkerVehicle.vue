@@ -255,21 +255,21 @@ watch(
     }
 );
 
-// - (Existing) Map Center Panning Loggic ------------------------------
-// Kept as-is (even though lat/lng watcher already pans). You can remove later if redundant.
-watch(
-    () => ({
-        lat: device.value?.last_telemetry?.latitude ?? null,
-        lng: device.value?.last_telemetry?.longitude ?? null,
-    }),
-    (pos, prev) => {
-        if (pos.lat == null || pos.lng == null) return;
+// // - (Existing) Map Center Panning Loggic ------------------------------
+// // Kept as-is (even though lat/lng watcher already pans). Can remove later if redundant.
+// watch(
+//     () => ({
+//         lat: device.value?.last_telemetry?.latitude ?? null,
+//         lng: device.value?.last_telemetry?.longitude ?? null,
+//     }),
+//     (pos, prev) => {
+//         if (pos.lat == null || pos.lng == null) return;
 
-        if (mapStore.getFollow == props.asset.id) {
-            updateMapCenter!(pos.lat, pos.lng);
-        }
-    }
-);
+//         if (mapStore.getFollow == props.asset.id) {
+//             updateMapCenter!(pos.lat, pos.lng);
+//         }
+//     }
+// );
 
 
 // fillColor.value = "#22c65e";

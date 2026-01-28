@@ -55,8 +55,6 @@ const tabsObjectData_1 = reactive({
 });
 
 
-
-
 watch(
   () => authorizationStore.getUserPermissions.size,
   () => {
@@ -66,7 +64,7 @@ watch(
     } 
   },
   { immediate: true }
-)
+);
 
 // - Methods -----------------------------------------------------------
 

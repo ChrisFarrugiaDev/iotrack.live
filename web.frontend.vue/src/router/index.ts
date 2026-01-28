@@ -123,6 +123,14 @@ router.beforeEach(async (
 		return next({ name: 'map.view' });
 	}
 
+	if ( to.name == 'assets.list' &&  !authorizationStore.can('asset.view') ) {
+		return next({ name: 'map.view' });
+	}
+
+	if ( to.name == 'devices.list' &&  !authorizationStore.can('device.view') ) {
+		return next({ name: 'map.view' });
+	}
+
 	const authStore = useAuthStore();
 	// const appStore = useAppStore();
 	const messageStore = useMessageStore();

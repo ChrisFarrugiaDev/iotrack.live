@@ -24,13 +24,15 @@
 
 <script setup lang="ts">
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 import { useMessageStore } from '@/stores/messageStore';
 import { VTabs, Vview } from '@/ui';
-import { reactive } from 'vue';
+import { reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 // - Store -------------------------------------------------------------
 const messageStore = useMessageStore();
+const authorizationStore = useAuthorizationStore();
 
 // - Route -------------------------------------------------------------
 
@@ -40,18 +42,28 @@ const route = useRoute();
 
 // - Data --------------------------------------------------------------
 
-type TabKey = 'devices.list' | 'devices.create';
+type TabKey = 'assets.list' | 'assets.create';
 
 // Reactive state to manage tab data and the active tab identifier
 const tabsObjectData_1 = reactive({
     activeTab: 'assets.list' as TabKey,
     tabs: {
         'assets.list': 'Assets List',
-        'assets.create': 'Register new Asset',
+        // 'assets.create': 'Register new Asset',
 
-    },
+    } as Record<TabKey, string>,
 });
 
+watch(
+  () => authorizationStore.getUserPermissions.size,
+  () => {
+    if (authorizationStore.can('asset.create')) {
+      tabsObjectData_1.tabs['assets.create'] =
+        'Assets List'
+    } 
+  },
+  { immediate: true }
+);
 
 // - Methods -----------------------------------------------------------
 
