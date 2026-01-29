@@ -41,12 +41,12 @@ INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
   (12,  'asset.create',          'Create new assets',             'asset'  ),
   (13,  'asset.update',          'Update existing assets',        'asset'  ),
   (14,  'asset.delete',          'Delete assets',                 'asset'  ),
+  (15,  'asset.assign-device',   'Assign devices to assets',      'asset'  ),
 
-  (15,  'device.view',           'View devices',                  'device' ),
-  (16,  'device.create',         'Create new devices',            'device' ),
-  (17,  'device.update',         'Update existing devices',       'device' ),
-  (18,  'device.delete',         'Delete devices',                'device' ),
-  (19,  'device.assign',         'Assign devices to assets',      'device' )
+  (16,  'device.view',           'View devices',                  'device' ),
+  (17,  'device.create',         'Create new devices',            'device' ),
+  (18,  'device.update',         'Update existing devices',       'device' ),
+  (19,  'device.delete',         'Delete devices',                'device' )
 ON CONFLICT (perm_id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -76,16 +76,16 @@ SELECT 2, perm_id FROM app.permissions
    'user.view','user.create','user.update','user.delete',
    'org.view','org.switch','org.create','org.update','org.delete',
    'audit.view',
-   'asset.view','asset.create','asset.update','asset.delete',
-   'device.view','device.create','device.update','device.delete','device.assign'
+   'asset.view','asset.create','asset.update','asset.delete','asset.assign-device',
+   'device.view','device.create','device.update','device.delete'
  )
 UNION ALL
 -- user defaults
 SELECT 3, perm_id FROM app.permissions
  WHERE key IN (
    'org.view','org.switch',
-   'asset.view','asset.create','asset.update',
-   'device.view','device.assign'
+   'asset.view','asset.create','asset.update','asset.assign-device',
+   'device.view'
  )
 UNION ALL
 -- viewer defaults

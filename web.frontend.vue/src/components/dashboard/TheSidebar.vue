@@ -201,7 +201,7 @@ onMounted(() => {
     right: 0;
     top: 0;
 
-    @include respondMinHeight(649) {
+    @include respondMinHeight(688) {
         top: -4px;
     }
 }
@@ -215,9 +215,9 @@ onMounted(() => {
     flex-direction: column; 
     background-color: transparent;
     
-    @include respondMinHeight(688) {
-        background-color: transparent;
-    }
+    // @include respondMinHeight(875) {
+    //     background-color: transparent;
+    // }
 
     // Expanded state (when user menu open)
     &__open {
@@ -233,12 +233,12 @@ onMounted(() => {
         &--top {
             min-height: 4.4rem !important;
         }
-        @include respondHeight(688) {
+        @include respondHeight(875) {
             max-height: 1.5rem;
             &--top { min-height: 1.5rem !important; }
         }
 
-        @include respondHeight(649) {
+        @include respondHeight(688) {
             max-height: 0rem;
             &--top { min-height: 0rem !important; }
         }
@@ -293,7 +293,7 @@ onMounted(() => {
 
         // Rounded corners for first/last items (only on tall screens)
 
-        @include respondMinHeight(649) {
+        @include respondMinHeight(688) {
         &--first {
                 border-top-right-radius: var(--radius-sm);         
             }
@@ -331,7 +331,7 @@ onMounted(() => {
         &--expand {
             transform: translateX(-7px);
 
-            @include respondMobile(688) {
+            @include respondMobile(875) {
                 transform: translateX(0px);
             }
         }

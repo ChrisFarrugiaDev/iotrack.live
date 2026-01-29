@@ -5,5 +5,6 @@ declare module "fastify" {
         userID?: string;
         userOrgID?: string;
         userRoleID?: string;
+        userPerms?: string[];
     }
 }

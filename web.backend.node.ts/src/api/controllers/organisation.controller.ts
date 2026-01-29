@@ -111,7 +111,7 @@ class OrganisationController {
                 });
             }
 
-
+            // Fetch organisations
             const organisations = await Organisation.getByIds(organisation_ids);
 
             if (!organisations || organisations.length == 0) {
@@ -120,6 +120,24 @@ class OrganisationController {
                     message: "No matching organisations were found to delete.",
                     data: { count: 0 },
                 });
+            }
+
+         
+            // Prevent deleting system organisations
+      
+            const SYSTEM_ORG_IDS = new Set([1, 2]); // root + archive
+
+            for (const org of organisations) {
+                if (SYSTEM_ORG_IDS.has(Number(org.id))) {
+                    return reply.status(403).send({
+                        success: false,
+                        message: `Organisation "${org.name}" cannot be deleted.`,
+                        error: {
+                            code: "SYSTEM_ORG_DELETE_FORBIDDEN",
+                            organisation_id: org.id,
+                        },
+                    });
+                }
             }
 
             // Child check — do not allow deleting a parent with children
@@ -200,6 +218,22 @@ class OrganisationController {
                     success: false,
                     message: "Organisation not found.",
                     error: { code: "ORGANISATION_NOT_FOUND" },
+                });
+            }
+
+            // ---------------------------------------------
+            // 1.1 Prevent updates to system organisations
+            // ---------------------------------------------
+            const SYSTEM_ORG_IDS = new Set([1, 2]); // root + archive
+
+            if (SYSTEM_ORG_IDS.has(Number(existing.id))) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "This organisation is a system organisation and cannot be modified.",
+                    error: {
+                        code: "SYSTEM_ORG_UPDATE_FORBIDDEN",
+                        organisation_id: existing.id,
+                    },
                 });
             }
 

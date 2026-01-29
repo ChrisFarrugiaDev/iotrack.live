@@ -239,6 +239,19 @@ class UserController {
                 });
             }
 
+            const hasRoot = users.some(u => u.role_id === 1);
+
+            if (hasRoot) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "Root users cannot be deleted.",
+                    error: {
+                        code: "ROOT_DELETE_FORBIDDEN",
+                    },
+                });
+            }
+
+
             // Delete from DB
             const result = await User.deleteByIDs(user_ids);
 
@@ -276,6 +289,7 @@ class UserController {
     static async update(request: FastifyRequest, reply: FastifyReply) {
         try {
 
+
             const userID = (request as any).params.id;
 
             // ---------------------------------------------
@@ -301,9 +315,25 @@ class UserController {
                 });
             }
 
+            // ---------------------------------------------
+            // 2. Prevent non-root users from updating root 
+            // ---------------------------------------------
+            
+            if (request.userRoleID !== "1" && existing.role_id === 1) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "You cannot update a root role.",
+                    error: {
+                        code: "ROOT_ROLE_ASSIGN_FORBIDDEN",
+                        permission: "user.update-root",
+                    },
+                });
+            }
+
+
 
             // ---------------------------------------------
-            // 2. Extract allowed update fields from body
+            // 3. Extract allowed update fields from body
             // ---------------------------------------------
 
             const parsed = userSchema.updateSchema.safeParse(request.body);
@@ -332,13 +362,18 @@ class UserController {
                 user_device_access
             } = parsed.data;
 
+       
+
+
+  
+
 
             // ---------------------------------------------
-            // 3. TO IMPLIMENT validate if user has permissions
+            // 4. TO IMPLIMENT validate if user has permissions
             // ---------------------------------------------
 
             // ---------------------------------------------
-            // 4. Ensure organisation is within allowed orgs for current user
+            // 5. Ensure organisation is within allowed orgs for current user
             // ---------------------------------------------
 
             if (organisation_id !== undefined) {
@@ -364,7 +399,7 @@ class UserController {
 
 
             // ---------------------------------------------
-            // 4. Input validation for critical fields
+            // 6. Input validation for critical fields
             // ---------------------------------------------
             const isEmpty = (v: unknown) =>
                 v === null ||
@@ -408,7 +443,7 @@ class UserController {
             }
 
             // ---------------------------------------------
-            // 5. Build Prisma update payload
+            // 7. Build Prisma update payload
             // ---------------------------------------------
             const userFields: Prisma.usersUpdateInput = {};
 
@@ -528,7 +563,7 @@ class UserController {
 
 
             // ---------------------------------------------
-            // 7. Resolve effective access & permissions
+            // 8. Resolve effective access & permissions
             // ---------------------------------------------
             const [
                 userPermissions,
@@ -568,7 +603,7 @@ class UserController {
             }
 
             // ---------------------------------------------
-            // 9. Successful response
+            // 10. Successful response
             // ---------------------------------------------
             return reply.send({
                 success: true,

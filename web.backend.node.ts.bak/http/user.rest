@@ -1,0 +1,20 @@
+### --------------------------------------------------------------------
+
+GET http://57.129.22.122:4001/api/user
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozNiwiaWF0IjoxNzYzNzI4ODUwLCJleHAiOjE3NjM3NzIwNTB9.YYDnOcSk2jTibQqRN3DZGZ4tnQfOQhALy_EY2ndmVyQ
+
+### --------------------------------------------------------------------
+POST http://57.129.22.122:4001/api/user/assignment-options
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MGFmODk4OS1iYmZkLTRlZjYtOWNiMy1hYjAwOTY3ZmNkMTUiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjozNiwiaWF0IjoxNzYzNzI4ODUwLCJleHAiOjE3NjM3NzIwNTB9.YYDnOcSk2jTibQqRN3DZGZ4tnQfOQhALy_EY2ndmVyQ
+
+{
+    "org_id" : 2
+}
+
+
+###
+
+GET http://node.track.iotsolutions.com.mt:3333/reset-driver?imei=864275070859932
+Content-Type: application/json

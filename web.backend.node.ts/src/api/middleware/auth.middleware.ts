@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { UserJWT } from "../../types/user-jwt.type";
 import * as redisUtils from "../../utils/redis.utils";
 import prisma from "../../config/prisma.config";
+import { AccessProfileController } from "../controllers/access-profile.controller";
 
 /**
  * Middleware to validate JWT and attach user info to the request object.
@@ -74,6 +75,13 @@ export const authMiddleware = async (request: FastifyRequest, reply: FastifyRepl
         request.userID = decoded.id;
         request.userOrgID = decoded.org_id;
         request.userRoleID = decoded.role_id;
+
+        const perms = await AccessProfileController.getUserPermissionKeys({
+            id: decoded.id,
+            role_id: Number(decoded.role_id),
+        });
+
+        request.userPerms = perms;
 
         // 7. Continue to the next middleware/controller
         // Fastify continues automatically if you return nothing and don't send a response

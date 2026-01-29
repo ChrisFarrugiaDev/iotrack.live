@@ -31,7 +31,7 @@
             </div>
             <div class="vform__group mt-7">
                 <label class="vform__label">Device</label>
-                <VueSelect v-model="form.device_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
+                <VueSelect v-model="form.device_id" :shouldAutofocusOption="false" :isDisabled="confirmOn || !authorizationStore.can('asset.assign-device')"
                     :style="[vueSelectStyles, selectErrorStyle(!!errors.device_id)]" class="vform__group"
                     :options="getDevices" placeholder="" />
                 <p class="vform__error">{{ errors.device_id }}</p>
@@ -171,9 +171,20 @@ import { useMessageStore } from '@/stores/messageStore';
 import type { Asset } from '@/types/asset.type';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useDashboardStore } from '@/stores/dashboardStore';
+import { useFormErrorHandler } from '@/composables/useFormErrorHandler';
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 
 const vueSelectStyles = useVueSelectStyles();
+
+const errors = ref<Record<string, string>>({
+    name: '',
+    asset_type: '',
+    organisation_id: '',
+    device_id: '',
+});
+
+const { handleFormError } = useFormErrorHandler(errors);
 
 // -Types --------------------------------------------------------------
 
@@ -188,6 +199,8 @@ const messageStore = useMessageStore();
 const dashboardStore = useDashboardStore();
 
 const { getAssets, uuidToIdMap } = storeToRefs(assetStore);
+
+const authorizationStore = useAuthorizationStore();
 
 // - Props -------------------------------------------------------------
 
@@ -234,12 +247,7 @@ const form = reactive({
 // Single sentinel representing "no device linked"
 const NO_DEVICE = '-1';
 
-const errors = ref<Record<string, string>>({
-    name: '',
-    asset_type: '',
-    organisation_id: '',
-    device_id: '',
-});
+
 
 
 //  - Computed ---------------------------------------------------------
@@ -526,38 +534,7 @@ async function updateAsset() {
 
     } catch (err: any) {
 
-        // Try to extract server-side validation errors
-        const fieldErrors = err?.response?.data?.error?.details?.fieldErrors;
-
-
-        if (fieldErrors && typeof fieldErrors === "object") {
-            for (const key in fieldErrors) {
-                if (Object.prototype.hasOwnProperty.call(errors.value, key)) {
-                    errors.value[key] = fieldErrors[key][0];
-                }
-            }
-            messageStore.setFlashMessagesList(
-                ["Please fix the highlighted errors and try again."],
-                'flash-message--orange'
-            );
-            return;
-        }
-
-        // Known global error messages from backend
-        const message = err?.response?.data?.message;
-        if (message === 'Invalid input.') {
-            messageStore.setFlashMessagesList(
-                ["Some of the provided information is invalid."],
-                'flash-message--orange'
-            );
-            return;
-        }
-
-        // Fallback for totally unexpected errors
-        messageStore.setFlashMessagesList(
-            [message ?? "An unexpected error occurred. Please try again later."],
-            'flash-message--orange'
-        );
+        handleFormError(err);
 
         // Always log error for developer debugging
         console.error("! AssetUpdateView updateAsset !", err);

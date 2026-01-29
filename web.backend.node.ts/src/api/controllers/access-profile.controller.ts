@@ -65,12 +65,13 @@ export class AccessProfileController {
             const settings = await AccessProfileController.getUserSettings(user);
             const permissions = await AccessProfileController.getUserPermissionKeys(user);
 
+
+
             // 6 fetch authorization permissoins
             // TODO:  cache these values
             const appRoles = await Role.getAll();
             const appPermissions = await Permissions.getAll();
             const appRolePermissions = await RolePermissions.getGroupedByRole(true);
-
 
             // 7. Construct the access profile object
             const profile: AccessProfile = {

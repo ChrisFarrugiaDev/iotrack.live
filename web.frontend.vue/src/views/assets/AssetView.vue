@@ -59,7 +59,7 @@ watch(
   () => {
     if (authorizationStore.can('asset.create')) {
       tabsObjectData_1.tabs['assets.create'] =
-        'Assets List'
+        'Register new Asset'
     } 
   },
   { immediate: true }

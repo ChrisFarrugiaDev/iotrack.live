@@ -65,6 +65,18 @@ class AssetController {
 
             // If a device is to be attached, validate device existence is is not already att and org match
             if (device_id) {
+
+                if (!request.userPerms!.includes("asset.assign-device")) {
+                    return reply.status(403).send({
+                        success: false,
+                        message: "You do not have permission to assign or detach devices to assets.",
+                        error: {
+                            code: "PERMISSION_DENIED",
+                            permission: "asset.assign-device",
+                        },
+                    });
+                }
+                
                 const device = await Device.getByID(device_id);
                 if (!device) {
                     return reply.status(404).send({
@@ -159,6 +171,7 @@ class AssetController {
     // In AssetController.ts
 
     static async update(request: FastifyRequest, reply: FastifyReply) {
+
         try {
             const assetID = (request as any).params.id;
             if (!assetID) {
@@ -216,7 +229,28 @@ class AssetController {
             if (typeof device_id !== "undefined") {
                 if (device_id === null || device_id === '0') {
                     // explicit detach -> ok
+                    if (!request.userPerms!.includes("asset.assign-device")) {
+                        return reply.status(403).send({
+                            success: false,
+                            message: "You do not have permission to assign or detach devices to assets.",
+                            error: {
+                                code: "PERMISSION_DENIED",
+                                permission: "asset.assign-device",
+                            },
+                        });
+                    }
                 } else {
+                    if (!request.userPerms!.includes("asset.assign-device")) {
+                        return reply.status(403).send({
+                            success: false,
+                            message: "You do not have permission to assign or detach devices to assets.",
+                            error: {
+                                code: "PERMISSION_DENIED",
+                                permission: "asset.assign-device",
+                            },
+                        });
+                    }
+
                     const dev = await Device.getByID(device_id);
                     if (!dev) {
                         return reply.status(404).send({
