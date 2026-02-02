@@ -83,6 +83,7 @@ export const authMiddleware = async (request: FastifyRequest, reply: FastifyRepl
 
         request.userPerms = perms;
 
+
         // 7. Continue to the next middleware/controller
         // Fastify continues automatically if you return nothing and don't send a response
         // (if you want compatibility with non-async middleware, you can also accept `done` and call it)

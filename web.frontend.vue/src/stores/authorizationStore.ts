@@ -22,10 +22,11 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
     const permissions = ref<Permission[]>([]);
     const rolePermissions = ref<Record<string, number[]>>({});
 
-    const userPermissions = ref<Set<string>>(new Set())
-    
+    const userPermissions = ref<Set<string>>(new Set());   
 
     const loaded = ref(false);
+
+    const rootOverIsActive = ref(false);
 
 
     // ---- Getters ----------------------------------------------------
@@ -76,8 +77,12 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
         return userPermissions.value;
     });
 
-    const can = computed(() => {
+    const can = computed(() => {        
+
         return (permissionKey: string) => {
+            
+            if (rootOverIsActive.value ) { return true; }
+
             return userPermissions.value.has(permissionKey)
         }
     });
@@ -156,6 +161,7 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
         getUserPermissions,
         setUserPermissions,
         can,
+        rootOverIsActive,
   
     };
 });

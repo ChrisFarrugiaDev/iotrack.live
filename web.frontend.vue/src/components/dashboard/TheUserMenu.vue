@@ -30,6 +30,16 @@
             </svg>
         </div>
 
+        <div v-if="isRoot" 
+            class="menu__link" :class="{'isActive ' : authorizationStore.rootOverIsActive}" 
+            v-on:click="authorizationStore.rootOverIsActive = !authorizationStore.rootOverIsActive">
+            <div class="menu__text" >
+                Root Override Perms                 
+            </div>
+            <svg class="menu__icon">
+                <use xlink:href="@/ui/svg/sprite.svg#icon-shield-warning"></use>
+            </svg>
+        </div>
         <div class="menu__link menu__link--last" @click="logout">
             <div class="menu__text">Logout</div>
             <svg class="menu__icon">
@@ -43,19 +53,32 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
+import { useAuthorizationStore } from '@/stores/authorizationStore';
 import { useDashboardStore} from '@/stores/dashboardStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+// - Route -------------------------------------------------------------
 
 const router = useRouter();
+
+// - Store -------------------------------------------------------------
+
 const dashboardStore = useDashboardStore();
+const settingsStore = useSettingsStore();
+const { isRoot } = storeToRefs(settingsStore);
 
+const authorizationStore = useAuthorizationStore();
 
+// - Computed ----------------------------------------------------------
 
 const getSidebarTheme = computed(() => {
     return dashboardStore.getTheme == 'light' ? 'light' : 'dark';
 });
+
+// - Methods -----------------------------------------------------------
 
 function logout() {
     router.push({ name: "logout.view" });
@@ -66,6 +89,9 @@ function logout() {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
+.isActive {
+    color: var(--color-red-600) !important;
+ }
 .menu {
      
     box-shadow: $box-shadow-4;

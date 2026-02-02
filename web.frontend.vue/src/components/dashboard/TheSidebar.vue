@@ -54,7 +54,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item">
+        <div class="sidebar__item" @click="goToView('groups.list')">
             <svg class="sidebar__svg ">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-groups"></use>
             </svg>

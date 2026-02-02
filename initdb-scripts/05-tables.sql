@@ -328,3 +328,103 @@ FROM
       ON p.perm_id = up.perm_id
 ORDER BY
     u.email, p.key;
+
+
+-- ---------------------------------------------------------------------
+
+-- groups
+
+CREATE TABLE IF NOT EXISTS app.groups (
+    id              BIGSERIAL PRIMARY KEY,
+    uuid            UUID        NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+
+    organisation_id BIGINT      NOT NULL
+        REFERENCES app.organisations(id) ON DELETE CASCADE,
+
+    name            TEXT        NOT NULL,
+
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_groups_org_name UNIQUE (organisation_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_groups_organisation_id
+    ON app.groups (organisation_id);
+
+CREATE TRIGGER trg_groups_set_updated_at
+BEFORE UPDATE ON app.groups
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- group_devices
+
+CREATE TABLE IF NOT EXISTS app.group_assets (
+    group_id  BIGINT NOT NULL
+        REFERENCES app.groups(id) ON DELETE CASCADE,
+
+    asset_id  BIGINT NOT NULL
+        REFERENCES app.assets(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (group_id, asset_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_assets_asset_id
+    ON app.group_assets (asset_id);
+
+
+
+-- group_assets
+
+CREATE TABLE IF NOT EXISTS app.group_devices (
+    group_id  BIGINT NOT NULL
+        REFERENCES app.groups(id) ON DELETE CASCADE,
+
+    device_id BIGINT NOT NULL
+        REFERENCES app.devices(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (group_id, device_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_devices_device_id
+    ON app.group_devices (device_id);
+
+
+-- group_users
+
+CREATE TABLE IF NOT EXISTS app.group_users (
+    group_id BIGINT NOT NULL
+        REFERENCES app.groups(id) ON DELETE CASCADE,
+
+    user_id  BIGINT NOT NULL
+        REFERENCES app.users(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_users_user_id
+    ON app.group_users (user_id);
+
+
+-- group_organisations
+
+CREATE TABLE IF NOT EXISTS app.group_organisations (
+    group_id        BIGINT NOT NULL
+        REFERENCES app.groups(id) ON DELETE CASCADE,
+
+    organisation_id BIGINT NOT NULL
+        REFERENCES app.organisations(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (group_id, organisation_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_organisations_org_id
+    ON app.group_organisations (organisation_id);

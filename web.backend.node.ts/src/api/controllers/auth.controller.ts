@@ -70,11 +70,12 @@ class AuthController {
             // await redisUtils.set(`user:token_version:${user.id}`, user.token_version, null, "iotrack.live:");
 
             // 4. Build the JWT payload and sign a new token
+         
             const tokenPayload: UserJWT = {
                 sub: user.uuid,
                 id: user.id,
                 email: user.email,
-                role_id: user.roles.id,
+                role_id: user.role_id,
                 org_id: user.organisations.id,
                 token_version: user.token_version,
             };

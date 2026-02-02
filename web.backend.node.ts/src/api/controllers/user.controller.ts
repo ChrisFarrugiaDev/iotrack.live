@@ -318,8 +318,9 @@ class UserController {
             // ---------------------------------------------
             // 2. Prevent non-root users from updating root 
             // ---------------------------------------------
-            
-            if (request.userRoleID !== "1" && existing.role_id === 1) {
+  
+
+            if (request.userRoleID != "1" && existing.role_id === 1) {
                 return reply.status(403).send({
                     success: false,
                     message: "You cannot update a root role.",

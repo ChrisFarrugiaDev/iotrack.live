@@ -16,6 +16,14 @@ export const useSettingsStore = defineStore('settingsStore', () => {
 
     const getAuthenticatedUser = computed( ()=> authenticatedUser.value);
 
+    const isRoot = computed(() => {
+        if (authenticatedUser.value?.role?.id === 1) {
+            return true
+        }
+
+        return false;
+    })
+    
     // ---- Actions ----------------------------------------------------
     function setMapsApiKey(key: string | undefined) {
         mapsApiKey.value = key;
@@ -36,6 +44,8 @@ export const useSettingsStore = defineStore('settingsStore', () => {
         setMapsApiKey,
         getAuthenticatedUser,
         setAuthenticatedUser,
+
+        isRoot,
 
     };
 });

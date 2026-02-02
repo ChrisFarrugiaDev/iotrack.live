@@ -32,6 +32,10 @@ import UserListView from '@/views/users/UserListView.vue'
 import UserCreateView from '@/views/users/UserCreateView.vue'
 import UserUpdateView from '@/views/users/UserUpdateView.vue'
 import { useAuthorizationStore } from '@/stores/authorizationStore'
+import GroupUpdateView from '@/views/groups/GroupUpdateView.vue'
+import GroupCreateView from '@/views/groups/GroupCreateView.vue'
+import GroupListView from '@/views/groups/GroupListView.vue'
+import GroupView from '@/views/groups/GroupView.vue'
 
 
 
@@ -84,6 +88,19 @@ const router = createRouter({
 				{ path: '', name: 'organisations.list', component: OrgListView },
 				{ path: 'new', name: 'organisations.create', component: OrgCreateView },
 				{ path: ':id/edit', name: 'organisations.edit', component: OrgUpdateView, props: true },
+			],
+		},
+
+		// Groups
+		{
+			path: '/groups',
+			name: 'groups.view',
+			component: GroupView,
+			meta: { requiresAuth: true },
+			children: [
+				{ path: '', name: 'groups.list', component: GroupListView },
+				{ path: 'new', name: 'groups.create', component: GroupCreateView },
+				{ path: ':id/edit', name: 'groups.edit', component: GroupUpdateView, props: true },
 			],
 		},
 
