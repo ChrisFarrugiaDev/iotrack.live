@@ -20,5 +20,6 @@ export interface AccessProfile {
 		devices: Record<string, DeviceType>;
 		settings: Record<string, any>;
 		permissions: Record<string, any>;
+		groups: Record<string, any>;
 	}
 } 

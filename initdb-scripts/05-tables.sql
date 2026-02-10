@@ -24,31 +24,42 @@ CREATE TABLE IF NOT EXISTS app.permissions (
 
 -- 2. Seed it with your initial permissions
 INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
+  -- Users
   ( 1,  'user.view',             'View users',                    'user'   ),
   ( 2,  'user.create',           'Create new users',              'user'   ),
   ( 3,  'user.update',           'Update existing users',         'user'   ),
   ( 4,  'user.delete',           'Delete users',                  'user'   ),
 
+  -- Organisations
   ( 5,  'org.view',              'View organisations',            'organisations' ),
   ( 6,  'org.switch',            'Switch organisation',           'organisations' ),
   ( 7,  'org.create',            'Create new organisations',      'organisations' ),
   ( 8,  'org.update',            'Update existing organisations', 'organisations' ),
   ( 9,  'org.delete',            'Delete organisations',          'organisations' ),
 
+  -- Admin / Audit
   (10,  'audit.view',            'View system audit logs',        'admin'  ),
 
+  -- Assets
   (11,  'asset.view',            'View assets',                   'asset'  ),
   (12,  'asset.create',          'Create new assets',             'asset'  ),
   (13,  'asset.update',          'Update existing assets',        'asset'  ),
   (14,  'asset.delete',          'Delete assets',                 'asset'  ),
   (15,  'asset.assign-device',   'Assign devices to assets',      'asset'  ),
 
+  -- Devices
   (16,  'device.view',           'View devices',                  'device' ),
   (17,  'device.create',         'Create new devices',            'device' ),
   (18,  'device.update',         'Update existing devices',       'device' ),
-  (19,  'device.delete',         'Delete devices',                'device' )
-ON CONFLICT (perm_id) DO NOTHING;
+  (19,  'device.delete',         'Delete devices',                'device' ),
 
+  -- Groups
+  (20,  'group.view',            'View groups',                   'group'  ),
+  (21,  'group.create',          'Create new groups',             'group'  ),
+  (22,  'group.update',          'Update existing groups',        'group'  ),
+  (23,  'group.delete',          'Delete groups',                 'group'  )
+
+  ON CONFLICT (perm_id) DO NOTHING;
 -- ---------------------------------------------------------------------------------------------------------------------
 
 -- 1. Create the role_permissions join table
@@ -66,35 +77,50 @@ CREATE TABLE IF NOT EXISTS app.role_permissions (
 --    user      (3) gets asset/device create/update/view,
 --    viewer    (4) gets view-only perms.
 
+-- --
+
 INSERT INTO app.role_permissions (role_id, perm_id)
--- sys_admin: all perms
+
+-- sys_admin: all permissions
 SELECT 1, perm_id FROM app.permissions
+
 UNION ALL
+
 -- admin defaults
 SELECT 2, perm_id FROM app.permissions
- WHERE key IN (
-   'user.view','user.create','user.update','user.delete',
-   'org.view','org.switch','org.create','org.update','org.delete',
-   'audit.view',
-   'asset.view','asset.create','asset.update','asset.delete','asset.assign-device',
-   'device.view','device.create','device.update','device.delete'
- )
+WHERE key IN (
+  'user.view','user.create','user.update','user.delete',
+  'org.view','org.switch','org.create','org.update','org.delete',
+  'audit.view',
+  'asset.view','asset.create','asset.update','asset.delete','asset.assign-device',
+  'device.view','device.create','device.update','device.delete',
+  'group.view','group.create','group.update','group.delete'
+)
+
 UNION ALL
+
 -- user defaults
 SELECT 3, perm_id FROM app.permissions
- WHERE key IN (
-   'org.view','org.switch',
-   'asset.view','asset.create','asset.update','asset.assign-device',
-   'device.view'
- )
+WHERE key IN (
+  'org.view','org.switch',
+  'asset.view','asset.create','asset.update','asset.assign-device',
+  'device.view',
+  'group.view'
+)
+
 UNION ALL
+
 -- viewer defaults
 SELECT 4, perm_id FROM app.permissions
- WHERE key IN (
-   'org.view',
-   'asset.view','device.view'
- )
+WHERE key IN (
+  'org.view',
+  'asset.view','device.view',
+  'group.view'
+)
+
 ON CONFLICT (role_id, perm_id) DO NOTHING;
+
+-- --
 
 CREATE OR REPLACE VIEW app.role_permissions_view AS
 SELECT
@@ -342,6 +368,9 @@ CREATE TABLE IF NOT EXISTS app.groups (
         REFERENCES app.organisations(id) ON DELETE CASCADE,
 
     name            TEXT        NOT NULL,
+    type            VARCHAR(32) NOT NULL,
+
+    items           INTEGER     NOT NULL DEFAULT 0,
 
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),

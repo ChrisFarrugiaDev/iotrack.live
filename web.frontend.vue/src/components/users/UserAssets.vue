@@ -53,8 +53,9 @@ const assetsOptions = ref<Record<string, any>[]>([]);
 // - Watch -------------------------------------------------------------
 
 watch(()=> userAssignableStore.getSelectedOrgId, async () => {
-    
+
     const grpAssets = userAssignableStore.getGroupedAssets    
+    console.log(grpAssets)
     assetsOptions.value = Object.values(grpAssets);
 
 },{

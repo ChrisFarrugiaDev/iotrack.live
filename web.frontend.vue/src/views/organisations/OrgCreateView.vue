@@ -64,6 +64,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useOrganisationStore } from "@/stores/organisationStore";
 import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
+import { useDashboardStore } from "@/stores/dashboardStore";
 
 
 // - Composable --------------------------------------------------------
@@ -83,6 +84,7 @@ const {handleFormError} = useFormErrorHandler(errors);
 
 const messageStore = useMessageStore();
 const organisationStore = useOrganisationStore();
+const dashboardStore = useDashboardStore();
 
 // - Data --------------------------------------------------------------
 
@@ -133,6 +135,8 @@ function initCreateOrganisation() {
 }
 
 async function createOrganisation() {
+
+    dashboardStore.setIsLoading(true);
     
     try {      
 
@@ -165,6 +169,7 @@ async function createOrganisation() {
         
     } finally {
         confirmOn.value = false;
+        dashboardStore.setIsLoading(false);
     }
 }
 

@@ -83,6 +83,7 @@ import { useMessageStore } from '@/stores/messageStore';
 import { useRoute, useRouter } from 'vue-router';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
+import { formatDateYMDHM } from '@/utils/dateTimeUtils';
 
 // --- Router -------------------------------------------------------
 const route = useRoute();
@@ -174,7 +175,7 @@ const tableCol = ref<TableColumn[]>([
         data: "created_at",
         sort: true,
         align: "left",
-        format: (value) => new Date(value).toLocaleString(), // Human-readable date
+        format: (value) => formatDateYMDHM(new Date(value)),
     },
 ]);
 

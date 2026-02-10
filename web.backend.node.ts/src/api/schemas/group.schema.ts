@@ -1,0 +1,43 @@
+import z from "zod";
+
+//----------------------------------------------------------------------
+// Basic required field validators
+
+
+// Required string with custom error messages
+const requiredString = z.string({
+    error: (iss) => iss.input === undefined
+        ? "Field is required."
+        : "Invalid input."
+});
+
+// Required boolean with custom error messages
+const requiredBoolean = z.boolean({
+    error: (iss) => iss.input === undefined
+        ? "Field is required."
+        : "Invalid input."
+});
+
+//----------------------------------------------------------------------
+// Field validators
+
+// Non-empty string: trims and requires at least 1 char
+const nonEmptyString = requiredString.trim().min(1, "Required");
+
+// Numeric string: must be digits only
+const numericString = requiredString.regex(/^\d+$/, "Must be numeric");
+
+//----------------------------------------------------------------------
+// Main user store schema
+
+
+export const storeSchema = z.object({
+    name: nonEmptyString,
+    type: nonEmptyString
+})
+
+
+export const destroySchema = z.object({
+    group_ids: z.array(numericString, "Field is required.").min(1, "Provide at least one organisation id.")
+});
+

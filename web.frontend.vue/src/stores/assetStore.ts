@@ -128,7 +128,7 @@ export const useAssetStore = defineStore('assetStore', () => {
             deviceStore.removeAssetToDeviceInStore(a.devices[0].id);
             deviceStore.addAssetToDeviceInStore(a.devices[0].id, a.id)
         }
-        assets.value[a.id] = a
+        assets.value[a.id] = a;
     }
 
     function removeAssetFromStore(assetId: string | number) {

@@ -43,3 +43,20 @@ export function genPass(len=12, upper=true, nums=true, special=true) {
 
     return pass;
 }
+
+export function indexBy<T extends Record<PropertyKey, any>> (arr: T[], key: keyof T): Record<PropertyKey, T> {
+
+    const result: Record<PropertyKey, T> = {};
+
+    for (const item of arr) {
+
+        const index = item[key];
+
+        if (index !== undefined && index !== null) {
+            result[index] = item;
+        }
+    }
+
+
+    return result;
+}

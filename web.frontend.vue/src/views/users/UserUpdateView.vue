@@ -511,11 +511,6 @@ async function updateUser() {
         // Success message
         messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
 
-
-
-
-
-
     } catch (err) {
         handleFormError(err);
         console.error("! UserUpdateView updateUser !", err);

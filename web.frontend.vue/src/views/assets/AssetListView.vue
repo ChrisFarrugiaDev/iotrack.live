@@ -16,8 +16,7 @@
             @update:page="currentPage = Number($emit)"
             @update:selectedKeys="selectedKeys = ($event as any)">
 
-            <template #actions="{ row }"
-        >          
+            <template #actions="{ row }">          
                 <VIconButton v-if="authorizationStore.can('asset.update')" icon="icon-image" @click="showUpdateImageModalOpen(row.id)"/>
                 <VIconButton v-if="authorizationStore.can('asset.update')" icon="icon-view-more" @click="showUpdateAssetModal(row.uuid)"/>
             </template>
@@ -83,6 +82,7 @@ import { useAppStore } from '@/stores/appStore';
 import { useDashboardStore } from '@/stores/dashboardStore';
 import UpdateImagesModal from '@/components/images/update_image_modal/UpdateImagesModal.vue';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
+import { formatDateYMDHM } from '@/utils/dateTimeUtils';
 
 
 // - Store -------------------------------------------------------------
@@ -161,7 +161,7 @@ const tableCol = ref<TableColumn[]>([
         col: "Created At",
         data: "created_at",
         sort: true,
-        format: (value) => new Date(value).toLocaleString(),
+        format: (value) => formatDateYMDHM(new Date(value)),
         align: "left"
     }
 

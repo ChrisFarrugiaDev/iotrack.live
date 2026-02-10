@@ -130,6 +130,7 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
         if (!assets || !orgs) return {}
 
         const groupedAssets: Record<string, TreeNode> = {}
+        
         for (const asset of Object.values(assets)) {
             const organisation = orgs[asset.organisation_id]
             if (!organisation) continue

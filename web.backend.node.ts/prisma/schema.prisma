@@ -21,6 +21,7 @@ model assets {
   updated_at        DateTime            @default(now()) @db.Timestamptz(6)
   organisations     organisations       @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
   devices           devices[]
+  group_assets      group_assets[]
   user_asset_access user_asset_access[]
 
   @@index([name], map: "idx_assets_name")
@@ -45,8 +46,9 @@ model devices {
   last_telemetry_ts  DateTime             @default(dbgenerated("'1970-01-01 00:00:00+00'::timestamp with time zone")) @db.Timestamptz(6)
   created_at         DateTime             @default(now()) @db.Timestamptz(6)
   updated_at         DateTime             @default(now()) @db.Timestamptz(6)
-  assets             assets?              @relation(fields: [asset_id], references: [id], onDelete: Restrict)
+  assets             assets?              @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
   organisations      organisations        @relation(fields: [organisation_id], references: [id], onDelete: SetDefault, onUpdate: NoAction)
+  group_devices      group_devices[]
   user_device_access user_device_access[]
 
   @@unique([external_id, external_id_type], map: "idx_devices_idtype_org")
@@ -67,6 +69,8 @@ model organisations {
   updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
   assets                   assets[]
   devices                  devices[]
+  group_organisations      group_organisations[]
+  groups                   groups[]
   organisations            organisations?             @relation("organisationsToorganisations", fields: [parent_org_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_organisations      organisations[]            @relation("organisationsToorganisations")
   user_organisation_access user_organisation_access[]
@@ -140,6 +144,7 @@ model users {
   created_at               DateTime                   @default(now()) @db.Timestamptz(6)
   updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
   token_version            Int                        @default(1)
+  group_users              group_users[]
   user_asset_access        user_asset_access[]
   user_device_access       user_device_access[]
   user_organisation_access user_organisation_access[]
@@ -256,5 +261,72 @@ model user_permissions {
   users       users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([user_id, perm_id])
+  @@schema("app")
+}
+
+model group_assets {
+  group_id   BigInt
+  asset_id   BigInt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  assets     assets   @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  groups     groups   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([group_id, asset_id])
+  @@index([asset_id], map: "idx_group_assets_asset_id")
+  @@schema("app")
+}
+
+model group_devices {
+  group_id   BigInt
+  device_id  BigInt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  devices    devices  @relation(fields: [device_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  groups     groups   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([group_id, device_id])
+  @@index([device_id], map: "idx_group_devices_device_id")
+  @@schema("app")
+}
+
+model group_organisations {
+  group_id        BigInt
+  organisation_id BigInt
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  groups          groups        @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organisations   organisations @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([group_id, organisation_id])
+  @@index([organisation_id], map: "idx_group_organisations_org_id")
+  @@schema("app")
+}
+
+model group_users {
+  group_id   BigInt
+  user_id    BigInt
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  groups     groups   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([group_id, user_id])
+  @@index([user_id], map: "idx_group_users_user_id")
+  @@schema("app")
+}
+
+model groups {
+  id                  BigInt                @id @default(autoincrement())
+  uuid                String                @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organisation_id     BigInt
+  name                String
+  type                String                @db.VarChar(32)
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  group_assets        group_assets[]
+  group_devices       group_devices[]
+  group_organisations group_organisations[]
+  group_users         group_users[]
+  organisations       organisations         @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([organisation_id, name], map: "uq_groups_org_name")
+  @@index([organisation_id], map: "idx_groups_organisation_id")
   @@schema("app")
 }

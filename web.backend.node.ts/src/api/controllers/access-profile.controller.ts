@@ -5,6 +5,7 @@ import { ApiResponse } from "../../types/api-response.type";
 import { Organisation, OrganisationType } from "../../models/organisation.model";
 import { UserOrganisationAccess } from "../../models/user-organisation-access.model";
 import * as redisUtils from "../../utils/redis.utils";
+import * as utils from "../../utils/utils"
 import { UserAssetAccess } from "../../models/user-asset-access.model";
 import { Asset, AssetType } from "../../models/asset.model";
 import { UserDeviceAccess } from "../../models/user-device-access.model";
@@ -14,6 +15,8 @@ import { Role } from "../../models/role.model";
 import { Permissions } from "../../models/permissions.model";
 import { RolePermissions, RolePermissionsType } from "../../models/role-permissions.model";
 import { UserPermissions } from "../../models/user-permissions.model";
+import { Group } from "../../models/group.model";
+
 
 // -------------------------------------------------------------------------
 
@@ -65,6 +68,8 @@ export class AccessProfileController {
             const settings = await AccessProfileController.getUserSettings(user);
             const permissions = await AccessProfileController.getUserPermissionKeys(user);
 
+            const g = await Group.getByOrganisation(user.organisation_id);
+            const groups = utils.indexBy(g , "id");
 
 
             // 6 fetch authorization permissoins
@@ -94,6 +99,7 @@ export class AccessProfileController {
                     devices,
                     settings,
                     permissions,
+                    groups,
                 },
                 authorization: {
                     roles: appRoles,
@@ -359,4 +365,9 @@ export class AccessProfileController {
 
         return keys;
     }
+
+
+
+
+
 }

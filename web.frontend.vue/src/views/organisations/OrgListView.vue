@@ -74,6 +74,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import OrgUpdateView from './OrgUpdateView.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
+import { formatDateYMDHM } from '@/utils/dateTimeUtils';
 
 
 // --- Router -------------------------------------------------------
@@ -137,7 +138,7 @@ const tableCol = ref<TableColumn[]>([
         data: "created_at",
         sort: true,
         align: "left",
-        format: (value) => new Date(value).toLocaleString(),
+        format: (value) => formatDateYMDHM(new Date(value)),
     },
 ]);
 

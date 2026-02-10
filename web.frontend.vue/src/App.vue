@@ -45,6 +45,7 @@ import { useSettingsStore } from './stores/settingsStore';
 import type { AuthenticatedUser } from './types/authenticated.user.type';
 import SocketIo from './components/socketio/SocketIo.vue';
 import { useAuthorizationStore } from './stores/authorizationStore';
+import { useGroupStore } from './stores/groupStore';
 
 
 // - Store -------------------------------------------------------------
@@ -66,6 +67,7 @@ const assetStore = useAssetStore();
 const organisationStore = useOrganisationStore();
 const settingsStore = useSettingsStore();
 const authorizationStore = useAuthorizationStore();
+const groupStore = useGroupStore();
 
 
 // - Routes ------------------------------------------------------------
@@ -164,6 +166,8 @@ async function fetchAccessProfile() {
             authorizationStore.setUserPermissions(
                 profile.access.permissions
             );
+
+            groupStore.setGroups(profile.access.groups);
        
             const autUserPayload: AuthenticatedUser = {
                 first_name: profile.first_name,

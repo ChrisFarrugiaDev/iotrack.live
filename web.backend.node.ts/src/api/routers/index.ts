@@ -6,6 +6,7 @@ import deviceRouter from "./device.router";
 import assetRouter from "./asset.router";
 import userRouter from "./user.router";
 import organisationRoute from "./organisation.router";
+import groupRouter from "./group.router";
 
 // ---------------------------------------------------------------------
 
@@ -18,6 +19,7 @@ export default async function router(fastify: FastifyInstance) {
     await fastify.register(assetRouter, {prefix: '/asset'});
     await fastify.register(userRouter, {prefix: '/user'});
     await fastify.register(organisationRoute, {prefix: '/organisation'});
+    await fastify.register(groupRouter, {prefix: '/group'});
 }
 
 // ---------------------------------------------------------------------

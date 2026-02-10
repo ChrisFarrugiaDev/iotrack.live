@@ -72,10 +72,6 @@ export function timeElapsed(
   };
 }
 
-
-
-
-
 export function formatDateTime(
   utcDateString: string,
   timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -99,4 +95,19 @@ export function formatDateTime(
   const minute = (map.minute ?? "").padStart(2, "0");
 
   return `${map.month} ${map.day}, ${map.year} ${map.hour}:${minute} ${map.dayPeriod}`;
+}
+
+export function formatDateYMDHM(value?: string | Date | null): string {
+    if (!value) return "";
+
+    const d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return "";
+
+    return (
+        `${d.getFullYear()}/` +
+        `${String(d.getMonth() + 1).padStart(2, "0")}/` +
+        `${String(d.getDate()).padStart(2, "0")} ` +
+        `${String(d.getHours()).padStart(2, "0")}:` +
+        `${String(d.getMinutes()).padStart(2, "0")}`
+    );
 }
