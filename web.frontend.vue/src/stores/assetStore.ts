@@ -27,6 +27,7 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     // ---- Getters ----------------------------------------------------
     const getAssets = computed(() => assets.value);
+    const getAssetIDs = computed(() => Object.keys(assets.value || {}));
 
 
     const getAssetsWithDevice = computed(() => {
@@ -218,5 +219,7 @@ export const useAssetStore = defineStore('assetStore', () => {
         getAssetsWithDevice,
         toggleFavorites,
         isFavorite,
+
+        getAssetIDs,
     }
 })

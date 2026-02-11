@@ -31,6 +31,7 @@ import 'vue3-treeselect/dist/vue3-treeselect.css';
 const props = defineProps<{
     confirmOn: boolean,
     defaultAssets?: string[],
+    filterAssetsByUser?: boolean,
 }>();
 
 // - Emits -------------------------------------------------------------
@@ -54,9 +55,13 @@ const assetsOptions = ref<Record<string, any>[]>([]);
 
 watch(()=> userAssignableStore.getSelectedOrgId, async () => {
 
-    const grpAssets = userAssignableStore.getGroupedAssets    
-    console.log(grpAssets)
+    if (props.filterAssetsByUser) {
+        userAssignableStore.filterAssetsByUser = true;
+    }
+    const grpAssets = userAssignableStore.getGroupedAssets;    
     assetsOptions.value = Object.values(grpAssets);
+
+    userAssignableStore.filterAssetsByUser = false;
 
 },{
     deep: true,

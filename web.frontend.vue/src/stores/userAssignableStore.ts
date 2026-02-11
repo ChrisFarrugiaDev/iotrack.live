@@ -19,6 +19,8 @@ import { useAppStore } from './appStore'
 import axios from '@/axios'
 import type { Asset } from '@/types/asset.type'
 import type { Device } from '@/types/device.type'
+import { useAssetStore } from './assetStore'
+import { useDeviceStore } from './deviceStore'
 
 export const useUserAssignableStore = defineStore('userAssignableStore', () => {
     // ---- Types ------------------------------------------------------
@@ -39,15 +41,19 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
 
     // ---- Getters ----------------------------------------------------
     // Returns raw assignable resources for the current org
-    const getAssignableResources = computed(() => assignableResources.value)
+    const getAssignableResources = computed(() => assignableResources.value);
 
     // The currently selected org id
-    const getSelectedOrgId = computed(() => selectedOrgId.value)
+    const getSelectedOrgId = computed(() => selectedOrgId.value);
 
     // Tree/grouped structures for UI (computed from raw assignable data)
-    const getGroupedAssets = computed(() => buildAssetsTree())
-    const getGroupedDevices = computed(() => buildDeviceTree())
-    const getGroupedOrganisations = computed(() => buildOrgTree())
+    const filterAssetsByUser = ref(false);
+    const getGroupedAssets = computed(() => buildAssetsTree(filterAssetsByUser.value));
+
+    const filterDevicesByUser = ref(false);
+    const getGroupedDevices = computed(() => buildDeviceTree(filterDevicesByUser.value));
+
+    const getGroupedOrganisations = computed(() => buildOrgTree());
 
     // ---- Actions ----------------------------------------------------
     /**
@@ -81,7 +87,7 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
     function buildOrgTree(): TreeNode[] {
         const orgId = selectedOrgId.value
         const orgs = assignableResources.value[orgId]?.organisation
-    
+
         if (!orgs) return []
 
         // 1. Create flat node map
@@ -98,7 +104,7 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
 
         // 2. Link nodes into a tree, skipping the root org
         Object.values(orgs as Record<string, any>).forEach((org) => {
-            
+
             const parentId = org.parent_org_id ?? null
             if (parentId === orgId) {
                 topLevel.push(nodeMap[org.id]) // direct children of root
@@ -123,24 +129,35 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
     /**
      * Build a grouping tree of assets by organisation (for UI).
      */
-    function buildAssetsTree(): Record<string, TreeNode> {
+    function buildAssetsTree(filterByUserAssets: boolean = false): Record<string, TreeNode> {
         const orgId = selectedOrgId.value
         const orgs = assignableResources.value[orgId]?.organisation
         const assets = assignableResources.value[orgId]?.assets as Record<string, Asset>
+
         if (!assets || !orgs) return {}
 
         const groupedAssets: Record<string, TreeNode> = {}
-        
+
+        const userAssetIds = filterByUserAssets
+            ? new Set(Object.keys(useAssetStore().getAssets || {}))
+            : null
+
         for (const asset of Object.values(assets)) {
             const organisation = orgs[asset.organisation_id]
             if (!organisation) continue
+
             if (!(organisation.name in groupedAssets)) {
                 groupedAssets[organisation.name] = {
                     label: organisation.name,
-                    id: organisation.name,                  
+                    id: organisation.name,
                     children: []
                 }
             }
+
+            if (filterByUserAssets && !userAssetIds!.has(asset.id)) {
+                continue
+            }
+
             groupedAssets[organisation.name]!.children!.push({
                 label: asset.name,
                 id: asset.id,
@@ -152,17 +169,23 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
     /**
      * Build a grouping tree of devices by organisation (for UI).
      */
-    function buildDeviceTree(): Record<string, TreeNode> {
+    function buildDeviceTree(filterByUserDevices: boolean = false): Record<string, TreeNode> {
         const orgId = selectedOrgId.value
         const orgs = assignableResources.value[orgId]?.organisation
         const devices = assignableResources.value[orgId]?.devices as Record<string, Device>
+
         if (!devices || !orgs) return {}
 
         const groupedDevices: Record<string, TreeNode> = {}
 
+        const userDeviceIds = filterByUserDevices
+            ? new Set(Object.keys(useDeviceStore().getDevices || {}))
+            : null
+
         for (const device of Object.values(devices)) {
             const organisation = orgs[device.organisation_id!]
             if (!organisation) continue
+
             if (!(organisation.name in groupedDevices)) {
                 groupedDevices[organisation.name] = {
                     label: organisation.name,
@@ -170,30 +193,39 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
                     children: []
                 }
             }
+
+            if (filterByUserDevices && !userDeviceIds!.has(device.id)) {
+                continue
+            }
+
             const label = device.model
                 ? `${device.model} ${device.external_id}`
                 : `${device.external_id}`
-            groupedDevices[organisation.name].children!.push({
+
+            groupedDevices[organisation.name]!.children!.push({
                 label,
                 id: device.id,
             })
         }
 
-        
         return groupedDevices
     }
 
     // ---- Expose API -------------------------------------------------
     return {
-        fetchAssignableResources,  
-        getAssignableResources,    
-        getGroupedAssets,          
-        getGroupedDevices,         
-        getGroupedOrganisations,   
-        getSelectedOrgId,          
-     
+        fetchAssignableResources,
+        getAssignableResources,
+        getGroupedAssets,
+        getGroupedDevices,
+        getGroupedOrganisations,
+        getSelectedOrgId,
+
         selectedOrgId,
         fetchedOrgIds,
         assignableResources,
+
+        filterAssetsByUser,
+        filterDevicesByUser,
+
     }
 })

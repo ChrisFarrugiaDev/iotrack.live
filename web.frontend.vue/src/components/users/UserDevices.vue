@@ -32,6 +32,7 @@ import 'vue3-treeselect/dist/vue3-treeselect.css';
 const props = defineProps<{
     confirmOn: boolean,
     defaultDevices?: string[],
+    filterDevicesByUser?: boolean,
 }>();
 
 // - Emits -------------------------------------------------------------
@@ -55,9 +56,13 @@ const devicesOptions = ref<Record<string, any>[]>([]);
 // - Watch -------------------------------------------------------------
 
 watch(()=> userAssignableStore.getSelectedOrgId, async () => {
-    
+    if (props.filterDevicesByUser) {
+        userAssignableStore.filterDevicesByUser = true;
+    }
     const grpDevices = userAssignableStore.getGroupedDevices;
     devicesOptions.value = Object.values(grpDevices);
+    
+    userAssignableStore.filterDevicesByUser = false;
 
 },{
     deep: true,

@@ -26,6 +26,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     // ---- Getters ----------------------------------------------------
 
     const getDevices = computed(() => devices.value);
+    const getDevicesIDs = computed(() => Object.keys(devices.value || {}));
 
     // Getter for a single device by id
     function useDevice(id: string) {
@@ -275,6 +276,6 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         useDevice,
         addAssetToDeviceInStore,
         removeAssetToDeviceInStore,
-   
+        getDevicesIDs,
     };
 });

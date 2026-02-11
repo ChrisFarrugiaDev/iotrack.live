@@ -11,31 +11,23 @@
 				<p class="vform__error">{{ errors.name }}</p>
 			</div>
 
-			<div class="vform__group mb-7">
-				<label class="vform__label">Goup Type<span class="vform__required">*</span></label>
-				<VueSelect v-model="form.type" 
-					:shouldAutofocusOption="false"
-					:isDisabled="confirmOn" 
-					:style="[vueSelectStyles, selectErrorStyle(!!errors.type)]" class="vform__group"
-					:options="[
-						{ label: 'Assets Group',  value: 'asset' },
-						{ label: 'Devices Group', value: 'device' },
-						// { label: 'Users Group',   value: 'user' },
-						// { label: 'Organisations Group',   value: 'organisation' },
-		
-					]" placeholder="" />
-				<p class="vform__error">{{ errors.type }}</p>
-			</div>
 
 		</div>
 
-		<UserAssets :confirmOn="confirmOn" :defaultAssets="defaultAssets" @assets-changed="form.assets = $event">
+		<UserAssets v-if="form.type == 'asset'"
+			:confirmOn="confirmOn" 
+			:defaultAssets="defaultAssets" 
+			@assets-changed="form.entities = $event"
+			:filterAssetsByUser="true">
         </UserAssets>
 
-		<UserDevices :confirmOn="confirmOn" :defaultDevices="defaultDevices" @devices-changed="form.devices = $event">
+		<UserDevices v-if="form.type == 'device'"
+			:confirmOn="confirmOn" 
+			:defaultDevices="defaultDevices" 
+			@devices-changed="form.entities = $event"
+			:filterDevicesByUser="true">
         </UserDevices>
-
-
+		
 	</form>
 </template>
 
@@ -57,6 +49,11 @@ import { onMounted, reactive, ref, watch } from "vue";
 import VueSelect from 'vue3-select-component';
 import { useUserAssignableStore } from "@/stores/userAssignableStore";
 import { useOrganisationStore } from "@/stores/organisationStore";
+import { useUserStore } from "@/stores/userStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useDeviceStore } from "@/stores/deviceStore";
+import { useAssetStore } from "@/stores/assetStore";
+
 
 
 const vueSelectStyles = useVueSelectStyles();
@@ -82,6 +79,15 @@ const {getGroups, uuidToIdMap } = storeToRefs(groupStore);
 const userAssignableStore = useUserAssignableStore();
 const organisationStore = useOrganisationStore();
 
+const userStore = useUserStore();
+
+const deviceStore = useDeviceStore();
+
+
+const assetStore = useAssetStore();
+const { getAssets } = storeToRefs(assetStore);
+
+
 // -Types --------------------------------------------------------------
 
 type Form = typeof form;
@@ -95,15 +101,15 @@ const form = reactive({
     id: null as null | string,
     name: null as null | string,
     type: null as null | string,
-
-    assets: [] as string[],
-    devices: [] as string[],
-	users: [] as string[],
-	organisations: [] as string[],
+    entities: [] as string[],
 });
 
+const hiddenAssetIds = ref<string[]>([])
 const defaultAssets = ref<string[]>([]);
+
 const defaultDevices = ref<string[]>([]);
+const hiddenDeviceIds = ref<string[]>([]);
+
 const defaultUsers = ref<string[]>([]);
 const defaultOrganisations = ref<string[]>([]);
 
@@ -146,8 +152,63 @@ watch(()=>organisationStore.getOrganisation, async() => {
 },{
 	deep: true,
 	immediate: true
-})
+});
 
+
+watch(
+  () => assetStore.getAssetIDs,
+  (userAssetIDs) => {
+
+    const groupAssetIds =  ['1', '2', '3', '100']
+
+    const visible: string[] = []
+    const hidden: string[] = []
+
+    for (const id of groupAssetIds) {
+      if (userAssetIDs?.includes(id)) {
+        visible.push(id)
+      } else {
+        hidden.push(id)
+      }
+    }
+
+    defaultAssets.value = visible
+    hiddenAssetIds.value = hidden
+
+    console.log('visible:', visible)
+    console.log('hidden:', hidden)
+  },
+  {
+    immediate: true,
+    deep: false
+  }
+)
+
+watch(
+  () => deviceStore.getDevicesIDs,
+  (userDeviceIDs) => {
+
+    const groupDeviceIds: string[] =  ["2"]   // ← real backend value later
+
+    const userSet = new Set(userDeviceIDs || [])
+
+    const visible: string[] = []
+    const hidden: string[] = []
+
+    for (const id of groupDeviceIds) {
+      userSet.has(id) ? visible.push(id) : hidden.push(id)
+    }
+
+    defaultDevices.value = visible
+    hiddenDeviceIds.value = hidden
+
+    console.log('visible devices:', visible)
+    console.log('hidden devices:', hidden)
+  },
+  {
+    immediate: true
+  }
+)
 </script>
 
 <!-- --------------------------------------------------------------- -->
