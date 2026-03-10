@@ -1,19 +1,57 @@
 ### --------------------------------------------------------------------
+GET http://57.129.22.122:4001/api/group/asset/11
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzcxOTQwMjg2LCJleHAiOjE3NzE5ODM0ODZ9.Epmycn5nv2dA7tN779X5lVmCCUwW7cw8CF50M5HeQq8
+
+### --------------------------------------------------------------------
 POST http://57.129.22.122:4001/api/group
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMCwiaWF0IjoxNzcwNTc3ODk4LCJleHAiOjE3NzA2MjEwOTh9.jZKbqknjRp2jMYiYrU7SZYhh_qlnp4p_LaU25PdOMGE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzcyNTQ4NzEwLCJleHAiOjE3NzI1OTE5MTB9.1jWNlzDQ0HsXjYosn_IWVJebGQBk9GUJEf0r1vjV_fk
 
 {
-    "name" : "Test Org Groups",
-    "type" : "organisation"
+    "name": "Test Asset Group",
+    "type": "asset"
+}
+
+### --------------------------------------------------------------------
+### UPDATE GROUP (rename + update assets)
+PATCH http://57.129.22.122:4001/api/group/11
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzcyNTQ4NzEwLCJleHAiOjE3NzI1OTE5MTB9.1jWNlzDQ0HsXjYosn_IWVJebGQBk9GUJEf0r1vjV_fk
+
+{
+    "name": "Updated Asset Group",
+    "type": "asset",
+    "entities_ids": ["1", "2", "5"]
 }
 
 ### --------------------------------------------------------------------
 DELETE http://57.129.22.122:4001/api/group
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMCwiaWF0IjoxNzcwNTc3ODk4LCJleHAiOjE3NzA2MjEwOTh9.jZKbqknjRp2jMYiYrU7SZYhh_qlnp4p_LaU25PdOMGE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzcyNTQ4NzEwLCJleHAiOjE3NzI1OTE5MTB9.1jWNlzDQ0HsXjYosn_IWVJebGQBk9GUJEf0r1vjV_fk
 
 {
   "group_ids": ["3", "7"]
 }
 
+### --------------------------------------------------------------------
+### UPDATE GROUP (only assets change)
+PATCH http://57.129.22.122:4001/api/group/13
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzcyNTQ4NzEwLCJleHAiOjE3NzI1OTE5MTB9.1jWNlzDQ0HsXjYosn_IWVJebGQBk9GUJEf0r1vjV_fk
+
+{
+    "type": "user",
+    "entities_ids": ["1", "4"]
+}
+
+### --------------------------------------------------------------------
+### UPDATE GROUP (only rename)
+PATCH http://57.129.22.122:4001/api/group/11
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzcyNTQ4NzEwLCJleHAiOjE3NzI1OTE5MTB9.1jWNlzDQ0HsXjYosn_IWVJebGQBk9GUJEf0r1vjV_fk
+
+{
+    "type": "asset",
+    "name": "Renamed Only Group"
+}

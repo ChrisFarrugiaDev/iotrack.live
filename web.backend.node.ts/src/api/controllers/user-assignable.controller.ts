@@ -2,6 +2,8 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { AccessProfileController } from "./access-profile.controller";
 import { ApiResponse } from "../../types/api-response.type";
 import { logger } from "../../utils/logger.utils";
+import { User } from "../../models/user.model";
+import { userToPublic } from "../dto/user.dto";
 
 
 class UserAssignmentController {
@@ -39,11 +41,17 @@ class UserAssignmentController {
             );
 
 
+            // Fetch users for those orgs
+            const users = await User.getUsersByOrganisationIds(accessibleOrgIds);
+            const safeUsers = users.map(userToPublic);
+
+       
+
             // 4. Respond with all assignable entities
             return reply.send({
                 success: true,
                 message: 'Assignable resources fetched successfully',
-                data: { organisation, assets, devices }
+                data: { organisation, assets, devices, users: safeUsers }
             } as ApiResponse);
 
         } catch (err) {

@@ -1,4 +1,4 @@
 ### --------------------------------------------------------------------
 GET http://57.129.22.122:4001/api/access-profile
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMCwiaWF0IjoxNzcwNDc5Mzg2LCJleHAiOjE3NzA1MjI1ODZ9.2XIBj3foUEs2bwp9QSqemrr0SddF4LrlgJ0LU3y8BmE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMyIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzczMDc3NjIyLCJleHAiOjE3NzMxMjA4MjJ9.FT-sBhsEoMValq4w9CHZCRN71uGJxMHXxnOKIiaLd-g

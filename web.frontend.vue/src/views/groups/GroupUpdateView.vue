@@ -14,20 +14,32 @@
 
 		</div>
 
-		<UserAssets v-if="form.type == 'asset'"
-			:confirmOn="confirmOn" 
-			:defaultAssets="defaultAssets" 
-			@assets-changed="form.entities = $event"
-			:filterAssetsByUser="true">
-        </UserAssets>
+		<UserAssets v-if="form.type == 'asset'" :confirmOn="confirmOn" :defaultAssets="defaultEntities"
+			@assets-changed="updateEntities" :filterAssetsByUser="true">
+		</UserAssets>
 
-		<UserDevices v-if="form.type == 'device'"
-			:confirmOn="confirmOn" 
-			:defaultDevices="defaultDevices" 
-			@devices-changed="form.entities = $event"
-			:filterDevicesByUser="true">
-        </UserDevices>
-		
+		<UserDevices v-if="form.type == 'device'" :confirmOn="confirmOn" :defaultDevices="defaultEntities"
+			@devices-changed="updateEntities" :filterDevicesByUser="true">
+		</UserDevices>
+
+		<GroupUsers v-if="form.type == 'user'" :confirmOn="confirmOn" :defaultUsers="defaultEntities"
+			@users-changed="updateEntities">			
+		</GroupUsers>
+
+		<UserOrganisations v-if="form.type == 'organisation'" :confirmOn="confirmOn" :defaultOrganisations="defaultEntities"
+			@org-changed="updateEntities">			
+		</UserOrganisations>
+
+
+		<!-- Row 5: Buttons -->
+		<div class="vform__row mt-9">
+			<button v-if="!confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="initUpdate" type="button">Update
+				Device</button>
+			<button v-if="confirmOn" class="vbtn vbtn--zinc-lt mt-3" @click.prevent="confirmOn = false"
+				type="button">Cancel</button>
+			<button v-if="confirmOn" class="vbtn vbtn--sky mt-3" @click.prevent="updateGroup" type="button">Confirm</button>
+		</div>
+
 	</form>
 </template>
 
@@ -43,30 +55,34 @@ import type { Group } from "@/types/group.type";
 import UserOrganisations from "@/components/users/UserOrganisations.vue";
 import UserDevices from "@/components/users/UserDevices.vue";
 import UserAssets from "@/components/users/UserAssets.vue";
+import GroupUsers from "@/components/groups/GroupUsers.vue";
 
 import { storeToRefs } from "pinia";
-import { onMounted, reactive, ref, watch } from "vue";
-import VueSelect from 'vue3-select-component';
+import { reactive, ref, toRaw, watch } from "vue";
 import { useUserAssignableStore } from "@/stores/userAssignableStore";
 import { useOrganisationStore } from "@/stores/organisationStore";
 import { useUserStore } from "@/stores/userStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useDeviceStore } from "@/stores/deviceStore";
 import { useAssetStore } from "@/stores/assetStore";
+import { useDashboardStore } from "@/stores/dashboardStore";
+import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
 
 
 
 const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
-    name: '',
-    type: '',
+	name: '',
+	type: '',
 });
+
+const { handleFormError } = useFormErrorHandler(errors);
 
 // - Props -------------------------------------------------------------
 
 const props = defineProps<{
-    groupUuid?: string | null,
+	groupUuid?: string | null,
 }>();
 
 // - Store -------------------------------------------------------------
@@ -74,18 +90,18 @@ const props = defineProps<{
 const messageStore = useMessageStore();
 const groupStore = useGroupStore();
 
-const {getGroups, uuidToIdMap } = storeToRefs(groupStore);
+const { getGroups, uuidToIdMap } = storeToRefs(groupStore);
 
 const userAssignableStore = useUserAssignableStore();
 const organisationStore = useOrganisationStore();
 
 const userStore = useUserStore();
-
 const deviceStore = useDeviceStore();
 
-
 const assetStore = useAssetStore();
-const { getAssets } = storeToRefs(assetStore);
+
+const dashboardStore = useDashboardStore();
+
 
 
 // -Types --------------------------------------------------------------
@@ -98,37 +114,120 @@ const confirmOn = ref(false);
 const group = ref<null | Group>(null);
 
 const form = reactive({
-    id: null as null | string,
-    name: null as null | string,
-    type: null as null | string,
-    entities: [] as string[],
+	id: null as null | string,
+	name: null as null | string,
+	type: null as null | string,
+	entities: [] as string[],
 });
 
-const hiddenAssetIds = ref<string[]>([])
-const defaultAssets = ref<string[]>([]);
+const entitiesUpdated = ref(false);
 
-const defaultDevices = ref<string[]>([]);
-const hiddenDeviceIds = ref<string[]>([]);
+const hiddenEntitiesIds = ref<string[]>([]);
+const defaultEntities = ref<string[]>([]);
+// - Watchers ----------------------------------------------------------
 
-const defaultUsers = ref<string[]>([]);
-const defaultOrganisations = ref<string[]>([]);
+// this is loading the Assets and Devices options
+watch(() => organisationStore.getOrganisation, async () => {
+
+	const currentOrg = organisationStore.getOrganisation;
+
+
+	if (currentOrg?.id) {
+		await userAssignableStore.fetchAssignableResources(currentOrg.id);
+	}
+}, {
+	deep: true,
+	immediate: true
+});
+
+// ---------
+type EntityType = 'asset' | 'device' | 'user' | 'organisation'
+
+// Config per type:
+// - userIds(): IDs the current user is allowed to see
+// - idsKey: key returned by backend for group items
+const typeConfig: Record<EntityType, { userIds: () => string[] | undefined; idsKey: string }> = {
+  asset: { userIds: () => assetStore.getAssetIDs, idsKey: 'asset_ids' },
+  device: { userIds: () => deviceStore.getDevicesIDs, idsKey: 'device_ids' },
+  user: { userIds: () => userStore.getUserScopeIDs, idsKey: 'user_ids' },
+  organisation: { userIds: () => organisationStore.getOrganisationScopeIDs, idsKey: 'organisation_ids' },
+}
+
+watch(
+  [
+    () => form.type as EntityType, // selected type
+    () => form.id,                 // selected group id
+
+    // re-run if user's visible IDs change
+    () => assetStore.getAssetIDs,
+    () => deviceStore.getDevicesIDs,
+    () => userStore.getUserScopeIDs,
+    () => organisationStore.getOrganisationScopeIDs,
+  ],
+  async ([type, groupID], _old, onInvalidate) => {
+    // cancel outdated async runs (avoid race conditions)
+    let cancelled = false
+    onInvalidate(() => { cancelled = true })
+
+    // nothing to do if missing data
+    if (!type || !groupID) return
+
+    const cfg = typeConfig[type]
+    if (!cfg) return
+
+	
+
+    // fetch group items for current type
+    const res = await groupStore.fetchGroupItems(type, groupID)
+    if (cancelled) return	
+
+    const groupIds = (res.data?.[cfg.idsKey] ?? []) as string[]
+
+    // split group IDs into visible/hidden based on user permissions
+    const userSet = new Set(cfg.userIds() ?? [])
+
+    const visible: string[] = []
+    const hidden: string[] = []
+
+    for (const id of groupIds) {
+		if (type == 'user') {
+			visible.push(String(id));
+		} else {
+
+			userSet.has(String(id)) ? visible.push(String(id)) : hidden.push(String(id))
+		}
+    }
+
+    // update UI state
+    defaultEntities.value = visible;
+    hiddenEntitiesIds.value = hidden;
+
+
+	console.log('visible:', visible);
+	console.log('hidden:', hidden);
+
+  },
+  { immediate: true } // run once on mount
+)
+// ---------
 
 // - Watchers ----------------------------------------------------------
 
 watch(
 	[() => props.groupUuid, getGroups, uuidToIdMap],
 	([groupUuid, groups, idMap]) => {
-		console.log(!groupUuid , !groups , !idMap)
+
 		if (!groupUuid || !groups || !idMap) return;
 
 		const groupId = idMap[groupUuid];
-        const g: any = groups[groupId];
+		const g: any = groups[groupId];
 
-        if (!g) return;
+		if (!g) return;
 
 		// Top-level fields
-        form.name = g.name ?? null;
-        form.type = g.type ?? null;
+		form.name = g.name ?? null;
+		form.type = g.type ?? null;
+		form.id = g.id ?? null;
 
 		group.value = g;
 	},
@@ -138,77 +237,71 @@ watch(
 // - Methods -----------------------------------------------------------
 
 function clearMessage() {
-    messageStore.clearFlashMessageList();
+	messageStore.clearFlashMessageList();
 }
 
-watch(()=>organisationStore.getOrganisation, async() => {
+function updateEntities(entities: string[]) {
+	entitiesUpdated.value = true;
+	form.entities = entities;
+}
 
-	const currentOrg = organisationStore.getOrganisation;	
+
+function initUpdate() {
+
+	if (!group.value) return;
+
+	    confirmOn.value = true;
+
+    errors.value = {
+		name: '',
+		type: '',
+    };
+}
+
+async function updateGroup() {
 
 	
-	if (currentOrg?.id) {
-		await userAssignableStore.fetchAssignableResources(currentOrg.id);
+	try {
+
+		dashboardStore.setIsLoading(true);
+		
+		for (let i = 0; i < hiddenEntitiesIds.value.length; i++) {
+	
+			if (!form.entities.includes(hiddenEntitiesIds.value[i])) {
+	
+				form.entities.push(hiddenEntitiesIds.value[i]);
+			}
+		}
+
+		const payload: { type: string, name?: string, entities_ids?: string[] } = {
+			type: form.type!
+		};
+
+		if (form.name && group.value?.name != form.name) {
+			payload.name = form.name;
+		}
+		if (entitiesUpdated) {
+			payload.entities_ids = form.entities;
+		}
+
+		const r = await groupStore.updateGroup(form.id!, payload);
+
+		messageStore.setFlashMessagesList([r.data.message], 'flash-message--blue');
+
+		groupStore.updateGroupsItemsInStore(r.data.data.group.id, r.data.data.group.items)
+
+	} catch (err) {
+		handleFormError(err);
+		console.error("! GroupUpdateView updateGroup !", err);
+		
+	} finally {
+		confirmOn.value = false;
+		dashboardStore.setIsLoading(false);
+
 	}
-},{
-	deep: true,
-	immediate: true
-});
+	
+}
 
-
-watch(
-  () => assetStore.getAssetIDs,
-  (userAssetIDs) => {
-
-    const groupAssetIds =  ['1', '2', '3', '100']
-
-    const visible: string[] = []
-    const hidden: string[] = []
-
-    for (const id of groupAssetIds) {
-      if (userAssetIDs?.includes(id)) {
-        visible.push(id)
-      } else {
-        hidden.push(id)
-      }
-    }
-
-    defaultAssets.value = visible
-    hiddenAssetIds.value = hidden
-
-    console.log('visible:', visible)
-    console.log('hidden:', hidden)
-  },
-  {
-    immediate: true,
-    deep: false
-  }
-)
-
-watch(
-  () => deviceStore.getDevicesIDs,
-  (userDeviceIDs) => {
-
-    const groupDeviceIds: string[] =  ["2"]   // ← real backend value later
-
-    const userSet = new Set(userDeviceIDs || [])
-
-    const visible: string[] = []
-    const hidden: string[] = []
-
-    for (const id of groupDeviceIds) {
-      userSet.has(id) ? visible.push(id) : hidden.push(id)
-    }
-
-    defaultDevices.value = visible
-    hiddenDeviceIds.value = hidden
-
-    console.log('visible devices:', visible)
-    console.log('hidden devices:', hidden)
-  },
-  {
-    immediate: true
-  }
-)
 </script>
 
 <!-- --------------------------------------------------------------- -->

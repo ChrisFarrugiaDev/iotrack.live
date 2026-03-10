@@ -36,7 +36,7 @@ export const useUserStore = defineStore('userStore', () => {
         return uu;
     });
 
-
+    const getUserScopeIDs = computed(() => Object.keys(userScope.value || {}) );
 
     const getUserPermissionsById = computed(() => {
         return (userId: string): number[] => {
@@ -277,6 +277,8 @@ export const useUserStore = defineStore('userStore', () => {
         getUserOrganisationsById,
         getUserAssetsById,
         getUserDevicesById,
+
+        getUserScopeIDs,
 
         // actions
         fetchUserScope,

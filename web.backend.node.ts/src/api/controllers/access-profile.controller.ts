@@ -56,6 +56,19 @@ export class AccessProfileController {
                 } as ApiResponse);
             }
 
+            console.log(user.organisation_id)
+
+            if ( request.userOrgID && user.organisation_id !== request.userOrgID ) {
+                const org = await Organisation.getById(request.userOrgID)!
+                user.organisation_id = request.userOrgID;
+                 
+                if (org) {
+                    user.organisations = org
+                }
+            }
+
+            console.log(user.organisation_id)
+
             // 3. Determine all organisation IDs the user can access
             const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(user.organisation_id, user.id);
 

@@ -18,6 +18,9 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
 
     const getOrganisation = computed(() => organisation.value);
     const getOrganisationScope = computed(() => organisationScope.value);
+    const getOrganisationScopeIDs = computed(() => {
+        return Object.keys(organisationScope.value || {})
+    })
 
     const getChildrenIds = computed(() => {
 
@@ -131,6 +134,7 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         deleteOrganisations,
         updateOrganisation,
         getOrgScopeByUUID,
+        getOrganisationScopeIDs,
 
         clear,
     }

@@ -10,6 +10,7 @@
                 :options="organisationsOptions" 
                 placeholder=""
                 :disabled="confirmOn" 
+                :disable-branch-nodes="true"
                 :show-count="true" 
                 :flat="true"/>
         </div>

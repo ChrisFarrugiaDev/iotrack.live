@@ -19,6 +19,7 @@ import { useAppStore } from './appStore'
 import axios from '@/axios'
 import type { Asset } from '@/types/asset.type'
 import type { Device } from '@/types/device.type'
+import type { User } from '@/types/user.type'
 import { useAssetStore } from './assetStore'
 import { useDeviceStore } from './deviceStore'
 
@@ -55,6 +56,8 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
 
     const getGroupedOrganisations = computed(() => buildOrgTree());
 
+    const getGroupedUsers = computed(() => buildUsersTree());
+
     // ---- Actions ----------------------------------------------------
     /**
      * Fetch assignable resources for a given org id.
@@ -74,6 +77,8 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
             fetchedOrgIds.value.push(org_id)
             selectedOrgId.value = org_id
             assignableResources.value[org_id] = result.data.data
+
+         
         } catch (err) {
             console.error('! useUserAssignableStore fetchAssignableResources !\n', err)
             throw err
@@ -211,6 +216,48 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
         return groupedDevices
     }
 
+    /**
+   * Build a grouping tree of users by organisation (for UI).
+   * No "filterByUser" needed here (you normally want all users in org scope).
+   */
+  function buildUsersTree(): Record<string, TreeNode> {
+    const orgId = selectedOrgId.value
+    const orgs = assignableResources.value[orgId]?.organisation
+    const users = assignableResources.value[orgId]?.users as Record<string, User>
+
+    if (!users || !orgs) { 
+        return {}
+     }
+
+    const groupedUsers: Record<string, TreeNode> = {}
+
+    for (const user of Object.values(users)) {
+      const organisation = orgs[user.organisation_id!]
+      if (!organisation) continue
+
+      if (!(organisation.name in groupedUsers)) {
+        groupedUsers[organisation.name] = {
+          label: organisation.name,
+          id: "org_" + organisation.id,
+          children: [],
+        }
+      }
+
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
+      const label =
+        fullName.length > 0
+          ? (user.email ? `${fullName} (${user.email})` : fullName)
+          : (user.email ? user.email : `User ${user.id}`)
+
+      groupedUsers[organisation.name]!.children!.push({
+        label,
+        id: user.id,
+      })
+    }
+
+ 
+    return groupedUsers
+  }
     // ---- Expose API -------------------------------------------------
     return {
         fetchAssignableResources,
@@ -227,5 +274,6 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
         filterAssetsByUser,
         filterDevicesByUser,
 
+        getGroupedUsers,
     }
 })

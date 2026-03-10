@@ -9,6 +9,9 @@ import { UserJWT } from "../../types/user-jwt.type";
 import { logger } from "../../utils/logger.utils";
 import { AccessProfileController } from "./access-profile.controller";
 
+import * as authSchema from "../schemas/auth.schema";
+import z from "zod";
+
 // -----------------------------------------------------------------------------
 
 // Utility: Get secret from env or throw early (prevents server starting if missing)
@@ -105,6 +108,97 @@ class AuthController {
             } as ApiResponse);
         }
     }
+
+
+    static async switchOrg (request: FastifyRequest, reply: FastifyReply) {
+        try {
+
+            const userID = request.userID;
+            const userOrgID = request.userOrgID;
+            const userRoleID = request.userRoleID;
+
+            if (!userID || !userOrgID || !userRoleID) {
+                return reply.status(401).send({
+                    success: false,
+                    message: 'Unauthorized request.',
+                    error: {
+                        code: 'AUTH_CONTEXT_INVALID',
+                        error: process.env.DEBUG === "true" ? "Missing authenticated user context." : undefined
+                    }
+                } as ApiResponse);
+            }
+
+            const user = await User.getByID(userID, ['organisations', 'roles']);
+
+            if (!user) {
+                return reply.status(404).send({
+                    success: false,
+                    message: 'User not found.',
+                    error: {
+                        code: 'USER_NOT_FOUND',
+                        error: process.env.DEBUG === "true" ? "Authenticated user no longer exists." : undefined
+                    }
+                } as ApiResponse);
+            }           
+
+            // Validate request body with Zod schema
+            const parsed = authSchema.switchOrg.safeParse(request.body);
+
+            if (!parsed.success) {
+            return reply.status(400).send({
+                success: false,
+                message: 'Invalid request data.',
+                errors: z.flattenError(parsed.error),
+            } as ApiResponse);
+            }
+
+            const targetOrgID = parsed.data.organisation_id;
+
+            const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(user.organisation_id, user.id);
+
+            if (!accessibleOrgIds.includes(targetOrgID)) {
+                return reply.status(403).send({
+                    success: false,
+                    message: 'You do not have access to the selected organisation.',
+                    error: {
+                        code: 'ORG_ACCESS_DENIED',
+                        error: process.env.DEBUG === "true" ? `User ${userID} cannot switch to organisation ${targetOrgID}.` : undefined
+                    }
+                } as ApiResponse);
+            }
+
+            const tokenPayload: UserJWT = {
+                sub: user.uuid,
+                id: user.id,
+                email: user.email,
+                role_id: userRoleID,
+                org_id: parsed.data.organisation_id,
+                token_version: user.token_version,
+            };
+
+            const token = AuthController.generateToken(tokenPayload);
+
+            return reply.send({
+                success: true,
+                message: 'Organisation switched successfully.',
+                data: { token }
+            } as ApiResponse);
+
+        } catch (err) {
+                    
+            logger.error({ err }, '! auth.controller.ts switchOrg !');
+
+            return reply.status(500).send({
+                success: false,
+                message: 'An unexpected error occurred. Please try again later.',
+                error: {
+                    code: "SERVER_ERROR",
+                    error: process.env.DEBUG === 'true' && err instanceof Error ? err.message : undefined
+                }
+            } as ApiResponse);
+        }
+    }
+
 
     // ------------------------------------------------------------------------- 
 

@@ -34,10 +34,14 @@ const numericString = requiredString.regex(/^\d+$/, "Must be numeric");
 export const storeSchema = z.object({
     name: nonEmptyString,
     type: nonEmptyString
-})
-
+});
 
 export const destroySchema = z.object({
     group_ids: z.array(numericString, "Field is required.").min(1, "Provide at least one organisation id.")
 });
 
+export const updateSchema = z.object({
+    entities_ids: z.array(numericString).optional(),
+    name: nonEmptyString.optional(),
+    type: nonEmptyString,
+});

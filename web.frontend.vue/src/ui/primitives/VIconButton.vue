@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
 	icon: string;         // SVG sprite symbol, e.g. "icon-view-more"
 	tooltip?: string;     // Tooltip text (shows above button)
 	ariaLabel?: string;   // For accessibility, falls back to tooltip
-	type?: 'default' | 'green' | 'red'; // For status coloring
+	type?: 'default' | 'green' | 'red' | 'dark'; // For status coloring
 	to?: string;          // For RouterLink (internal routing)
 	href?: string;        // For <a> (external links)
 }>(), {
@@ -46,6 +46,7 @@ const tag = computed(() => {
 const btnClass = computed(() => ({
 	'viconbtn--green': props.type === 'green',
 	'viconbtn--red': props.type === 'red',
+	'viconbtn--dark': props.type === 'dark',
 }));
 </script>
 
@@ -99,6 +100,18 @@ const btnClass = computed(() => ({
 		&:focus-visible {
 			background: var(--color-red-600);
 			color: var(--color-white);
+		}
+	}
+
+	&--dark {
+		border-color: var(--color-zinc-100);
+		color: var(--color-zinc-100);
+
+		&:hover,
+		&:focus-visible {
+			background: var(--color-zinc-100);
+			color: var(--color-zinc-500);
+			opacity: .75;
 		}
 	}
 

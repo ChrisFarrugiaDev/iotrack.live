@@ -25,7 +25,7 @@
 
             <!-- Row action slot: view/edit button -->
              <template #actions="{ row }" v-if="authorizationStore.can('org.update')">
-                <VIconButton icon="icon-view-more" @click="showUpdateOrganisationModal(row.uuid)" />
+                <VIconButton type="dark" icon="icon-view-more" @click="showUpdateOrganisationModal(row.uuid)" />
              </template>
         </VTable>
 

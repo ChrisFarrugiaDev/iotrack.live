@@ -1,13 +1,14 @@
 import prisma from '../config/prisma.config';
 import { Prisma, PrismaClient, users, organisations, roles } from "../../generated/prisma";
 import { bigIntToString } from '../utils/utils';
+import { OrganisationType } from './organisation.model';
 
 
 
 export type UserType = Omit<users, 'id' | 'organisation_id'> & {
     id: string;
     organisation_id: string;
-    organisations?: organisations,
+    organisations?: OrganisationType,
     roles?: roles
 };
 

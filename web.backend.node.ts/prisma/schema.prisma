@@ -265,11 +265,10 @@ model user_permissions {
 }
 
 model group_assets {
-  group_id   BigInt
-  asset_id   BigInt
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  assets     assets   @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  groups     groups   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  group_id BigInt
+  asset_id BigInt
+  assets   assets @relation(fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  groups   groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([group_id, asset_id])
   @@index([asset_id], map: "idx_group_assets_asset_id")
@@ -277,11 +276,10 @@ model group_assets {
 }
 
 model group_devices {
-  group_id   BigInt
-  device_id  BigInt
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  devices    devices  @relation(fields: [device_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  groups     groups   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  group_id  BigInt
+  device_id BigInt
+  devices   devices @relation(fields: [device_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  groups    groups  @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([group_id, device_id])
   @@index([device_id], map: "idx_group_devices_device_id")
@@ -291,7 +289,6 @@ model group_devices {
 model group_organisations {
   group_id        BigInt
   organisation_id BigInt
-  created_at      DateTime      @default(now()) @db.Timestamptz(6)
   groups          groups        @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   organisations   organisations @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -301,11 +298,10 @@ model group_organisations {
 }
 
 model group_users {
-  group_id   BigInt
-  user_id    BigInt
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  groups     groups   @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  group_id BigInt
+  user_id  BigInt
+  groups   groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users    users  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([group_id, user_id])
   @@index([user_id], map: "idx_group_users_user_id")
@@ -318,6 +314,7 @@ model groups {
   organisation_id     BigInt
   name                String
   type                String                @db.VarChar(32)
+  items               Int                   @default(0)
   created_at          DateTime              @default(now()) @db.Timestamptz(6)
   updated_at          DateTime              @default(now()) @db.Timestamptz(6)
   group_assets        group_assets[]

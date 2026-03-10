@@ -9,3 +9,12 @@ Content-Type: application/json
 }
 
 ### --------------------------------------------------------------------
+
+POST http://57.129.22.122:4001/api/auth/switch_org
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGYyZGEzMy0xZDE2LTRlYjUtOGJiOS1mYTNlYmY5ZTdiOTkiLCJpZCI6IjIiLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZV9pZCI6Miwib3JnX2lkIjoiMSIsInRva2VuX3ZlcnNpb24iOjYyMSwiaWF0IjoxNzczMDc3NDYzLCJleHAiOjE3NzMxMjA2NjN9.BVtnFnreWBm5rqgw6G5UUOW_OBbrPWWUdaoX-kEuASk
+
+{
+  "organisation_id": "3"
+ 
+}

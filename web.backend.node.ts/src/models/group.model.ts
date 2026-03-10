@@ -11,6 +11,14 @@ export type GroupType = Omit<groups, 'id'> & {
 
 export class Group {
 
+    static async getByID(groupID: string): Promise<GroupType | null> {
+        const result = await prisma.groups.findFirst({
+            where: { 'id': BigInt(groupID) }
+        });
+
+        return bigIntToString(result);
+    }
+
     // -----------------------------------------------------------------
 
     static async getByIds(
@@ -69,10 +77,7 @@ export class Group {
         return bigIntToString(result);
     }
 
-
-
     // -----------------------------------------------------------------
-
 
     static async deleteByIDs(groupIDs: string[]) {
         const ids = groupIDs.map(id => BigInt(id));
@@ -82,5 +87,17 @@ export class Group {
             }
         })
         return result;
+    }
+
+    static async updateByID(
+        groupID: string,
+        data: Prisma.groupsUpdateInput,
+        prismaClient: Prisma.TransactionClient | PrismaClient = prisma
+    ): Promise<GroupType> {
+        const result = await prismaClient.groups.update({
+            where: {id: BigInt(groupID)},
+            data
+        });
+        return bigIntToString(result);
     }
 }

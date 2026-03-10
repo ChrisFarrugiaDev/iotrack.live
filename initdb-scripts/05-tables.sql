@@ -395,7 +395,7 @@ CREATE TABLE IF NOT EXISTS app.group_assets (
     asset_id  BIGINT NOT NULL
         REFERENCES app.assets(id) ON DELETE CASCADE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
 
     PRIMARY KEY (group_id, asset_id)
 );
@@ -414,7 +414,7 @@ CREATE TABLE IF NOT EXISTS app.group_devices (
     device_id BIGINT NOT NULL
         REFERENCES app.devices(id) ON DELETE CASCADE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (group_id, device_id)
 );
@@ -432,7 +432,7 @@ CREATE TABLE IF NOT EXISTS app.group_users (
     user_id  BIGINT NOT NULL
         REFERENCES app.users(id) ON DELETE CASCADE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (group_id, user_id)
 );
@@ -450,7 +450,7 @@ CREATE TABLE IF NOT EXISTS app.group_organisations (
     organisation_id BIGINT NOT NULL
         REFERENCES app.organisations(id) ON DELETE CASCADE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (group_id, organisation_id)
 );

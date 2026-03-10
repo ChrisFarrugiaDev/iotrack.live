@@ -74,6 +74,40 @@ export const useGroupStore = defineStore('groupStore', () => {
         }
     }
 
+    async function updateGroup(id: string, payload: { type: string, name?: string, entities_ids?: string[] }) {
+        try {
+
+            const url = `${appStore.getAppUrl}/api/group/${id}`;
+            return await axios.request({
+                method: 'patch',
+                url,
+                data: payload,
+
+            });
+        } catch (err) {
+            console.error('! groupStore updateGroup !\n', err);
+            throw err;
+        }
+    }
+
+
+    async function fetchGroupItems(groupType: string, groupID: string) {
+        try {
+            const url = `${appStore.getAppUrl}/api/group/${groupType}/${groupID}`;
+            const res = await axios.get(url);
+     
+            return res.data;
+
+        } catch (err) {
+            console.error('! groupStore fetchGroupItems !\n', err);
+            throw err;
+        }
+    }
+
+    function updateGroupsItemsInStore(id: string, items: number ) {
+        groups.value![id].items = items;
+    }
+
     // - Expose --------------------------------------------------------
     return {
         getGroups,
@@ -83,5 +117,8 @@ export const useGroupStore = defineStore('groupStore', () => {
         createGroup,
         deleteGroup,
         uuidToIdMap,
+        fetchGroupItems,
+        updateGroup,
+        updateGroupsItemsInStore,
     };
 });
