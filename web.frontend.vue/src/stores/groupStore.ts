@@ -29,6 +29,10 @@ export const useGroupStore = defineStore('groupStore', () => {
 
     // ---- Actions ----------------------------------------------------
 
+    function clear() {
+        groups.value = null;
+    }
+
     function setGroups(payload: Record<string, Group>) {
         groups.value = payload;
     }
@@ -110,6 +114,8 @@ export const useGroupStore = defineStore('groupStore', () => {
 
     // - Expose --------------------------------------------------------
     return {
+        clear,
+        
         getGroups,
         setGroups,
         addGroupToStore,

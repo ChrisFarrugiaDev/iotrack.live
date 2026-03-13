@@ -192,6 +192,7 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     function clear() {
         assets.value = null;
+        favoriteAssets.value = [];
     }
 
     function toggleFavorites(id: string) {
@@ -206,11 +207,12 @@ export const useAssetStore = defineStore('assetStore', () => {
 
     // ---- Expose -----------------------------------------------------
     return {
+        clear,
+        
         favoriteAssets,
         getAssets,
         setAssets,
         uuidToIdMap,
-        clear,
         createAsset,
         deleteAssets,
         updatedAsset,

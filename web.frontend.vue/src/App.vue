@@ -179,6 +179,7 @@ async function fetchAccessProfile() {
         
             settingsStore.setAuthenticatedUser(autUserPayload)
         }
+        
         appStore.setShouldFetchAccessProfile(false);
 
     } catch (err) {

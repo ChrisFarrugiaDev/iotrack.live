@@ -71,7 +71,13 @@ export const useFilterStore = defineStore('filterStore', () => {
     );
 
     // ---- Actions ----------------------------------------------------
-
+    function clear() {
+        deselectedOrgIDs.value = [];
+        deselectedAssetTypes.value = [];
+        activityMode.value = 'none';
+        activityDateISO.value = null;
+        searchFilter.value = '';
+    }
     // Organisation
     function setDeselectedOrgIDs(ids: (string | number)[]) {
         deselectedOrgIDs.value = [...ids]
@@ -118,6 +124,8 @@ export const useFilterStore = defineStore('filterStore', () => {
 
     // ---- Expose -----------------------------------------------------
     return {
+        clear,
+        
         // state
         deselectedOrgIDs,
         deselectedAssetTypes,

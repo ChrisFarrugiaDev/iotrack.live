@@ -47,6 +47,10 @@ export const useImageStore = defineStore('imageStore', () => {
     }
 
     // ---- Actions ----------------------------------------------------
+    function clear() {
+        appImages.value = {};
+    }
+
     async function deleteImage(imageId: string) {
 
         const url = `${useAppStore().getAppUrl}/img/delete/${imageId}`;
@@ -91,6 +95,8 @@ export const useImageStore = defineStore('imageStore', () => {
 
     // - Expose --------------------------------------------------------
     return {
+        clear,
+        
         appImages,
         fetchImages,
         addImages,

@@ -25,6 +25,7 @@
 
             <!-- Row action slot: view/edit button -->
              <template #actions="{ row }" v-if="authorizationStore.can('org.update')">
+                <VIconButton type="dark" icon="icon-swap-horiz" @click="showSwitchOrganisationModal(row.id, row.name)" />
                 <VIconButton type="dark" icon="icon-view-more" @click="showUpdateOrganisationModal(row.uuid)" />
              </template>
         </VTable>
@@ -58,6 +59,26 @@
                 <button class="vbtn vbtn--red" @click="deleteOrganisations">Delete</button>
             </template>
         </VModal>
+
+        <!-- Switch Org Confirmation Modal -->
+        <VModal v-model="isSwitchOrgModalOpen" size="xs">
+            <template #header>
+                <div class="vheading--3">Switch Organisation</div>
+            </template>
+            <div class="delete-modal">
+                <svg class="delete-modal__icon">
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-swap-horiz" />
+                </svg>
+                <p class="delete-modal__text">
+                    Do you want to switch to the organisation "{{ targetOrganisationToSwitch!.name }}" ?
+                </p>
+  
+            </div>
+            <template #footer>
+                <button class="vbtn vbtn--zinc-lt" @click="isSwitchOrgModalOpen = false">Cancel</button>
+                <button class="vbtn vbtn--red" @click="switchOrganisation">Switch</button>
+            </template>
+        </VModal>
     </div>
 </template>
 
@@ -75,6 +96,9 @@ import OrgUpdateView from './OrgUpdateView.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
 import { formatDateYMDHM } from '@/utils/dateTimeUtils';
+import { useAppStore } from '@/stores/appStore';
+import axios from '@/axios';
+import { useAuthStore } from '@/stores/authStore';
 
 
 // --- Router -------------------------------------------------------
@@ -89,6 +113,8 @@ const messageStore = useMessageStore();
 const dashboardStore = useDashboardStore();
 
 const authorizationStore = useAuthorizationStore();
+const appStore = useAppStore();
+const authStore = useAuthStore();
 
 // --- Data ------------------------------------------------------------
 const searchTerm = ref("");
@@ -98,7 +124,11 @@ const selectedKeys = ref<string[]>([]); // Organisation row selection
 // Modal visibility state
 const isUpdateModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
+const isSwitchOrgModalOpen = ref(false);
+
 const selectedOrganisationUuid = ref<string | null>(null);
+
+const targetOrganisationToSwitch = ref<{id: string, name: string} | null>(null);
 
 const tableCol = ref<TableColumn[]>([
     {
@@ -187,14 +217,6 @@ function showDeleteOrganisationModal() {
     }
 }
 
-// Show update modal for selected organisation (skip if already open on same organisation)
-function showUpdateOrganisationModal(id: string) {
-    if (id === selectedOrganisationUuid.value) return;
-    isUpdateModalOpen.value = true;
-    selectedOrganisationUuid.value = id;
-}
-
-
 // Called on delete modal confirm
 async function deleteOrganisations() {
     try {
@@ -233,6 +255,39 @@ async function deleteOrganisations() {
     }  finally {
         dashboardStore.setIsLoading(false);
     }
+}
+
+function showSwitchOrganisationModal(id: string, name: string) {
+    isSwitchOrgModalOpen.value = true;
+    targetOrganisationToSwitch.value = { id: id, name: name }
+}
+
+// Show update modal for selected organisation (skip if already open on same organisation)
+function showUpdateOrganisationModal(id: string) {
+    if (id === selectedOrganisationUuid.value) return;
+    isUpdateModalOpen.value = true;
+    selectedOrganisationUuid.value = id;
+}
+
+async function switchOrganisation() {
+    // 1 get token
+
+    const url = `${appStore.getAppUrl}/api/auth/switch_org`;
+
+    const response = await axios.post(url, { "organisation_id": targetOrganisationToSwitch.value!.id });
+
+    const token = response.data.data.token;
+
+    authStore.setJwt(token);
+    appStore.clearOrgScopedStores();
+
+    appStore.setShouldFetchAccessProfile(true);
+    
+
+    // 2 get new data
+    // 3 clean store
+    // 4 update store
+    // 5 clean
 }
 
 // --- Hooks -----------------------------------------------------------

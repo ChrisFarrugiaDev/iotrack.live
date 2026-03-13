@@ -88,6 +88,14 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
     });
 
     // ---- Actions ----------------------------------------------------
+    function clear() {
+        roles.value = {};
+        permissions.value = [];
+        rolePermissions.value = {};
+        userPermissions.value = new Set();
+        loaded.value = false;
+        rootOverIsActive.value = false;
+    }
 
     function setRoles(r: Record<string, string>) {
         roles.value = r;
@@ -147,6 +155,8 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
 
     // - Expose --------------------------------------------------------
     return {
+        clear,
+        
         getRoles,
         setRoles,
         getPermissions,

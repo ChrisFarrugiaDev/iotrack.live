@@ -52,6 +52,11 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
 
     // ---- Setters (Actions) ------------------------------------------
 
+    function clear() {
+        organisation.value = null;
+        organisationScope.value = null;
+    }
+
     function setOrganisation(val: Record<string, string> | null) {
         organisation.value = val
     }
@@ -113,13 +118,10 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         }
     }
 
-    function clear() {
-        organisation.value = null;
-        organisationScope.value = null;
-    }
 
     // ---- Expose -----------------------------------------------------
     return {
+        clear,
 
         getOrganisation,
         setOrganisation,
@@ -136,6 +138,5 @@ export const useOrganisationStore = defineStore('organisationStore', () => {
         getOrgScopeByUUID,
         getOrganisationScopeIDs,
 
-        clear,
     }
 });

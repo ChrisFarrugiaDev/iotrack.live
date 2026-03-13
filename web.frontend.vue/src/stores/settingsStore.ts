@@ -34,7 +34,8 @@ export const useSettingsStore = defineStore('settingsStore', () => {
     }
 
     function clear() {
-        mapsApiKey.value = undefined
+        mapsApiKey.value = undefined;
+        authenticatedUser.value = undefined;
     }
 
     // - Expose --------------------------------------------------------

@@ -1,5 +1,16 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { useAssetStore } from './assetStore';
+import { useAuthorizationStore } from './authorizationStore';
+import { useDeviceStore } from './deviceStore';
+import { useFilterStore } from './filterStore';
+import { useGroupStore } from './groupStore';
+import { useImageStore } from './imageStore';
+import { useMapStore } from './mapStore';
+import { useOrganisationStore } from './organisationStore';
+import { useSettingsStore } from './settingsStore';
+import { useUserAssignableStore } from './userAssignableStore';
+import { useUserStore } from './userStore';
 
 
 declare global {
@@ -38,9 +49,6 @@ export const useAppStore = defineStore('appStore', () => {
     // );
 
 
-
-
-
     const shouldFetchAccessProfile = ref<boolean>(true);
 
 
@@ -57,8 +65,23 @@ export const useAppStore = defineStore('appStore', () => {
         shouldFetchAccessProfile.value = val;
     }
 
+    function clearOrgScopedStores() {
+        useAssetStore().clear();
+        useAuthorizationStore().clear();
+        useDeviceStore().clear();
+        useFilterStore().clear();
+        useGroupStore().clear();
+        useImageStore().clear();
+        useMapStore().clear();
+        useOrganisationStore().clear();
+        useSettingsStore().clear();
+        useUserAssignableStore().clear();
+        useUserStore().clear();
+    }
+
     // - Expose --------------------------------------------------------
     return {
+        clearOrgScopedStores,
         getAppUrl,
 
         getShouldFetchAccessProfile,

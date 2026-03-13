@@ -59,6 +59,14 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
     const getGroupedUsers = computed(() => buildUsersTree());
 
     // ---- Actions ----------------------------------------------------
+
+    function clear() {
+        selectedOrgId.value = '0';
+        fetchedOrgIds.value = [];
+        assignableResources.value = {};
+        filterAssetsByUser.value = false;
+        filterDevicesByUser.value = false;
+    }
     /**
      * Fetch assignable resources for a given org id.
      * Caches results to avoid redundant API calls.
@@ -260,6 +268,8 @@ export const useUserAssignableStore = defineStore('userAssignableStore', () => {
   }
     // ---- Expose API -------------------------------------------------
     return {
+        clear,
+        
         fetchAssignableResources,
         getAssignableResources,
         getGroupedAssets,

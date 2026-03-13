@@ -124,6 +124,10 @@ export const useUserStore = defineStore('userStore', () => {
 
     function clear() {
         userScope.value = null;
+        usersPermissions.value = {};
+        usersOrganisations.value = {};
+        usersAssets.value = {};
+        usersDevices.value = {};
     }
 
 
@@ -268,6 +272,7 @@ export const useUserStore = defineStore('userStore', () => {
 
     // ---- Expose -----------------------------------------------------
     return {
+        clear,
 
         // state getters
         getUserScope,
@@ -299,7 +304,6 @@ export const useUserStore = defineStore('userStore', () => {
 
         // utils
         setUserScope,
-        clear,
 
         setUserAccessState,
     }

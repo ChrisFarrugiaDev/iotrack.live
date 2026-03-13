@@ -46,7 +46,9 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
 
     function clear() {
-        devices.value = null
+        devices.value = null;
+        activeAnimations.clear();
+        lastTs = 0;
     }
 
     function setDevices(payload: Record<string, Device>) {
@@ -261,9 +263,10 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
     // - Expose --------------------------------------------------------
     return {
+        clear,
+        
         getDevices,
         setDevices,
-        clear,
         uuidToIdMap,
         createDevice,
         deleteDevices,

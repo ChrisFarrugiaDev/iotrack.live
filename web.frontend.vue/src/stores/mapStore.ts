@@ -44,6 +44,15 @@ export const useMapStore = defineStore('mapStore', () => {
 
 
     // ---- Actions ----------------------------------------------------
+    function clear() {
+        activeInfoWindow.value = null;
+        follow.value = null;
+        followIsDisabled.value = false;
+
+        mapZoomLevel.value = null;
+        mapLat.value = null;
+        mapLng.value = null;
+    }
     function setActiveInfoWindow (id: string | null)  {
         if (activeInfoWindow.value == id) {
             activeInfoWindow.value = null;
@@ -79,15 +88,13 @@ export const useMapStore = defineStore('mapStore', () => {
         mapLng.value = lng;     
     }
 
-    function clear() {
-         mapZoomLevel.value = null;
-         mapLat.value = null;
-         mapLng.value = null;
-    }
+
+    
 
     // - Expose --------------------------------------------------------
     return {
-         clear,
+        clear,
+
         getActiveInfoWindow,
         setActiveInfoWindow,
         getMapZoomLevel,

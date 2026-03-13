@@ -118,8 +118,8 @@ const btnClass = computed(() => ({
 	// SVG icon styling
 	&__icon {
 		fill: currentColor;
-		width: 1rem;
-		height: 1rem;
+		width: 1.2rem;
+		height: 1.2rem;
 		pointer-events: none;
 	}
 
