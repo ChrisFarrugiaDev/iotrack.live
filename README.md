@@ -9,14 +9,6 @@ This project also serves as a **technical showcase**, demonstrating backend arch
 
 ---
 
-## Architecture
-
-<p align="center">
-  <img src="docs/architecture/iotrack-live-architecture.png" alt="iotrack.live architecture" width="1000" />
-</p>
-
----
-
 ## Overview
 
 iotrack.live provides:
