@@ -55,7 +55,7 @@ The system is designed to handle **high-frequency IoT data streams** while maint
 
 ---
 
-## ⚙️ Main Technologies
+## Main Technologies
 
 ### Backend
 - **Golang** (high-performance services, parsers, computation)

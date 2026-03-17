@@ -58,8 +58,8 @@ const { getRemeberMe } = storeToRefs(authStore);
 // - Data --------------------------------------------------------------
 const router = useRouter();
 
-const email = ref("alice@acme.com");
-const password = ref("DevPass");
+const email = ref("");
+const password = ref("");
 
 // const loginPageTitle = ref(GO_LOGIN_PAGE_TITLE);
 const loginPageTitle = ref("Welcome to <b style='font-weight:600'>IoTrack</b> Live");
@@ -104,8 +104,8 @@ async function submitForm() {
 
             const token = response.data.data.token;
 
-            email.value = 'alice@acme.com';
-            password.value = 'DevPass';
+            email.value = '';
+            password.value = '';
 
             authStore.setJwt(null);
 
