@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { useLocalStorage } from '@vueuse/core';
 
 export const useAuthorizationStore = defineStore('authorizationStore', () => {
 
@@ -19,10 +20,23 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
 
     // ---- State ------------------------------------------------------
     const roles = ref<Record<string, string>>({});
+    // const permissions = ref<Permission[]>([]);
     const permissions = ref<Permission[]>([]);
     const rolePermissions = ref<Record<string, number[]>>({});
 
-    const userPermissions = ref<Set<string>>(new Set());   
+    const userPermissionKeysStorage = useLocalStorage<string[]>(
+        'iotrack.user.permissions',
+        []
+    )
+
+    const userPermissions = computed<Set<string>>({
+        get() {
+            return new Set(userPermissionKeysStorage.value)
+        },
+        set(value: Set<string>) {
+            userPermissionKeysStorage.value = Array.from(value)
+        }
+    })
 
     const loaded = ref(false);
 
@@ -69,7 +83,7 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
 
     const getRolePermissions = computed(() => {
         return rolePermissions.value;
-    });    
+    });
 
     const isLoaded = computed(() => loaded.value);
 
@@ -77,11 +91,12 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
         return userPermissions.value;
     });
 
-    const can = computed(() => {        
+    const can = computed(() => {
+
 
         return (permissionKey: string) => {
-            
-            if (rootOverIsActive.value ) { return true; }
+
+            if (rootOverIsActive.value) { return true; }
 
             return userPermissions.value.has(permissionKey)
         }
@@ -156,7 +171,7 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
     // - Expose --------------------------------------------------------
     return {
         clear,
-        
+
         getRoles,
         setRoles,
         getPermissions,
@@ -172,6 +187,6 @@ export const useAuthorizationStore = defineStore('authorizationStore', () => {
         setUserPermissions,
         can,
         rootOverIsActive,
-  
+
     };
 });

@@ -26,7 +26,7 @@
 import { VTabs, Vview } from '@/ui';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useRoute, useRouter } from 'vue-router';
-import { reactive } from 'vue';
+import { reactive, watch} from 'vue';
 import { useMessageStore } from '@/stores/messageStore';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
 
@@ -50,12 +50,21 @@ const tabsObjectData_1 = reactive({
     activeTab: 'groups.list' as TabKey,
     tabs: {
         'groups.list': 'Groups List',
-        'groups.create': 'Create new Group',
+        // 'groups.create': 'Create new Group',
 
     } as Record<TabKey, string>,
 });
 
-
+watch(
+  () => authorizationStore.getUserPermissions.size,
+  () => {
+    if (authorizationStore.can('device.create')) {
+      tabsObjectData_1.tabs['groups.create'] =
+        'Create new Group'
+    } 
+  },
+  { immediate: true }
+);
 // - Methods -----------------------------------------------------------
 
 function setActiveTab(e: any) {

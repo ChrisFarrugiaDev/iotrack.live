@@ -24,9 +24,9 @@
             </template>
 
             <!-- Row action slot: view/edit button -->
-             <template #actions="{ row }" v-if="authorizationStore.can('org.update')">
-                <VIconButton type="dark" icon="icon-swap-horiz" @click="showSwitchOrganisationModal(row.id, row.name)" />
-                <VIconButton type="dark" icon="icon-view-more" @click="showUpdateOrganisationModal(row.uuid)" />
+             <template #actions="{ row }" >
+                <VIconButton v-if="authorizationStore.can('org.switch')" type="dark" icon="icon-swap-horiz" @click="showSwitchOrganisationModal(row.id, row.name)" />
+                <VIconButton v-if="authorizationStore.can('org.update')" type="dark" icon="icon-view-more" @click="showUpdateOrganisationModal(row.uuid)" />
              </template>
         </VTable>
 
@@ -103,6 +103,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 // --- Router -------------------------------------------------------
 const route = useRoute();
+
 const router = useRouter();
 
 // --- Stores ----------------------------------------------------------
@@ -131,12 +132,13 @@ const selectedOrganisationUuid = ref<string | null>(null);
 const targetOrganisationToSwitch = ref<{id: string, name: string} | null>(null);
 
 const tableCol = ref<TableColumn[]>([
+    
     {
         col: "ID",
         data: "id",
         sort: true,
         align: "left",
-        hidden: true,
+        hidden: false,
     },
     {
         col: "Path",
@@ -270,24 +272,34 @@ function showUpdateOrganisationModal(id: string) {
 }
 
 async function switchOrganisation() {
-    // 1 get token
 
-    const url = `${appStore.getAppUrl}/api/auth/switch_org`;
+    try {
+        const url = `${appStore.getAppUrl}/api/auth/switch_org`;
+        
+        const response = await axios.post(url, { "organisation_id": targetOrganisationToSwitch.value!.id });
 
-    const response = await axios.post(url, { "organisation_id": targetOrganisationToSwitch.value!.id });
+        const token = response.data.data.token;
 
-    const token = response.data.data.token;
+        authStore.setJwt(token);
 
-    authStore.setJwt(token);
-    appStore.clearOrgScopedStores();
+        appStore.clearOrgScopedStores();
 
-    appStore.setShouldFetchAccessProfile(true);
-    
+        appStore.setShouldFetchAccessProfile(true);
 
-    // 2 get new data
-    // 3 clean store
-    // 4 update store
-    // 5 clean
+    } catch (err: any) {
+
+        console.error("! OrgListView switchOrganisation !", err);    
+
+        if (err.response.data.message) {
+            messageStore.setFlashMessagesList([err.response.data.message], 'flash-message--red');
+        }
+
+        
+    } finally {
+        isSwitchOrgModalOpen.value = false;
+        targetOrganisationToSwitch.value = null;
+    }
+
 }
 
 // --- Hooks -----------------------------------------------------------

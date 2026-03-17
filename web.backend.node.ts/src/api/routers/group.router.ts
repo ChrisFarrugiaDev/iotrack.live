@@ -22,14 +22,14 @@ export default async function groupRouter(fastify:FastifyInstance) {
 
     fastify.delete(
         "/",
-        {preHandler: [authMiddleware, validateBody(destroySchema), requirePermissions(["group.delete"])], },
+        {preHandler: [authMiddleware, validateBody(destroySchema), requirePermissions(["group.delete"]) ], },
         GroupController.destroy
     );
 
 
     fastify.patch(
         "/:id",
-        { preHandler: [authMiddleware, validateBody(updateSchema), ] },
+        { preHandler: [authMiddleware, validateBody(updateSchema), requirePermissions(["group.update"])  ] },
         GroupController.update
     );   
 }

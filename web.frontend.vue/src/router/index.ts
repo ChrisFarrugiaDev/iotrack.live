@@ -36,6 +36,7 @@ import GroupUpdateView from '@/views/groups/GroupUpdateView.vue'
 import GroupCreateView from '@/views/groups/GroupCreateView.vue'
 import GroupListView from '@/views/groups/GroupListView.vue'
 import GroupView from '@/views/groups/GroupView.vue'
+import { nextTick } from 'vue'
 
 
 
@@ -130,7 +131,28 @@ router.beforeEach(async (
 	// Note: We are access the Pinia store within the navigation guard by:
 	// useAuthStore() & useMessageStore() to ensure Pinia is properly initialized 
 
+	const authStore = useAuthStore();
+	const messageStore = useMessageStore();
 	const authorizationStore = useAuthorizationStore();
+
+	const { isAuthenticated } = storeToRefs(authStore);
+	// const { checkJwtExpiration } = useJwtComposable();
+
+
+	// flash message handling
+	messageStore.getFlashMessageDuration ?
+		messageStore.decreaseFlashMessageDuration() :
+		messageStore.clearFlashMessageList();
+	
+	// auth gate (default to protected if meta not specified)
+	const requiresAuth = to.meta.requiresAuth !== false;
+
+	if (requiresAuth && !isAuthenticated.value) {
+		authStore.setRedirectTo(to);
+		return next({ name: 'login.view' });
+	}
+
+	await nextTick();
 
 	if ( to.name == 'organisations.list' &&  !authorizationStore.can('org.view') ) {
 		return next({ name: 'map.view' });
@@ -148,27 +170,11 @@ router.beforeEach(async (
 		return next({ name: 'map.view' });
 	}
 
-	const authStore = useAuthStore();
-	// const appStore = useAppStore();
-	const messageStore = useMessageStore();
-
-	const { isAuthenticated } = storeToRefs(authStore);
-	// const { checkJwtExpiration } = useJwtComposable();
-
-
-	// flash message handling
-	messageStore.getFlashMessageDuration ?
-		messageStore.decreaseFlashMessageDuration() :
-		messageStore.clearFlashMessageList();
-
-
-	// auth gate (default to protected if meta not specified)
-	const requiresAuth = to.meta.requiresAuth !== false;
-
-	if (requiresAuth && !isAuthenticated.value) {
-		authStore.setRedirectTo(to);
-		return next({ name: 'login.view' });
+	if ( to.name == 'groups.list' &&  !authorizationStore.can('group.view') ) {
+		return next({ name: 'map.view' });
 	}
+
+
 
 	// continue with the navigation
 	next();

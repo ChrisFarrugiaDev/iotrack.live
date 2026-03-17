@@ -14,8 +14,8 @@ export const useUserStore = defineStore('userStore', () => {
 
     const userScope = ref<Record<string, User> | null>(null);
 
-    const usersPermissions = ref<Record<string, number[]>>({});
     const usersOrganisations = ref<Record<string, string[]>>({});
+    const usersPermissions = ref<Record<string, number[]>>({});
     const usersAssets = ref<Record<string, string[]>>({});
     const usersDevices = ref<Record<string, string[]>>({});
 

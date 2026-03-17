@@ -50,6 +50,7 @@ func main() {
 	// -----------------------------------------------------------------
 
 	rabbitConfig, err := rabbitmq.LoadRabbitMQConfig("./rabbitmq_config.json")
+
 	if err != nil {
 		logger.Error("Failed to load RabbitMQ configuration file", zap.String("path", "./rabbitmq_config.json"), zap.Error(err))
 		os.Exit(1)
