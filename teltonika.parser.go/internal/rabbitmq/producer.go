@@ -10,7 +10,7 @@ import (
 	"github.com/GoWebProd/uuid7"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
-	"iotrack.live/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/logger"
 )
 
 // RabbitMQProducer manages the connection and publishing to RabbitMQ

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"iotrack.live/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/logger"
 )
 
 type RedisCache struct {

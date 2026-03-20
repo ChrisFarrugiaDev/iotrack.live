@@ -6,9 +6,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"iotrack.live/internal/logger"
-	"iotrack.live/internal/models"
-	"iotrack.live/internal/util"
+	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/models"
+	"iotrack.live/teltonika.parser.go/internal/util"
 )
 
 // ---------------------------------------------------------------------

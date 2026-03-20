@@ -1,4 +1,4 @@
-module iotrack.live
+module iotrack.live/teltonika.parser.go
 
 go 1.23.1
 

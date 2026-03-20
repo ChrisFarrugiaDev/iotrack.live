@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"iotrack.live/internal/apptypes"
-	"iotrack.live/internal/cache"
-	"iotrack.live/internal/logger"
-	"iotrack.live/internal/models"
-	"iotrack.live/internal/teltonika"
+	"iotrack.live/teltonika.parser.go/internal/apptypes"
+	"iotrack.live/teltonika.parser.go/internal/cache"
+	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/models"
+	"iotrack.live/teltonika.parser.go/internal/teltonika"
 )
 
 // ---------------------------------------------------------------------

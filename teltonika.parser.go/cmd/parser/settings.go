@@ -7,10 +7,10 @@ import (
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
-	"iotrack.live/internal/cache"
-	"iotrack.live/internal/db"
-	"iotrack.live/internal/logger"
-	"iotrack.live/internal/models"
+	"iotrack.live/teltonika.parser.go/internal/cache"
+	"iotrack.live/teltonika.parser.go/internal/db"
+	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/models"
 )
 
 // ---------------------------------------------------------------------

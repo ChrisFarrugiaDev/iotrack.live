@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"time"
 
-	"iotrack.live/internal/cache"
-	"iotrack.live/internal/util"
+	"iotrack.live/teltonika.parser.go/internal/cache"
+	"iotrack.live/teltonika.parser.go/internal/util"
 )
 
 type Codec12Command struct {

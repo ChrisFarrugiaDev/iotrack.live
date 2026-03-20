@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"iotrack.live/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/logger"
 )
 
 func Test_loadEnv(t *testing.T) {

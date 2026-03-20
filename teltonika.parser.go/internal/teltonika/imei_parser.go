@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"go.uber.org/zap"
-	"iotrack.live/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/logger"
 )
 
 func ImeiParser(packet []byte) (string, error) {

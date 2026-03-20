@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"iotrack.live/internal/apptypes"
-	"iotrack.live/internal/util"
+	"iotrack.live/teltonika.parser.go/internal/apptypes"
+	"iotrack.live/teltonika.parser.go/internal/util"
 )
 
 func ParseCodec12(data []byte) (*apptypes.Codec12Message, error) {

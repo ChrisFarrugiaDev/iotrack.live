@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"iotrack.live/internal/apptypes"
-	"iotrack.live/internal/util"
+	"iotrack.live/teltonika.parser.go/internal/apptypes"
+	"iotrack.live/teltonika.parser.go/internal/util"
 	"strconv"
 	"time"
 )

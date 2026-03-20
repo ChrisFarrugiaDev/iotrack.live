@@ -32,6 +32,8 @@ files_to_decrypt=(
   telemetry.db.writer.node.ts/.env.development.gpg  
   socketio.gateway.node.ts/.env.gpg
   socketio.gateway.node.ts/.env.development.gpg  
+  computation.server.go/.env.gpg
+  computation.server.go/.env.development.gpg  
 )
 
 # Find and decrypt the files

@@ -1,6 +1,6 @@
 package services
 
-import "iotrack.live/internal/appcore"
+import "iotrack.live/teltonika.parser.go/internal/appcore"
 
 type Service struct {
 	App *appcore.App

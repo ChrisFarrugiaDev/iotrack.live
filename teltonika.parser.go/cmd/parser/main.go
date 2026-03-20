@@ -14,13 +14,13 @@ import (
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
-	"iotrack.live/internal/appcore"
-	"iotrack.live/internal/apptypes"
-	"iotrack.live/internal/cache"
-	"iotrack.live/internal/logger"
-	"iotrack.live/internal/rabbitmq"
-	"iotrack.live/internal/services"
-	"iotrack.live/internal/tcp"
+	"iotrack.live/teltonika.parser.go/internal/appcore"
+	"iotrack.live/teltonika.parser.go/internal/apptypes"
+	"iotrack.live/teltonika.parser.go/internal/cache"
+	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/rabbitmq"
+	"iotrack.live/teltonika.parser.go/internal/services"
+	"iotrack.live/teltonika.parser.go/internal/tcp"
 )
 
 var app appcore.App

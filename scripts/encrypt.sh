@@ -31,6 +31,8 @@ files_to_encrypt=(
   telemetry.db.writer.node.ts/.env.development  
   socketio.gateway.node.ts/.env
   socketio.gateway.node.ts/.env.development  
+  computation.server.go/.env
+  computation.server.go/.env.development  
 )
 
 # Find and encrypt the files

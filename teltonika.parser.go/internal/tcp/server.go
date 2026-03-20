@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"iotrack.live/internal/appcore"
-	"iotrack.live/internal/apptypes"
-	"iotrack.live/internal/logger"
-	"iotrack.live/internal/services"
+	"iotrack.live/teltonika.parser.go/internal/appcore"
+	"iotrack.live/teltonika.parser.go/internal/apptypes"
+	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.parser.go/internal/services"
 )
 
 type TCPServer struct {
