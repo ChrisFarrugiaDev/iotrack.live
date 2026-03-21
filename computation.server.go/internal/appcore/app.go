@@ -1,7 +1,11 @@
 package appcore
 
-import "github.com/jackc/pgx/v5/pgxpool"
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+	"iotrack.live/computation.server.go/internal/models"
+)
 
 type App struct {
-	DB *pgxpool.Pool
+	DB     *pgxpool.Pool
+	Models models.Models
 }
