@@ -72,7 +72,8 @@ func (p *RabbitMQProducer) Run() {
 	}
 }
 
-// connect handles the connection and channel setup, including declaring multiple queues
+// connect establishes the RabbitMQ connection, opens a channel,
+// and sets up the configured exchanges, queues, and bindings.
 func (p *RabbitMQProducer) connect() bool {
 	var err error
 	p.connection, err = amqp.Dial(p.config.URL)
@@ -147,16 +148,22 @@ func (p *RabbitMQProducer) setupExchangesAndQueues() error {
 	return nil
 }
 
+// monitorConnection watches for RabbitMQ connection closures
+// and, if the connection closes due to an error, keeps retrying until reconnection succeeds.
 func (p *RabbitMQProducer) monitorConnection() {
 	go func() {
 		for {
+			// Blocks until RabbitMQ reports that the current connection has been closed.
 			reason, ok := <-p.connection.NotifyClose(make(chan *amqp.Error))
 			if !ok {
+				// If Ok is false. The notification channel was closed, so stop monitoring.
 				logger.Info("Channel and connection closed")
 				break
 			}
 			logger.Error("Trying to reconnect...", zap.Error(fmt.Errorf("connection closed: %s", reason)))
 			for {
+				// If the connection closes and RabbitMQ sends an error.
+				// Ok is true and keep retrying until reconnection succeeds.
 				if p.connect() {
 					logger.Info("Reconnection successful")
 					return
@@ -166,6 +173,26 @@ func (p *RabbitMQProducer) monitorConnection() {
 		}
 	}()
 }
+
+// Close cleanly closes the channel and connection
+func (p *RabbitMQProducer) Close() {
+	if p.channel != nil {
+		if err := p.channel.Close(); err != nil {
+			logger.Error("Failed to close RabbitMQ channel", zap.Error(err))
+		} else {
+			logger.Info("RabbitMQ channel closed gracefully.")
+		}
+	}
+	if p.connection != nil {
+		if err := p.connection.Close(); err != nil {
+			logger.Error("Failed to close RabbitMQ connection", zap.Error(err))
+		} else {
+			logger.Info("RabbitMQ connection closed gracefully.")
+		}
+	}
+}
+
+// ---------------------------------------------------------------------
 
 // SendFanoutMessage sends a message to a fanout exchange (routing key is ignored).
 // Use this for pub/sub or broadcasts.
@@ -237,23 +264,5 @@ func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, messa
 			fmt.Sprintf("Failed to publish message using routing key '%s' on exchange '%s'", routingKeyName, exchangeName),
 			zap.Error(err),
 		)
-	}
-}
-
-// Close cleanly closes the channel and connection
-func (p *RabbitMQProducer) Close() {
-	if p.channel != nil {
-		if err := p.channel.Close(); err != nil {
-			logger.Error("Failed to close RabbitMQ channel", zap.Error(err))
-		} else {
-			logger.Info("RabbitMQ channel closed gracefully.")
-		}
-	}
-	if p.connection != nil {
-		if err := p.connection.Close(); err != nil {
-			logger.Error("Failed to close RabbitMQ connection", zap.Error(err))
-		} else {
-			logger.Info("RabbitMQ connection closed gracefully.")
-		}
 	}
 }

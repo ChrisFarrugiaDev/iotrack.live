@@ -75,6 +75,7 @@ func initializeDatabase() {
 	// Assign the database connection to the app configuration
 	app.DB = dbPool
 
+	// Initialize the application models using the database connection.
 	app.Models, err = models.New(dbPool)
 	if err != nil {
 		logger.Error("Error initializing models", zap.Error(err))

@@ -60,5 +60,11 @@ func StartPublisher(rc *RedisCache, buf int) (chan<- PubMsg, func()) {
 		<-done
 	}
 
+	// 	ch = input channel for work
+	// done = signal that the worker has fully finished
+
+	// 	close(ch) says: “no more messages”
+	// close(done) says: “the goroutine is now completely done”
+
 	return ch, stop
 }

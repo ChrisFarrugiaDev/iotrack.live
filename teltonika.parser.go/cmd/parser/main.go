@@ -26,16 +26,29 @@ import (
 var app appcore.App
 
 func initializeAppCore(app *appcore.App) {
+	// Generates a unique instance ID for this app run.
 	app.UUID = uuid7.New()
-	app.LastTelemetryMap = make(map[int64]apptypes.FlatAvlRecord)
-	app.UpdatedDevicesSetA = make(map[int64]struct{})
-	app.UpdatedDevicesSetB = make(map[int64]struct{})
-	app.ActiveList = "A"
-	app.LatestTelemetryLock = sync.Mutex{}
+
+	// Initializes the cron scheduler with second-level precision.
 	app.Cron = cron.New(cron.WithSeconds())
 
-	app.LastTsMap = make(map[int64]time.Time)
+	// Holds the first set of updated device IDs.
+	app.UpdatedDevicesSetA = make(map[int64]struct{})
 
+	// Holds the second set of updated device IDs.
+	app.UpdatedDevicesSetB = make(map[int64]struct{})
+
+	// Indicates which updated device set is currently active.
+	app.ActiveList = "A"
+
+	// Protects access to the latest telemetry data.
+	app.LatestTelemetryLock = sync.Mutex{}
+
+	// Stores the latest telemetry record for each device ID.
+	app.LastTelemetryMap = make(map[int64]apptypes.FlatAvlRecord)
+
+	// Stores the timestamp of the latest telemetry record for each device ID.
+	app.LastTsMap = make(map[int64]time.Time)
 }
 
 func main() {
@@ -44,7 +57,9 @@ func main() {
 	initializeAppCore(&app)
 
 	loadEnv()
+
 	logger.InitLogger()
+
 	initializeCache()
 
 	// -----------------------------------------------------------------
@@ -66,6 +81,8 @@ func main() {
 	initializeDatabase()
 
 	// -----------------------------------------------------------------
+
+	// Initialize Redis publisher (async pub/sub).
 	ch, stopPublisher := cache.StartPublisher(app.Cache, 2000)
 	app.PubCh = ch
 
