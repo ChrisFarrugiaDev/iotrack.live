@@ -15,13 +15,15 @@ import (
 )
 
 type App struct {
-	Cache             *cache.RedisCache
-	Cron              *cron.Cron
-	MQProducer        *rabbitmq.RabbitMQProducer
-	DB                *pgxpool.Pool
-	Models            models.Models
-	Devices           map[string]*models.Device
-	DevicesLock       sync.RWMutex
+	Cache      *cache.RedisCache
+	Cron       *cron.Cron
+	MQProducer *rabbitmq.RabbitMQProducer
+	DB         *pgxpool.Pool
+	Models     models.Models
+
+	Devices     map[string]*models.Device
+	DevicesLock sync.RWMutex
+
 	Organisations     map[string]*models.Organisation
 	OrganisationsLock sync.RWMutex
 	UUID              *uuid7.Generator

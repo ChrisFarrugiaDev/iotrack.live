@@ -22,15 +22,18 @@ import (
 // It distinguishes between IMEI handshake (first packet) and data packets.
 func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *apptypes.Meta) {
 
+	// cmd: Codec12 command to send back to the device, if needed
+	// ack: 4-byte Teltonika acknowledgment containing the record count
 	cmd := []byte{}
 	ack := make([]byte, 4)
 
-	// Place this at the top of your function:
+	// Helper for logging a processing error and replying with the current ACK.
 	fail := func(msg string, err error) {
 		logger.Error(msg, zap.String("imei", deviceMeta.IMEI), zap.Error(err))
 		conn.Write(ack)
 	}
 
+	// (ref_point 9005)
 	// --- 1. IMEI Handshake: 000F + 15 ASCII bytes (hex, 34 chars) -----
 	if len(packet) == 17 {
 		imei, err := teltonika.ImeiParser(packet)
@@ -44,7 +47,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		currentDevice, ok := s.App.Devices[imei]
 		s.App.DevicesLock.RUnlock()
 
-		// -- If device not found in cache, create it in DB and cache
+		// -- If device not found in cache, create it in DB and cache (ref_point 9006)
 		if !ok {
 			newDevice := &models.Device{
 				ExternalID:     imei,
@@ -81,14 +84,14 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		// -- Build deviceMeta for downstream processing
 		deviceMeta.IMEI = currentDevice.ExternalID
 
-		// Positive ACK
+		// Positive ACK (ref_point 9007)
 		conn.Write([]byte{0x01})
 		return
 	}
 
 	// --- 2. Data Packet: Codec 8/8ex (telemetry) or Codec 12 (commands) ---
 
-	// Retrieve the current device
+	// Retrieve the current device (ref_point 9008)
 	s.App.DevicesLock.RLock()
 	currentDevice := s.App.Devices[deviceMeta.IMEI]
 	s.App.DevicesLock.RUnlock()
@@ -126,7 +129,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 
 	// -------------------- Command Send/Retry Logic --------------------
 
-	// Check if a Codec 12 command is currently in-flight for this device
+	// Check if a Codec 12 command is currently in-flight for this device (ref_point 9009)
 	inflightKey := "codec12:inflight-commands:" + deviceMeta.IMEI
 	inflightExist, err := s.App.Cache.Exists(inflightKey)
 
@@ -152,15 +155,15 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		}
 
 		switch dataPacket.GetCodecType() {
-		case "GPRS messages":
-			// Codec 12 response: command completed successfully
+		case "GPRS_Messages":
+			// Codec 12 response: command completed successfully (ref_point 9010)
 			s.App.Cache.Delete(inflightKey) // (456A)
 			codec12Message := dataPacket.(*apptypes.Codec12Message)
 			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
 			// (Send to DB or sync cache later)
 
 		case "AVL_Data":
-			// Still no Codec 12 response—try resend or fail after N tries
+			// Still no Codec 12 response—try resend or fail after N tries (ref_point 9011)
 			if inflightCommand.Retries < 10 {
 				inflightCommand.SetToInflight() // (should increment retry count)
 				cmd, err = inflightCommand.ToPacket()

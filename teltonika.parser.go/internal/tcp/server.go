@@ -32,7 +32,7 @@ func (s *TCPServer) Start(ctx context.Context) {
 		port = 5027
 	}
 
-	// Start listening for incoming TCP connections on the specified port.
+	// Start listening for incoming TCP connections on the specified port. (ref_point 9000).
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		logger.Error("Failed to start TCP server", zap.Error(err))
@@ -60,7 +60,7 @@ func (s *TCPServer) Start(ctx context.Context) {
 				continue
 			}
 		}
-		// Handle each connection in its own goroutine for concurrency.
+		// Handle each connection in its own goroutine for concurrency. (ref_point 9001)
 		go s.handleConnection(conn)
 	}
 }
@@ -76,10 +76,13 @@ func (s *TCPServer) handleConnection(conn net.Conn) {
 		timeoutSec = 30
 	}
 
-	// Set an initial timeout on the connection.
+	// Set an initial timeout on the connection. (ref_point 9002)
 	conn.SetDeadline(time.Now().Add(time.Duration(timeoutSec) * time.Second))
 
 	buf := make([]byte, 4096)
+
+	// TCP connections can stay open and send multiple packets,
+	// so keep reading in a loop until the connection ends. (ref_point 9003)
 	for {
 		n, err := conn.Read(buf)
 		if err != nil {

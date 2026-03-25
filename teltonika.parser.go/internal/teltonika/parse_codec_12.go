@@ -60,7 +60,7 @@ func ParseCodec12(data []byte) (*apptypes.Codec12Message, error) {
 
 	packet.CRC = crc
 	packet.Quantity2 = quantity2
-	packet.CodecType = "GPRS messages"
+	packet.CodecType = "GPRS_Messages"
 	packet.Content = apptypes.GPRS{
 		IsResponse:  true,
 		Type:        typ,
