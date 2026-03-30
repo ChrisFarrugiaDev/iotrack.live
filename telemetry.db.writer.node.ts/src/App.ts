@@ -5,6 +5,7 @@ import { logError, logInfo } from './utils/logger.utils';
 import redis from "./config/redis.config";
 import cron, { ScheduledTask } from 'node-cron';
 import { updateAllDevicesLastTelemetryFromRedisService } from "./services/update-all-devices-last-telemetry-from-redis.service";
+import { updateTeltonikaCodec12CommandsFromRedisService } from "./services/update-teltonika-codec12-commands-from-redis.service";
 
 
 
@@ -53,6 +54,9 @@ class App {
 
     registerCronJobs(): void {
         // Cron: Every 20 seconds (at 10, 30, and 50 seconds past each minute)
+        this.cronTasks.syncTeltonikaCodec12CommandsFromRedis = cron.schedule('1 * * * * *', async () => {
+            await updateTeltonikaCodec12CommandsFromRedisService();
+        });
         this.cronTasks.syncDeviceTelemetryFromRedis = cron.schedule('10,30,50 * * * * *', async () => {
             await updateAllDevicesLastTelemetryFromRedisService();
         });

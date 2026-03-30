@@ -157,10 +157,13 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		switch dataPacket.GetCodecType() {
 		case "GPRS_Messages":
 			// Codec 12 response: command completed successfully (ref_point 9010)
-			s.App.Cache.Delete(inflightKey) // (456A)
+			if err := s.App.Cache.Delete(inflightKey); err != nil {
+				fail("Redis error while deleting inflight command", err)
+				return
+			}
+			inflightExist = false // (456A)
 			codec12Message := dataPacket.(*apptypes.Codec12Message)
 			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
-			// (Send to DB or sync cache later)
 
 		case "AVL_Data":
 			// Still no Codec 12 response—try resend or fail after N tries (ref_point 9011)
@@ -174,7 +177,11 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				}
 
 			} else {
-				s.App.Cache.Delete(inflightKey) // (456A)
+				if err := s.App.Cache.Delete(inflightKey); err != nil {
+					fail("Redis error while deleting inflight command", err)
+					return
+				}
+				inflightExist = false // (456A)
 				inflightCommand.SetToSync("failed", "no_response")
 			}
 		}
@@ -229,7 +236,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		}
 	}
 
-	// ------------- Send Command (or Telemetry ACK) to Device -------------
+	// ------------- Send Command (or Telemetry ACK) to Device ---------
 
 	// Teltonika expects a 4-byte ACK (number of records)
 	binary.BigEndian.PutUint32(ack, uint32(dataPacket.GetQuantity1()))
@@ -242,7 +249,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		conn.Write(ack)
 	}
 
-	// ------------------- TODO: Data Forwarding --------------------
+	// -------------------  Data Forwarding ----------------------------
 	// If telemetry, forward to RabbitMQ/Redis for DB and UI consumption
 
 	if dataPacket.GetCodecType() == "AVL_Data" {
@@ -262,8 +269,6 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				Speed:      avl.GPSelement.Speed,
 				Elements:   avl.IOelement.Elements,
 			}
-
-			fmt.Println("-> ->", currentDevice.Model)
 
 			record := map[string]any{
 				"device_id": currentDevice.ID,
