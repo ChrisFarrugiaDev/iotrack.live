@@ -1,12 +1,13 @@
 <template>
-	<div>
+	<div class="vlist">
         <!-- Search bar and delete button row -->
-        <div class="mt-16 flex">
+        <div class="vlist__toolbar">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
             <VIconButton v-if="authorizationStore.can('group.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteGroupModal" />
         </div>
 
-        <VTable class="mt-4" 
+        <VTable class="vlist__table" 
+            fill
             :table-col="tableCol" 
             :table-data="tableData" 
             :search="searchTerm" 
@@ -18,6 +19,10 @@
             @update:selectedKeys="selectedKeys = ($event as any)"
 
         >
+            <template #pagination="{ page, pageCount, setPage }">
+                <ThePager class="justify-center w-100" :page="page" :page-count="pageCount" :set-page="setPage" />
+            </template>
+
             <template #actions="{ row }">          
                 <VIconButton v-if="authorizationStore.can('group.update')" icon="icon-view-more" @click="showUpdateGroupModal(row.uuid)"/>
             </template>

@@ -1,12 +1,13 @@
 <template>
-    <div >        
+    <div class="vlist">        
         <!-- Search bar and delete button row -->
-        <div class="mt-16 flex">
+        <div class="vlist__toolbar">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
             <VIconButton v-if="authorizationStore.can('asset.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteAssetModal" />
         </div>
 
-        <VTable class="mt-4"
+        <VTable class="vlist__table"
+            fill
             :table-col="tableCol"
             :table-data="tableData"
             :search="searchTerm" :per-page="25"

@@ -1,18 +1,19 @@
 <template>
-    <div>
-        <div class="mt-16 flex">
+    <div class="vlist">
+        <div class="vlist__toolbar">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
             <VIconButton v-if="authorizationStore.can('org.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteOrganisationModal" />
         </div>
 
-        <VTable class="mt-4" 
+        <VTable class="vlist__table" 
+            fill
             :search="searchTerm" 
             :selectable="true"
             :table-col="tableCol" 
             :table-data="tableData" 
             :sortKey="'path'" 
             :row-class="getOrgRowClass"
-            :per-page="25"
+            :per-page="5"
             v-model:page="currentPage"
             @update:page="currentPage = Number($emit)"
             @update:selectedKeys="selectedKeys = ($event as any)"
@@ -379,4 +380,3 @@ watch([selectedOrganisationUuid, isUpdateModalOpen], ([org_uuid, open]) => {
     }
 }
 </style>
-

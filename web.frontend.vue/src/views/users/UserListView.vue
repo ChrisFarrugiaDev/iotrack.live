@@ -1,12 +1,13 @@
 <template>
-    <div >
-        <div class="mt-16 flex">
+    <div class="vlist">
+        <div class="vlist__toolbar">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
             <VIconButton v-if="authorizationStore.can('user.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteUserModal" />
         </div>
 
         <VTable 
-            class="mt-4" 
+            class="vlist__table" 
+            fill
             :search="searchTerm" 
             :selectable="true"
             :table-col="tableCol" 
@@ -16,7 +17,6 @@
             @update:page="currentPage = Number($emit)"     
             @update:selectedKeys="selectedKeys = ($event as any)"        
         >
-            <!-- Pagination slot for custom pager component -->
             <template #pagination="{ page, pageCount, setPage }">
                 <ThePager class="justify-center w-100" :page="page" :page-count="pageCount" :set-page="setPage" />
             </template>
@@ -161,8 +161,6 @@ const tableData = computed(()=>{
     });    
 });
 
-
-
 // -- Methods ----------------------------------------------------------
 function clearMessage() {
     messageStore.clearFlashMessageList();
@@ -269,12 +267,6 @@ watch([selectedUserUuid, isUpdateModalOpen], ([user_uuid, open]) => {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly
-.flex {
-    display: flex;
-    gap: .5rem;
-}
-
 .delete-modal {
     display: flex;
     flex-direction: column;

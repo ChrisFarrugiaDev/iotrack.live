@@ -81,6 +81,10 @@ Use existing Vue components, SCSS tokens, and UI primitives before creating new 
 
 The dashboard should remain operational and compact rather than marketing-oriented. Prioritize clear tables, forms, map controls, modals, and permission-aware actions.
 
+Domain view wrappers that use a page title, flash message, tabs, and route body should use `Vview` with the `header` slot. `Vview` owns the fixed header and scrollable body behavior for these dashboard pages.
+
+List pages should use the shared `vlist`, `vlist__toolbar`, and `vlist__table` classes. Tables that should fill the available list area and keep pagination visible should use `VTable` with the `fill` prop.
+
 ## Verification Requirements
 
 Before considering frontend changes complete, run:

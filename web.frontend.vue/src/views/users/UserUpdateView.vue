@@ -1,5 +1,5 @@
 <template>
-    <form class="vform mt-16" autocomplete="off">
+    <form class="vform users-form" autocomplete="off">
         <TheFlashMessage></TheFlashMessage>
 
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }" @click="clearMessage">
@@ -526,4 +526,7 @@ async function updateUser() {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-// Placeholder comment to ensure global styles are imported correctly</style>
+.users-form {
+    padding-top: 3rem;
+}
+</style>

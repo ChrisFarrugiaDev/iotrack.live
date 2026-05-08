@@ -1,5 +1,5 @@
 <template>
-	<form class="vform mt-16" autocomplete="off" @click="clearMessage">
+	<form class="vform users-form" autocomplete="off" @click="clearMessage">
 
 		<div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
 
@@ -337,5 +337,7 @@ async function createUser() {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-/* Make Treeselect visually match your .vform__input look & feel */
+.users-form {
+	padding-top: 3rem;
+}
 </style>
