@@ -68,7 +68,8 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			}
 
 			// Update in-memory cache
-			if err := s.App.Cache.HSet("devices", imei, newDevice, "iotrack.live:"); err != nil {
+			err := s.App.Cache.HSet("devices", imei, newDevice, "iotrack.live:")
+			if err != nil {
 				logger.Error("Failed to cache new device", zap.Error(err))
 				conn.Write([]byte{0x00})
 				return
@@ -104,6 +105,11 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	}
 
 	// Get Codec ID (always at byte 8)
+	if len(packet) < 9 {
+		logger.Error("packet too short to read codec id", zap.Int("len", len(packet)))
+		conn.Write([]byte{0x00})
+		return
+	}
 	codecID := int(packet[8])
 	logger.Debug("CodecID detected", zap.Int("CodecID", codecID))
 
@@ -157,13 +163,18 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		switch dataPacket.GetCodecType() {
 		case "GPRS_Messages":
 			// Codec 12 response: command completed successfully (ref_point 9010)
-			if err := s.App.Cache.Delete(inflightKey); err != nil {
+			err := s.App.Cache.Delete(inflightKey)
+			if err != nil {
 				fail("Redis error while deleting inflight command", err)
 				return
 			}
 			inflightExist = false // (456A)
 			codec12Message := dataPacket.(*apptypes.Codec12Message)
-			inflightCommand.SetToSync("completed", codec12Message.GetResponse())
+			err = inflightCommand.SetToSync("completed", codec12Message.GetResponse())
+			if err != nil {
+				msg := "Failed to sync completed command"
+				logger.Error(msg, zap.String("imei", deviceMeta.IMEI), zap.Error(err))
+			}
 
 		case "AVL_Data":
 			// Still no Codec 12 response—try resend or fail after N tries (ref_point 9011)
@@ -177,12 +188,17 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				}
 
 			} else {
-				if err := s.App.Cache.Delete(inflightKey); err != nil {
+				err := s.App.Cache.Delete(inflightKey)
+				if err != nil {
 					fail("Redis error while deleting inflight command", err)
 					return
 				}
 				inflightExist = false // (456A)
-				inflightCommand.SetToSync("failed", "no_response")
+				err = inflightCommand.SetToSync("failed", "no_response")
+				if err != nil {
+					msg := "Failed to sync failed command"
+					logger.Error(msg, zap.String("imei", deviceMeta.IMEI), zap.Error(err))
+				}
 			}
 		}
 	}
@@ -282,7 +298,11 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 				"telemetry": telemetry, // <- Assign struct, NOT string
 			}
 
-			msg, _ := json.Marshal(record)
+			msg, err := json.Marshal(record)
+			if err != nil {
+				logger.Warn("failed to marshal telemetry payload", zap.Error(err))
+				continue
+			}
 			s.App.MQProducer.SendDirectMessage("teltonika_telemetry", "teltonika", string(msg))
 
 			// TODO:  remove only for testing
@@ -303,7 +323,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 						zap.String("income_ts", avl.HappenedAt),
 						zap.Error(err),
 					)
-					return // or continue
+					continue
 				}
 
 				// Only process if this is the first seen or the newest message
