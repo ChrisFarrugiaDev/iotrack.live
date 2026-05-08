@@ -1,6 +1,6 @@
 <template>
 	<!--  Table Outer Wrapper -------------------------------------- -->
-	<div class="vtable__wrapper">
+	<div class="vtable__wrapper" :class="{ 'vtable__wrapper--fill': fill }">
 
 		<!--  Table Container -------------------------------------- -->
 		<div class="vtable__container">
@@ -143,6 +143,7 @@ const props = defineProps<{
 	clearSelected?: number;
 	sortKey?: string;
 	rowClass?:(row:any) => string | string;
+	fill?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -342,9 +343,12 @@ function handleCellClick(c: TableColumn, row: any, ev: MouseEvent) {
 			font-weight: 600;
 			color: var(--color-zinc-900);
 			user-select: none;
-			border-bottom: 1px solid var(--color-zinc-900);
+			border-bottom: 0;
+			box-shadow: inset 0 -1px 0 var(--color-zinc-900);
 			position: sticky;
 			top: 0;
+			z-index: 2;
+			background: var(--color-bg-li);
 
 			&.vtable__th--sortable {
 				cursor: pointer;
@@ -366,11 +370,11 @@ function handleCellClick(c: TableColumn, row: any, ev: MouseEvent) {
 		}
 
 		&--head {
-			background: var(--color-white);
+			background: var(--color-bg-li);
 
 			&:hover {
 
-				background-color: var(--color-white);
+				background-color: var(--color-bg-li);
 			}
 		}
 	}
@@ -447,9 +451,46 @@ function handleCellClick(c: TableColumn, row: any, ev: MouseEvent) {
 	display: block;
 }
 
+.vtable__wrapper--fill {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+}
+
 .vtable__container {
 	margin-bottom: var(--space-6, 1.5rem);
 	overflow: auto;
+}
+
+.vtable__wrapper--fill .vtable__container {
+	flex: 1 1 auto;
+	height: 100%;
+	min-height: 0;
+	margin-bottom: 1rem;
+	overflow-y: auto;
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-zinc-300) transparent;
+}
+
+.vtable__wrapper--fill .vtable__container::-webkit-scrollbar {
+	width: 8px;
+}
+
+.vtable__wrapper--fill .vtable__container::-webkit-scrollbar-thumb {
+	background: var(--color-zinc-300);
+	border-radius: 999px;
+}
+
+.vtable__wrapper--fill .vtable__container::-webkit-scrollbar-thumb:hover {
+	background: var(--color-zinc-400);
+}
+
+.vtable__wrapper--fill > :deep(.vpager) {
+	flex: 0 0 auto;
+	align-self: center;
 }
 
 .vtable__pager {

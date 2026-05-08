@@ -1,21 +1,21 @@
 <template>
-    <Vview>
-        <div class="vheading--2 ">Users</div>
-        <TheFlashMessage></TheFlashMessage>   
+    <Vview pad="0">
+        <template #header>
+            <div class="vheading--2 ">Users</div>
+            <TheFlashMessage></TheFlashMessage>   
 
 
-        <VTabs class="mt-16" 
-            :activeTab="route.name as string"
-            :tabs="tabsObjectData_1.tabs"
-            :isDisabled="false" 
-            :layoutBreakpoint="500" 
-           @setActiveTab="setActiveTab" @click="clearMessage">
-        </VTabs>
+            <VTabs class="mt-16" 
+                :activeTab="route.name as string"
+                :tabs="tabsObjectData_1.tabs"
+                :isDisabled="false" 
+                :layoutBreakpoint="500" 
+               @setActiveTab="setActiveTab" @click="clearMessage">
+            </VTabs>
+        </template>
     
         <RouterView v-slot="{ Component, route }">
-      
-                <component :is="Component" :key="route.name" />
-          
+            <component :is="Component" :key="route.name" />
         </RouterView>
 
 

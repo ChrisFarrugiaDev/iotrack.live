@@ -1,15 +1,17 @@
 <template>
-    <Vview>
-        <div class="vheading--2 ">Organisations</div>
-        <TheFlashMessage></TheFlashMessage>   
+    <Vview pad="0">
+        <template #header>
+            <div class="vheading--2 ">Organisations</div>
+            <TheFlashMessage></TheFlashMessage>   
 
-        <VTabs class="mt-16" 
-            :activeTab="route.name as string"
-            :tabs="tabsObjectData_1.tabs"
-            :isDisabled="false" 
-            :layoutBreakpoint="500" 
-           @setActiveTab="setActiveTab" @click="clearMessage">
-        </VTabs>
+            <VTabs class="mt-16" 
+                :activeTab="route.name as string"
+                :tabs="tabsObjectData_1.tabs"
+                :isDisabled="false" 
+                :layoutBreakpoint="500" 
+               @setActiveTab="setActiveTab" @click="clearMessage">
+            </VTabs>
+        </template>
     
         <RouterView v-slot="{ Component, route }">
             <KeepAlive :exclude="['organisations.list', 'organisations.create']">

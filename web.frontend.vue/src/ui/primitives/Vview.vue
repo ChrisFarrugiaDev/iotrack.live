@@ -1,7 +1,15 @@
 <template>
     <main class="vview" :style="rootStyle">
         <section class="vview__section" :class="sectionClass" :style="sectionStyle">
-            <slot />
+            <div v-if="$slots.header" class="vview__layout">
+                <header class="vview__header">
+                    <slot name="header" />
+                </header>
+                <section class="vview__body">
+                    <slot />
+                </section>
+            </div>
+            <slot v-else />
         </section>
     </main>
 </template>
@@ -54,10 +62,10 @@ const sectionStyle = computed(() => ({
 .vview {
     width: 100%;
     min-height: 100%;
-    padding: 4.4rem 2rem 0rem 6rem;
+    padding: 4.4rem 2rem 2rem 6rem;
 
     @include respondHeight(688) {
-        padding: 1.5rem 2rem 0rem 6rem;
+        padding: 1.5rem 2rem 1.5rem 6rem;
     }
 }
 
@@ -74,6 +82,45 @@ const sectionStyle = computed(() => ({
 
     &--elevated {
         box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+    }
+}
+
+.vview__layout {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 6.4rem);
+    min-height: 0;
+    padding: 3rem 1rem 1rem;
+
+    @include respondHeight(688) {
+        height: calc(100vh - 3rem);
+    }
+}
+
+.vview__header {
+    flex: 0 0 auto;
+}
+
+.vview__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 1.5rem;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-zinc-300) transparent;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--color-zinc-300);
+        border-radius: 999px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: var(--color-zinc-400);
     }
 }
 

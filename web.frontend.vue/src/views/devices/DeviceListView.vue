@@ -1,13 +1,13 @@
 <template>
-    <div>
+    <div class="vlist">
         <!-- Search bar and delete button row -->
-        <div class="mt-16 flex">
+        <div class="vlist__toolbar">
             <VSearch v-model="searchTerm" :clearable="true" placeholder="Search…" :debounce="150" />
             <VIconButton v-if="authorizationStore.can('device.delete')" class="mr-2" type="red" icon="icon-delete" @click="showDeleteDeviceModal" />
         </div>
 
         <!-- Device table (with selection, pagination, actions) -->
-        <VTable class="mt-4" :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
+        <VTable class="vlist__table" fill :table-col="tableCol" :table-data="tableData" :search="searchTerm" :per-page="25"
             v-model:page="currentPage" row-key="id" :selectable="true" 
             @update:page="currentPage = Number($emit)" @update:selectedKeys="selectedKeys = ($event as any)">
             <!-- Pagination slot for custom pager component -->
