@@ -11,11 +11,10 @@
 <body>
 	<div id="app"></div>
 	<script>
-		window.GO_DOCKERIZED = "{{ .GO_DOCKERIZED }}";
+		window.GO_DOCKERIZED = "{{ .GO_DOCKERIZED }}" === "true";
+		window.GO_APP_URL = "{{ .GO_APP_URL }}";
 	</script>
 	<script type="module" src="/src/main.ts"></script>
 </body>
 
 </html>
-
-
