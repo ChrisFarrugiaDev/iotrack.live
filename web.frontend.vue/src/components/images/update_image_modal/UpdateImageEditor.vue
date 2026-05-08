@@ -18,9 +18,7 @@
                     // movable: false,
                     // resizable: false,
                     aspectRatio: 1,
-                }" 
-                image-restriction="stencil"
-                v-bind="primaryProps" priority="visible-area" :transitions="false" />
+                }" image-restriction="stencil" priority="visible-area" :transitions="false" />
 
         </div>
 
@@ -32,19 +30,12 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { Cropper } from 'vue-advanced-cropper';
 import 'vue-advanced-cropper/dist/style.css';
 import { useAppStore } from '@/stores/appStore';
 import { storeToRefs } from 'pinia';
 import { useAssetStore } from '@/stores/assetStore';
-
-const initialCoordinates = {
-    left: 0,
-    top: 0,
-    width: 20,
-    height: 20,
-}
 
 // - Types -------------------------------------------------------------
 
@@ -65,12 +56,6 @@ const props = defineProps<{
     selectedAssetID: string | null,
 }>();
 
-const emit = defineEmits<{
-
-    (e: 'update-primary-image'): void
-
-}>();
-
 // - Store -------------------------------------------------------------
 const { getAppUrl } = storeToRefs(useAppStore());
 
@@ -80,41 +65,9 @@ const cropperRef = ref<any>(null);
 
 // - Computed ----------------------------------------------------------
 
-const getPrimaryImg = computed(() => {
-    if (!props.selectedAssetID) return null
-    const currentAsset = assetStore.getAssets?.[props.selectedAssetID]
-    return currentAsset?.attributes?.primary_image || null
-})
-
-const getCoordinates = computed(() => {
-    if (!props.selectedAssetID) return null
-    const currentAsset = assetStore.getAssets?.[props.selectedAssetID]
-    return currentAsset?.attributes?.primary_image?.coordinates || null
-})
-
-const isPrimary = computed(() =>
-    getPrimaryImg.value &&
-    props.selectedImage &&
-    props.selectedImage.imageId === getPrimaryImg.value.imageId
-)
-
-const primaryProps = computed(() => {
-    const coords = getCoordinates.value
-
-    if (isPrimary.value && coords) {
-        return {
-            defaultSize: { width: coords.width, height: coords.height },
-            defaultPosition: { left: coords.left, top: coords.top },
-        }
-    }
-
-    return {}
-})
-
 function onReady() {
     const inst = cropperRef.value
     if (!inst) return
-    const { width, height } = inst.imageSize // provided by the instance 
 }
 
 
@@ -160,7 +113,8 @@ async function updatePrimaryImage() {
         border: 1px solid var(--color-zinc-300);
         border-radius: .5rem;
         overflow: hidden;
-        min-height: 360px;
+        min-height: 0;
+        height: 100%;
         display: grid;
         place-items: center;
     }

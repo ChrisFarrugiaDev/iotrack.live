@@ -120,7 +120,8 @@ async function deleteImage(e: Event) {
         display: flex;
         flex-direction: column;
         min-width: 320px;
-        max-height: 78vh;
+        min-height: 0;
+        height: 100%;
         border: 1px solid var(--color-zinc-300);
        
         border-radius: var(--radius-lg, 0.5rem);
@@ -142,15 +143,15 @@ async function deleteImage(e: Event) {
 .image-grid {
     padding: .8rem;
     overflow: auto;
-    /* keeps 158 × 137 boxes packed; wraps automatically */
+    min-height: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 158px);
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: .75rem;
     justify-content: start;
 
     &__item {
         position: relative;
-        width: 150px;
+        width: 100%;
         height: 150px;
         border: 1px solid var(--color-zinc-300);
         border-radius: var(--radius-lg, .5rem);
