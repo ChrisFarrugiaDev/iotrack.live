@@ -9,7 +9,7 @@
                         <button class="overflow-visible vmodal__close" @click="close" aria-label="Close">&times;</button>
                     </header>
 
-                    <div class=" overflow-scroll  vmodal__body">
+                    <div class="vmodal__body" :class="{ 'vmodal__body--fit': bodyFit }">
                         <slot />
                     </div>
 
@@ -33,10 +33,12 @@ const props = withDefaults(defineProps<{
     closeOnEsc?: boolean;
     closeOnOverlay?: boolean;
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    bodyFit?: boolean;
 }>(), {
     closeOnEsc: true,
     closeOnOverlay: true,
     size: 'sm',
+    bodyFit: false,
 });
 
 const emit = defineEmits<{
@@ -188,6 +190,13 @@ onBeforeUnmount(() => {
         z-index: 6000;
         font-family: var(--font-primary);
         max-height: calc(100vh - 12rem);      
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    &__body--fit {
+        max-height: none;
+        overflow: hidden;
     }
 
     &__footer {
@@ -228,11 +237,6 @@ onBeforeUnmount(() => {
 .overflow-visible {
     overflow: visible !important;
 }
-.overflow-scroll {
-    overflow-y: scroll!important;
-    overflow-x: hidden;
-}
-
 .flex-align-center {
     align-items: center !important;
 }

@@ -1,24 +1,28 @@
 <template>
-    <VModal v-model="isUpdateImageModalOpen" size="xl">
-        <div class="image-editor">
-            
-            <UpdateImageEditor 
-                :selectedImage="selectedImage"
+    <VModal v-model="isUpdateImageModalOpen" size="xl" body-fit>
+        <template #header>
+            <div class="vheading--3">Asset Images</div>
+        </template>
+
+        <section class="image-manager">
+            <div class="image-manager__workspace">
+                <UpdateImageEditor 
+                    :selectedImage="selectedImage"
+                    :selectedAssetID="selectedAssetID"
+                ></UpdateImageEditor>
+
+                <UpdateImageGallery 
+                    :images="images" 
+                    :selectedAssetID="selectedAssetID"
+                    @update:selectedImage="selectedImage=$event">
+                </UpdateImageGallery>
+            </div>
+
+            <UpdateImagesUploader class="image-manager__uploader" @files-change="onFilesChange"
                 :selectedAssetID="selectedAssetID"
-            ></UpdateImageEditor>
-
-            <UpdateImageGallery 
-                :images="images" 
-                :selectedAssetID="selectedAssetID"
-                @update:selectedImage="selectedImage=$event">
-            </UpdateImageGallery>
-
-        </div>
-
-        <UpdateImagesUploader class="mt-4" @files-change="onFilesChange"
-            :selectedAssetID="selectedAssetID"
-            :imageCount="images.length">
-        </UpdateImagesUploader>
+                :imageCount="images.length">
+            </UpdateImagesUploader>
+        </section>
 
     </VModal>
 
@@ -109,19 +113,33 @@ function onFilesChange(items: any[]) {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
-
-.image-editor {
+.image-manager {
     display: grid;
-    grid-template-columns: 1fr 360px;
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 1rem;
-    min-height: 60vh;
-    max-height: 78vh;   
+    height: min(68vh, 42rem);
+    min-height: 30rem;
+
+    &__workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 28rem;
+        gap: 1rem;
+        min-height: 0;
+    }
+
+    &__uploader {
+        min-height: 7rem;
+    }
 }
 
 @media (max-width: 920px) {
-    .image-editor {
-        grid-template-columns: 1fr;
-        max-height: none;
+    .image-manager {
+        height: auto;
+        min-height: 0;
+
+        &__workspace {
+            grid-template-columns: 1fr;
+        }
     }
 }
 
