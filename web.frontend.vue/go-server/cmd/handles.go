@@ -16,7 +16,7 @@ func (h *VueHandler) ServerIndexWithVariables(w http.ResponseWriter, r *http.Req
 		GO_DOCKERIZED bool
 		GO_APP_URL    string
 	}{
-		GO_DOCKERIZED: true,
+		GO_DOCKERIZED: false,
 		GO_APP_URL:    GO_APP_URL,
 	}
 

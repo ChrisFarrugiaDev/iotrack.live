@@ -203,7 +203,8 @@ async function fetchAccessProfile() {
 <style lang="scss" scoped>
 .page {
     grid-column: 1/3;
-     
+    min-height: 0;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -218,8 +219,9 @@ async function fetchAccessProfile() {
     background-color: $col-slate-50;
     display: grid;
     grid-template-columns: 4rem 1fr;
-    min-height: 100vh;
+    height: 100dvh;
     width: 100vw;
+    overflow: hidden;
     
 }
 

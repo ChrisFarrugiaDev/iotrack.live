@@ -141,9 +141,9 @@ defineExpose({ focus, clear });
 
     &__input {
         width: 100%;
-        height: 2rem;
+        height: 2.4rem;
         font-size: .9rem;
-        padding: .3rem .5rem;
+        padding: .45rem .75rem;
         padding-left: 2rem;
         font-family: var(--font-primary);
         /* leaves space for icon */

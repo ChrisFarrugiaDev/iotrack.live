@@ -28,9 +28,12 @@ const accessibleDevices = computed(()=>{
 
 // let url = `${import.meta.env.VITE_APP_URL}:${import.meta.env.VITE_SOCKET_SIO_PORT}`;
 let url = `${import.meta.env.VITE_APP_URL}`;
+console.log("1", url)
 if (window.GO_DOCKERIZED === true) {
     url = `${import.meta.env.GO_APP_URL}`;
+    console.log("2", url)
 }
+
 
 const socket = io(url, {
     path: "/socket.io/",

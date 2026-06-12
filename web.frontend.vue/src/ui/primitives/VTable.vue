@@ -381,14 +381,14 @@ function handleCellClick(c: TableColumn, row: any, ev: MouseEvent) {
 
 	&__cell {
 		overflow: visible !important;
-		padding: 0 0.5rem;
-		height: 2.5rem;
+		padding: 0.35rem 0.75rem;
+		height: 2.75rem;
 		border-bottom: 1px solid var(--color-zinc-200);
 		white-space: nowrap;
 		overflow: visible;
 
 		&--select {
-			width: 2.25rem;
+			width: 2.75rem;
 		}
 
 		&--actions {
@@ -468,8 +468,9 @@ function handleCellClick(c: TableColumn, row: any, ev: MouseEvent) {
 	flex: 1 1 auto;
 	height: 100%;
 	min-height: 0;
-	margin-bottom: 1rem;
+	margin-bottom: 1.25rem;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	scrollbar-gutter: stable;
 	scrollbar-width: thin;
 	scrollbar-color: var(--color-zinc-300) transparent;

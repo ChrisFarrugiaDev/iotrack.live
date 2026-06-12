@@ -5,13 +5,13 @@
     &__row {
         display: flex;
         flex-direction: column;
-        gap: 0rem;
+        gap: 0.25rem;
         flex: 1;
         overflow: visible;
 
         @include respondMobile(1000) {
             flex-direction: row;
-            gap: 1rem !important;
+            gap: 1.25rem !important;
         }
     }
 
@@ -49,7 +49,7 @@
         height: 100%;
         margin: 0;
       
-        padding: 2rem 0.5rem 0.5rem 0.5rem;
+        padding: 2rem 0.75rem 0.5rem 0.75rem;
         background-color: var(--color-bg-hi); 
         color: var(--color-text-1);
         font-family: var(--font-mono);

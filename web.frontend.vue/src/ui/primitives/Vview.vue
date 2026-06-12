@@ -61,8 +61,10 @@ const sectionStyle = computed(() => ({
 
 .vview {
     width: 100%;
-    min-height: 100%;
-    padding: 4.4rem 2rem 2rem 6rem;
+    height: 100%;
+    min-height: 0;
+    padding: 2rem 2rem 1.5rem 6rem;
+    overflow: hidden;
 
     @include respondHeight(688) {
         padding: 1.5rem 2rem 1.5rem 6rem;
@@ -72,8 +74,10 @@ const sectionStyle = computed(() => ({
 .vview__section {
     margin-inline: auto;
     width: 100%;
+    height: 100%;
+    min-height: 0;
     border-radius: var(--radius-md, 500px);
-    overflow: visible;
+    overflow: hidden;
 
     /* modifiers */
     &--bordered {
@@ -88,23 +92,24 @@ const sectionStyle = computed(() => ({
 .vview__layout {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 6.4rem);
+    height: 100%;
     min-height: 0;
-    padding: 3rem 1rem 1rem;
-
-    @include respondHeight(688) {
-        height: calc(100vh - 3rem);
-    }
+    padding: 1.75rem 1.25rem 1rem;
 }
 
 .vview__header {
     flex: 0 0 auto;
+
+    :deep(.vtabs) {
+        margin-top: 2rem !important;
+    }
 }
 
 .vview__body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-bottom: 1.5rem;
     scrollbar-gutter: stable;
     scrollbar-width: thin;

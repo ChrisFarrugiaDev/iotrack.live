@@ -288,10 +288,7 @@ async function updateDevice() {
 
     if (!device.value) return;
 
-    dashboardStore.setIsLoading(true);
-
     const payload = buildUpdatePayload(form, device.value);
-
 
     if (Object.keys(payload).length === 0) {
 
@@ -302,6 +299,8 @@ async function updateDevice() {
         confirmOn.value = false;
         return;
     }
+
+    dashboardStore.setIsLoading(true);
 
     try {
         // Send request
