@@ -29,6 +29,10 @@ class App {
             try {
 
                 // Step 3: decode base64 → UTF-8 string
+                // TODO: teltonika.parser.go currently publishes live Redis
+                // messages as base64 JSON strings. If the parser later
+                // publishes plain JSON, remove this decode step and use
+                // JSON.parse(msg) directly.
                 const msgString = Buffer.from(msg, "base64").toString("utf8");
                 const jsonMsg = JSON.parse(msgString)
                 // console.log("->")

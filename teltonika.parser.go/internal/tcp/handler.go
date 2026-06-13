@@ -333,7 +333,10 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 					// Update the in-memory cache
 					s.App.LastTsMap[currentDevice.ID] = incomingTs
 
-					// Marshal and publish live message (non-blocking, with burst buffer)
+					// Marshal and publish live message (non-blocking, with burst buffer).
+					// TODO: this publishes a base64 JSON string because msg is []byte.
+					// If this is changed to publish JSON directly, update
+					// socketio.gateway.node.ts/src/App.ts at the same time.
 					payload, err := json.Marshal(msg)
 					if err == nil {
 						s.App.PubCh <- cache.PubMsg{
