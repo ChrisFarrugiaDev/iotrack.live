@@ -47,14 +47,9 @@ export function createRedisSubscriber(onMessage: (msg: any) => void) {
 
     // Handle each published message
     sub.on("message", (_channel, message) => {
-        try {
-            const data = JSON.parse(message);
-            // Queue the message for batched forwarding
-            enqueue(data);
-        } catch (e) {
-            // If JSON parsing fails, log but continue
-            logger.warn({ message }, "Invalid JSON in pub/sub");
-        }
+        // Queue the raw Redis payload. App.ts owns message parsing so it can
+        // support both current plain JSON and old base64 JSON payloads.
+        enqueue(message);
     });
 
     // Return the subscriber client so caller can close gracefully

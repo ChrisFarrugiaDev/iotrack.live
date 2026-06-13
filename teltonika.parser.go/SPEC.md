@@ -159,7 +159,7 @@ Consumer:
 Gateway behavior:
 
 - Subscribes to `teltonika:live`.
-- Decodes the parser message.
+- Parses the parser's plain JSON message.
 - Emits `live-update` to Socket.IO room `device:<device_id>`.
 
 ## Codec 12 Command Flow

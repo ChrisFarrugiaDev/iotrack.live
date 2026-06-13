@@ -133,8 +133,7 @@ Responsibilities:
 
 - Starts a Socket.IO server.
 - Subscribes to Redis pub/sub messages.
-- Decodes base64 Redis messages.
-- Parses telemetry JSON payloads.
+- Parses telemetry JSON payloads from Redis messages.
 - Emits `live-update` events to device-specific rooms.
 
 Important implementation notes:
@@ -145,8 +144,8 @@ Important implementation notes:
 - Redis subscriber code lives in `socketio.gateway.node.ts/src/redis`.
 - Default Socket.IO port is `4003` if `SIO_PORT` is not set.
 
-This service should be improved after the live Redis message contract is made
-explicit.
+The live Redis message contract is plain JSON. The gateway keeps a fallback for
+the old base64 JSON format during mixed-version rollout.
 
 ### `web.frontend.vue`
 
@@ -437,4 +436,3 @@ implemented.
 
 This keeps the work grounded in the most important service without forcing a
 large rewrite.
-

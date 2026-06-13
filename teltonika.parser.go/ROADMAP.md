@@ -17,11 +17,6 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Fix live Redis payload encoding.
-  - In `internal/tcp/handler.go`, `msg` is already JSON bytes.
-  - Publish `msg` directly instead of `json.Marshal(msg)`.
-  - This is a small real bug and should be first.
-
 - [ ] Harden RabbitMQ publishing when the producer is not connected.
   - `SendDirectMessage` currently assumes `p.channel` is ready.
   - If RabbitMQ is unavailable while TCP traffic arrives, publishing can fail
@@ -52,6 +47,12 @@ expected runtime behavior.
   - Keep current IMEI handling as-is.
   - Only revisit if parser errors appear from partial or combined TCP reads.
   - Keep any future change small, readable, and local to `server.go`.
+
+## Completed
+
+- [x] Fix live Redis payload encoding.
+  - `internal/tcp/handler.go` now publishes existing JSON bytes directly instead
+    of wrapping them with `json.Marshal(msg)`.
 
 ## Validation Notes
 

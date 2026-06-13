@@ -2,6 +2,38 @@ import { logger } from "./utils/logger.utils";
 import { createRedisSubscriber } from "./redis/subscriber";
 import { createSocketIOServer } from "./socketio/server";
 
+// ---------------------------------------------------------------------
+
+// Redis live messages should now arrive as plain JSON strings.
+// This helper keeps parsing in one place and still accepts older shapes while
+// parser and gateway deployments may briefly overlap.
+function parseLiveRedisMessage(msg: unknown) {
+    // Some older code paths parsed Redis JSON before this callback. If that
+    // still happens, use the object directly instead of stringifying it into
+    // "[object Object]".
+    if (typeof msg === "object" && msg !== null) {
+        return msg;
+    }
+
+    const msgString = String(msg);
+
+    try {
+        // Current contract: teltonika.parser.go publishes plain JSON.
+        return JSON.parse(msgString);
+    } catch (jsonErr) {
+        try {
+            // Legacy contract: teltonika.parser.go used to publish a base64
+            // encoded JSON string because the JSON bytes were marshaled again.
+            const decodedMsg = Buffer.from(msgString, "base64").toString("utf8");
+            return JSON.parse(decodedMsg);
+        } catch {
+            throw jsonErr;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------
+
 class App {
     static _instance: App;
     private sub: ReturnType<typeof createRedisSubscriber> | null = null;
@@ -28,13 +60,7 @@ class App {
         this.sub = createRedisSubscriber((msg) => {
             try {
 
-                // Step 3: decode base64 → UTF-8 string
-                // TODO: teltonika.parser.go currently publishes live Redis
-                // messages as base64 JSON strings. If the parser later
-                // publishes plain JSON, remove this decode step and use
-                // JSON.parse(msg) directly.
-                const msgString = Buffer.from(msg, "base64").toString("utf8");
-                const jsonMsg = JSON.parse(msgString)
+                const jsonMsg = parseLiveRedisMessage(msg);
                 // console.log("->")
                 // console.log(jsonMsg)
 
