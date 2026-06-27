@@ -21,15 +21,12 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Make telemetry delivery contracts explicit.
-  - RabbitMQ is the durable/history path.
-  - Redis latest-telemetry keys are the fast current-state path.
-  - Redis pub/sub is the live UI path and is allowed to miss messages because
-    the latest snapshot can be recovered from Redis.
-  - Consider adding `schema_version` to telemetry payloads and changing
-    RabbitMQ message content type from `text/plain` to `application/json`.
-  - Ensure the DB writer is idempotent for duplicate or retried telemetry,
-    ideally using a stable device/timestamp/event identity.
+- [ ] Review telemetry writer idempotency.
+  - `../telemetry.db.writer.node.ts` currently bulk inserts RabbitMQ telemetry.
+  - Decide whether duplicate or retried telemetry should be ignored using a
+    stable device/timestamp/event identity.
+  - Consider adding `schema_version` to telemetry payloads only as a coordinated
+    parser and writer change.
 
 - [ ] Review latest telemetry locking.
   - `LastTsMap` and `LastTelemetryMap` are touched from packet handlers and cron
@@ -43,6 +40,14 @@ expected runtime behavior.
   - Keep any future change small, readable, and local to `server.go`.
 
 ## Completed
+
+- [x] Make telemetry delivery contracts explicit.
+  - `SPEC.md` now documents RabbitMQ as the durable/history path, Redis latest
+    telemetry as the current-state path, and Redis pub/sub as best-effort live
+    UI delivery.
+  - RabbitMQ publish metadata now uses content type `application/json`.
+  - Telemetry JSON field names, routing keys, exchanges, queues, Redis keys, and
+    pub/sub channels were left unchanged.
 
 - [x] Fix live Redis payload encoding.
   - `internal/tcp/handler.go` now publishes existing JSON bytes directly instead

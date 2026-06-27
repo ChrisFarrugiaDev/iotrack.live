@@ -249,7 +249,7 @@ func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
 		false,         // immediate
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
-			ContentType:  "text/plain",
+			ContentType:  "application/json",
 			Body:         []byte(message),
 			MessageId:    p.UUID.Next().String(),
 		},
@@ -297,7 +297,7 @@ func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, messa
 		false, // immediate
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
-			ContentType:  "text/plain",
+			ContentType:  "application/json",
 			Body:         []byte(message),
 			MessageId:    p.UUID.Next().String(),
 		},

@@ -130,8 +130,14 @@ RabbitMQ contract:
 - Exchange: `teltonika`
 - Routing key: `teltonika_telemetry`
 - Queue: `telemetry`
+- Content type: `application/json`
 - Consumer: `../telemetry.db.writer.node.ts`
 - Consumer insert target: PostgreSQL `app.telemetry`
+- Delivery role: durable telemetry history. The writer consumes the JSON body
+  and bulk inserts the records into PostgreSQL.
+
+The RabbitMQ body is the history contract. Keep the existing JSON field names
+stable unless the parser and writer are changed together.
 
 ## Latest Telemetry And Live Updates
 
@@ -150,7 +156,14 @@ Redis keys:
 - `teltonika.parser.go:device-latest-telemetry:<device_id>`
 - `teltonika.parser.go:device-latest-telemetry:id`
 
+Redis latest telemetry is the current-state recovery path. It is updated from
+the newest telemetry record seen for each device and can be used by downstream
+services to rebuild current device state.
+
 The parser publishes live updates to Redis channel `teltonika:live`.
+
+Redis pub/sub is the live UI path. It is best-effort: subscribers can miss a
+message, then recover the latest device state from Redis.
 
 Consumer:
 
