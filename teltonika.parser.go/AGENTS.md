@@ -143,3 +143,7 @@ The Docker Compose service name is `teltonika-parser-go`.
 - Redis cache initialization tests are opt-in with `RUN_REDIS_TESTS=1`.
 - Run focused parser tests with `go test ./internal/teltonika`; 
 - Run RabbitMQ producer tests with `go test ./internal/rabbitmq`; 
+
+## Commit Guidelines
+
+Do not add a `Co-Authored-By: Claude ...` trailer (or any AI co-author) to commits. Commits should list only the human author.
