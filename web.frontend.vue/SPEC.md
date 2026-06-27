@@ -17,6 +17,27 @@ The frontend is responsible for:
 
 The frontend is not responsible for enforcing final security decisions. The backend must still validate authentication, authorisation, and submitted payloads.
 
+## Platform Context
+
+This app is one microservice inside the larger `iotrack.live` system. A clean
+session opened from this directory should understand these service boundaries:
+
+- `web.backend.node.ts` is the main REST API for auth, access profiles, assets,
+  devices, organisations, groups, and users.
+- `socketio.gateway.node.ts` forwards live telemetry from Redis to browser
+  clients through Socket.IO.
+- `file.server.go` owns image and file upload/list/delete behavior.
+- `teltonika.parser.go` ingests Teltonika TCP traffic, parses telemetry, writes
+  live state to Redis, and sends durable telemetry to RabbitMQ.
+- `telemetry.db.writer.node.ts` consumes RabbitMQ telemetry and syncs Redis
+  latest-state/Codec 12 data back to PostgreSQL.
+- `computation.server.go` is still being defined and should not be assumed as a
+  stable frontend dependency yet.
+
+Frontend work should follow backend contracts instead of inventing new data
+shapes locally. When a UI change exposes a contract gap, document the expected
+shape before wiring broad behavior around it.
+
 ## Repository Layout
 
 Key files and directories:
@@ -44,6 +65,8 @@ window.GO_APP_URL = "{{ .GO_APP_URL }}";
 
 When `window.GO_DOCKERIZED` is true, client API calls should use `window.GO_APP_URL`. Otherwise they should use Vite env values.
 
+`appStore.ts` should remain the frontend source of truth for runtime app URL behavior. Keep API calls and Socket.IO connection logic aligned with that store instead of spreading URL decisions across components.
+
 Do not commit real secrets or production-only values. Keep local-only values in `.env` and production values in the hosting environment that starts the Go server.
 
 Apache proxy configuration is kept in `iotrack.live.conf`:
@@ -52,6 +75,33 @@ Apache proxy configuration is kept in `iotrack.live.conf`:
 - `/img/` proxies to the image/file service.
 - `/socket.io/` proxies to the Socket.IO service.
 - `/` proxies to the Go frontend server.
+
+When adding new frontend routes, check the Go production server so direct page refresh works for those routes.
+
+## Main Runtime Flows
+
+Authentication and hydration:
+
+1. User logs in through `web.backend.node.ts`.
+2. JWT is stored by `authStore.ts`.
+3. `axios.ts` attaches the JWT to API requests.
+4. `App.vue` fetches `/api/access-profile`.
+5. App stores are hydrated with devices, assets, organisations, groups, settings, permissions, roles, and authenticated user data.
+
+Live telemetry:
+
+1. `SocketIo.vue` connects to `socketio.gateway.node.ts`.
+2. It emits `join-devices` with accessible device IDs.
+3. It receives `live-update` events.
+4. `deviceStore.updateWithLiveData` updates latest telemetry.
+5. Map marker components react to store changes and animate movement.
+
+Map rendering:
+
+1. `TheMap.vue` reads the Google Maps API key from settings.
+2. It renders assets with attached devices and last telemetry.
+3. It selects marker components by asset type.
+4. It controls active info windows, follow mode, map center, and zoom.
 
 ## Routing & Access Control
 
@@ -75,11 +125,17 @@ Pinia stores hold domain state. Keep API-facing domain state in the relevant sto
 
 `App.vue` currently hydrates stores from `/api/access-profile`.
 
+The access profile currently exposes backend authorization metadata through `profile.authorization.permissoins`. This spelling is part of the current frontend/backend contract. Do not rename it in the frontend without coordinating the backend response shape.
+
 ## UI & Styling
 
 Use existing Vue components, SCSS tokens, and UI primitives before creating new patterns. Domain pages should stay under `src/views/<domain>/`, while reusable pieces belong in `src/components/` or `src/ui/`.
 
 The dashboard should remain operational and compact rather than marketing-oriented. Prioritize clear tables, forms, map controls, modals, and permission-aware actions.
+
+Code should prioritize readability and understanding. Prefer direct control
+flow, clear names, and small local changes over clever abstractions. Add short
+intent comments only when they make a workflow easier to follow.
 
 Domain view wrappers that use a page title, flash message, tabs, and route body should use `Vview` with the `header` slot. `Vview` owns the fixed header and scrollable body behavior for these dashboard pages.
 
@@ -107,4 +163,7 @@ Use the `GOCACHE` override when the default Go cache is not writable.
 - Keep production runtime injection aligned with `appStore.ts` and Socket.IO setup.
 - Ensure all create/edit/list routes have matching permission guards.
 - Replace broad `any` usage with domain types where it affects shared contracts.
+- Review `SocketIo.vue` for runtime URL cleanup, debug log removal, and live-update typing.
+- Check Go server SPA route coverage when adding or changing routes.
+- Review bundle size later; the current build passes but Vite reports large CSS/JS chunks.
 - Expand tests when a frontend test framework is introduced.
