@@ -127,11 +127,8 @@ The Docker Compose service name is `teltonika-parser-go`.
 - Default TCP timeout is `30` seconds if `TCP_TIMEOUT` is not set.
 - Parser logs use the local Zap wrapper in `internal/logger`.
 
-## Recent Implementation Updates
+## Testing Notes
 
-- RabbitMQ publishing now guards nil producers and unavailable channels before
-  publishing from `SendDirectMessage` and `SendFanoutMessage`.
-- Focused RabbitMQ tests cover nil producer and nil channel publish paths in
-  `internal/rabbitmq/producer_test.go`.
-- Redis cache initialization tests are gated behind `RUN_REDIS_TESTS=1` so
-  normal parser tests do not require local Redis.
+- Redis cache initialization tests are opt-in with `RUN_REDIS_TESTS=1`.
+- Run focused parser tests with `go test ./internal/teltonika`; 
+- Run RabbitMQ producer tests with `go test ./internal/rabbitmq`; 

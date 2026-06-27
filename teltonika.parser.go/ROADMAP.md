@@ -31,12 +31,6 @@ expected runtime behavior.
   - Ensure the DB writer is idempotent for duplicate or retried telemetry,
     ideally using a stable device/timestamp/event identity.
 
-- [ ] Add focused parser tests with real Teltonika examples.
-  - Add tests for IMEI parsing, Codec 8, Codec 8 Extended, and Codec 12
-    response.
-  - Use small real hex packet fixtures from Teltonika docs.
-  - Keep tests close to `internal/teltonika`.
-
 - [ ] Review latest telemetry locking.
   - `LastTsMap` and `LastTelemetryMap` are touched from packet handlers and cron
     flush code.
@@ -69,12 +63,18 @@ expected runtime behavior.
   - Redis integration verification remains available with
     `RUN_REDIS_TESTS=1 GOCACHE=/tmp/gocache go test ./cmd/parser`.
 
+- [x] Add focused parser tests with real Teltonika examples.
+  - Added tests for IMEI parsing, Codec 8, Codec 8 Extended, and Codec 12
+    response using Teltonika wiki hex packet examples.
+  - Tests live in `internal/teltonika/parser_test.go`.
+
 ## Validation Notes
 
 - `GOCACHE=/tmp/gocache go test ./...` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/...` passes.
 - `GOCACHE=/tmp/gocache go test ./cmd/parser` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/rabbitmq` passes.
+- `GOCACHE=/tmp/gocache go test ./internal/teltonika` passes.
 - `GOCACHE=/tmp/gocache go build -o /tmp/teltonika-parser-analysis
   ./cmd/parser` builds, with the existing read-only module download cache
   warning.
