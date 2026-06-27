@@ -4,6 +4,12 @@ This directory is a standalone Go module for the Teltonika TCP parser service.
 When Codex is opened from this directory, treat this file and `SPEC.md` as the
 main project context.
 
+## Skill
+
+A `teltonika-codec` skill is installed at `.agents/skills/teltonika-codec/` with offline
+byte-level specs for Codec 8, Codec 8 Extended, and Codec 12 (packet layout, IO elements,
+CRC, TCP ACK, command lifecycle). Load it when working on protocol parsing or codec types.
+
 ## Scope
 
 - Main service entrypoint: `cmd/parser/main.go`
