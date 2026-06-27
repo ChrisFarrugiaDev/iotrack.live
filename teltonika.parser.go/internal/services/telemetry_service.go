@@ -51,12 +51,9 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 	// Save updated telemetry record
 	s.App.LastTelemetryMap[deviceID] = merged
 
-	// Mark device as updated in the active set (A/B double-buffering)
-	if s.App.ActiveList == "A" {
-		s.App.UpdatedDevicesSetA[deviceID] = struct{}{}
-	} else {
-		s.App.UpdatedDevicesSetB[deviceID] = struct{}{}
-	}
+	// Mark this device as needing a flush. It's a set, so repeated
+	// writes for the same device between flushes collapse to one entry.
+	s.App.UpdatedDevices[deviceID] = struct{}{}
 }
 
 // ---------------------------------------------------------------------
@@ -66,16 +63,13 @@ func (s *Service) FlushLastTelemetry() {
 	// Lock, swap the active set, and snapshot telemetry for the affected devices.
 	// Snapshot must happen under the lock to avoid a race with UpdateLastTelemetry writers.
 	s.App.LatestTelemetryLock.Lock()
-	var processSet map[int64]struct{}
-	if s.App.ActiveList == "A" {
-		s.App.ActiveList = "B"
-		processSet = s.App.UpdatedDevicesSetA
-		s.App.UpdatedDevicesSetA = make(map[int64]struct{}) // Reset A to empty
-	} else {
-		s.App.ActiveList = "A"
-		processSet = s.App.UpdatedDevicesSetB
-		s.App.UpdatedDevicesSetB = make(map[int64]struct{}) // Reset B to empty
-	}
+
+	// Grab the current set of updated devices and immediately replace it
+	// with a fresh empty one. New writers accumulate into the new set while
+	// we flush the old one below — the swap itself is instant, so the lock
+	// is held only briefly.
+	processSet := s.App.UpdatedDevices
+	s.App.UpdatedDevices = make(map[int64]struct{})
 	// Deep-copy the telemetry for each updated device while still holding the lock.
 	// DeepCopy is required because FlatAvlRecord.Elements is a map (reference type) —
 	// a plain struct copy would share the pointer, letting a concurrent UpdateLastTelemetry

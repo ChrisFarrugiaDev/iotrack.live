@@ -32,14 +32,8 @@ func initializeAppCore(app *appcore.App) {
 	// Initializes the cron scheduler with second-level precision.
 	app.Cron = cron.New(cron.WithSeconds())
 
-	// Holds the first set of updated device IDs.
-	app.UpdatedDevicesSetA = make(map[int64]struct{})
-
-	// Holds the second set of updated device IDs.
-	app.UpdatedDevicesSetB = make(map[int64]struct{})
-
-	// Indicates which updated device set is currently active.
-	app.ActiveList = "A"
+	// Holds the set of device IDs updated since the last telemetry flush.
+	app.UpdatedDevices = make(map[int64]struct{})
 
 	// Protects access to the latest telemetry data.
 	app.LatestTelemetryLock = sync.Mutex{}

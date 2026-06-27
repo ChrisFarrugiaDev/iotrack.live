@@ -30,10 +30,12 @@ type App struct {
 
 	LastTsMap           map[int64]time.Time
 	LastTsLock          sync.RWMutex
-	LastTelemetryMap    map[int64]apptypes.FlatAvlRecord
-	UpdatedDevicesSetA  map[int64]struct{}
-	UpdatedDevicesSetB  map[int64]struct{}
-	ActiveList          string //  A/B double-buffering
+	LastTelemetryMap map[int64]apptypes.FlatAvlRecord
+
+	// Set of device IDs that received new telemetry since the last flush.
+	// Swapped out under LatestTelemetryLock on each flush (see FlushLastTelemetry).
+	UpdatedDevices map[int64]struct{}
+
 	LatestTelemetryLock sync.Mutex
 
 	// Redis publisher

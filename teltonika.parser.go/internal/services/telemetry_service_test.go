@@ -11,10 +11,8 @@ import (
 
 func newTestService() *Service {
 	app := &appcore.App{
-		LastTelemetryMap:   make(map[int64]apptypes.FlatAvlRecord),
-		UpdatedDevicesSetA: make(map[int64]struct{}),
-		UpdatedDevicesSetB: make(map[int64]struct{}),
-		ActiveList:         "A",
+		LastTelemetryMap: make(map[int64]apptypes.FlatAvlRecord),
+		UpdatedDevices:   make(map[int64]struct{}),
 	}
 	return NewService(app)
 }
