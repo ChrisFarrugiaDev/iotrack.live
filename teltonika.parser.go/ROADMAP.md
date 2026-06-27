@@ -31,13 +31,6 @@ expected runtime behavior.
   - Ensure the DB writer is idempotent for duplicate or retried telemetry,
     ideally using a stable device/timestamp/event identity.
 
-- [ ] Make Redis-dependent tests explicit.
-  - `go test ./...` currently fails because `Test_initializeCache` expects local
-    Redis at `127.0.0.1:16379`.
-  - Gate integration tests behind an environment variable such as
-    `RUN_REDIS_TESTS=1`.
-  - Normal local verification should not require Redis credentials.
-
 - [ ] Add focused parser tests with real Teltonika examples.
   - Add tests for IMEI parsing, Codec 8, Codec 8 Extended, and Codec 12
     response.
@@ -70,13 +63,20 @@ expected runtime behavior.
     local retry/backoff, or a dead-letter/failure path before treating telemetry
     as safely handed off.
 
+- [x] Make Redis-dependent tests explicit.
+  - `Test_initializeCache` now skips unless `RUN_REDIS_TESTS=1` is set.
+  - Normal parser package tests no longer require Redis at `127.0.0.1:16379`.
+  - Redis integration verification remains available with
+    `RUN_REDIS_TESTS=1 GOCACHE=/tmp/gocache go test ./cmd/parser`.
+
 ## Validation Notes
 
+- `GOCACHE=/tmp/gocache go test ./...` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/...` passes.
+- `GOCACHE=/tmp/gocache go test ./cmd/parser` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/rabbitmq` passes.
 - `GOCACHE=/tmp/gocache go build -o /tmp/teltonika-parser-analysis
   ./cmd/parser` builds, with the existing read-only module download cache
   warning.
-- `GOCACHE=/tmp/gocache go test ./...` fails at
-  `cmd/parser.Test_initializeCache` because Redis access is not available by
-  default.
+- Redis integration tests require `RUN_REDIS_TESTS=1` and a local Redis test
+  instance.

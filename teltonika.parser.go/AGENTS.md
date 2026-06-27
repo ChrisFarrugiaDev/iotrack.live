@@ -92,13 +92,19 @@ Related services in the repo:
 Run from `teltonika.parser.go`:
 
 ```bash
+GOCACHE=/tmp/gocache go test ./...
+GOCACHE=/tmp/gocache go test ./cmd/parser
 GOCACHE=/tmp/gocache go test ./internal/rabbitmq
 GOCACHE=/tmp/gocache go test ./internal/tcp ./internal/teltonika ./internal/util
 go build -o teltonika-parser ./cmd/parser
 ```
 
-`go test ./...` currently includes Redis-dependent tests and may fail without a
-local Redis test instance.
+Redis integration tests are opt-in. Run them only when a local Redis test
+instance is available:
+
+```bash
+RUN_REDIS_TESTS=1 GOCACHE=/tmp/gocache go test ./cmd/parser
+```
 
 From the repo root, the existing build target is:
 
@@ -127,3 +133,5 @@ The Docker Compose service name is `teltonika-parser-go`.
   publishing from `SendDirectMessage` and `SendFanoutMessage`.
 - Focused RabbitMQ tests cover nil producer and nil channel publish paths in
   `internal/rabbitmq/producer_test.go`.
+- Redis cache initialization tests are gated behind `RUN_REDIS_TESTS=1` so
+  normal parser tests do not require local Redis.
