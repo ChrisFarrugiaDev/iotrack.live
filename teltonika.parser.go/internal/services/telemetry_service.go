@@ -60,6 +60,7 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 // FlushLastTelemetry stores the latest telemetry for updated devices in Redis.
 // Uses double-buffered A/B sets for concurrency safety.
 func (s *Service) FlushLastTelemetry() {
+
 	// Lock, swap the active set, and snapshot telemetry for the affected devices.
 	// Snapshot must happen under the lock to avoid a race with UpdateLastTelemetry writers.
 	s.App.LatestTelemetryLock.Lock()
@@ -70,6 +71,7 @@ func (s *Service) FlushLastTelemetry() {
 	// is held only briefly.
 	processSet := s.App.UpdatedDevices
 	s.App.UpdatedDevices = make(map[int64]struct{})
+
 	// Deep-copy the telemetry for each updated device while still holding the lock.
 	// DeepCopy is required because FlatAvlRecord.Elements is a map (reference type) —
 	// a plain struct copy would share the pointer, letting a concurrent UpdateLastTelemetry
@@ -78,6 +80,7 @@ func (s *Service) FlushLastTelemetry() {
 	for deviceID := range processSet {
 		snapshot[deviceID] = s.App.LastTelemetryMap[deviceID].DeepCopy()
 	}
+
 	s.App.LatestTelemetryLock.Unlock()
 
 	// Iterate the snapshot outside the lock — safe, no concurrent writers can touch it.
