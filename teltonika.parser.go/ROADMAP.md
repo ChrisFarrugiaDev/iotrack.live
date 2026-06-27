@@ -34,10 +34,13 @@ expected runtime behavior.
   - Check with the race detector after focused tests exist.
   - Only change locking if a race is confirmed or the fix stays simple.
 
-- [ ] Optional: improve TCP data packet reading.
-  - Keep current IMEI handling as-is.
-  - Only revisit if parser errors appear from partial or combined TCP reads.
-  - Keep any future change small, readable, and local to `server.go`.
+- [ ] Low priority - parked: watch TCP packet boundary handling.
+  - Teltonika packets include `Data Field Length`, so packet boundaries can be
+    handled if real device logs prove the current read loop needs it.
+  - Do not change current IMEI or data packet reading logic unless parser errors
+    show partial or combined TCP reads.
+  - If needed later, keep any future change small, readable, and local to
+    `server.go`.
 
 ## Completed
 

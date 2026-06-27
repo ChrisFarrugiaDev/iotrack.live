@@ -6,9 +6,14 @@ main project context.
 
 ## Skill
 
-A `teltonika-codec` skill is installed at `.agents/skills/teltonika-codec/` with offline
-byte-level specs for Codec 8, Codec 8 Extended, and Codec 12 (packet layout, IO elements,
-CRC, TCP ACK, command lifecycle). Load it when working on protocol parsing or codec types.
+A `teltonika-codec` skill provides offline byte-level specs for Codec 8, Codec 8 Extended,
+and Codec 12 (packet layout, IO elements, CRC, TCP ACK, command lifecycle).
+
+- **Claude Code**: invoke the `teltonika-codec` skill via the Skill tool.
+- **Codex / other agents**: read `.agents/skills/teltonika-codec/SKILL.md` and all files
+  under `.agents/skills/teltonika-codec/references/` directly.
+
+Load this skill whenever working on protocol parsing, codec types, or any of the `parse_*.go` files.
 
 ## Scope
 
