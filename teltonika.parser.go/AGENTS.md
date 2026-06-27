@@ -92,9 +92,13 @@ Related services in the repo:
 Run from `teltonika.parser.go`:
 
 ```bash
-go test ./...
+GOCACHE=/tmp/gocache go test ./internal/rabbitmq
+GOCACHE=/tmp/gocache go test ./internal/tcp ./internal/teltonika ./internal/util
 go build -o teltonika-parser ./cmd/parser
 ```
+
+`go test ./...` currently includes Redis-dependent tests and may fail without a
+local Redis test instance.
 
 From the repo root, the existing build target is:
 
@@ -116,3 +120,10 @@ The Docker Compose service name is `teltonika-parser-go`.
 - Default TCP port is `5027` if `TCP_PORT` is not set.
 - Default TCP timeout is `30` seconds if `TCP_TIMEOUT` is not set.
 - Parser logs use the local Zap wrapper in `internal/logger`.
+
+## Recent Implementation Updates
+
+- RabbitMQ publishing now guards nil producers and unavailable channels before
+  publishing from `SendDirectMessage` and `SendFanoutMessage`.
+- Focused RabbitMQ tests cover nil producer and nil channel publish paths in
+  `internal/rabbitmq/producer_test.go`.

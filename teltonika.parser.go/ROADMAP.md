@@ -21,16 +21,6 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Harden RabbitMQ publishing when the producer is not connected.
-  - `SendDirectMessage` currently assumes `p.channel` is ready.
-  - If RabbitMQ is unavailable while TCP traffic arrives, publishing can fail
-    badly.
-  - Keep the fix small: guard nil channel, log clearly, and return without
-    panic.
-  - Next reliability pass should decide whether to use publisher confirms,
-    local retry/backoff, or a dead-letter/failure path before treating telemetry
-    as safely handed off.
-
 - [ ] Make telemetry delivery contracts explicit.
   - RabbitMQ is the durable/history path.
   - Redis latest-telemetry keys are the fast current-state path.
@@ -71,9 +61,19 @@ expected runtime behavior.
   - `internal/tcp/handler.go` now publishes existing JSON bytes directly instead
     of wrapping them with `json.Marshal(msg)`.
 
+- [x] Harden RabbitMQ publishing when the producer is not connected.
+  - `SendDirectMessage` and `SendFanoutMessage` now guard nil producers and
+    unavailable channels before publishing.
+  - Added focused tests for nil producer and nil channel publish paths in
+    `internal/rabbitmq/producer_test.go`.
+  - Next reliability pass should decide whether to use publisher confirms,
+    local retry/backoff, or a dead-letter/failure path before treating telemetry
+    as safely handed off.
+
 ## Validation Notes
 
 - `GOCACHE=/tmp/gocache go test ./internal/...` passes.
+- `GOCACHE=/tmp/gocache go test ./internal/rabbitmq` passes.
 - `GOCACHE=/tmp/gocache go build -o /tmp/teltonika-parser-analysis
   ./cmd/parser` builds, with the existing read-only module download cache
   warning.

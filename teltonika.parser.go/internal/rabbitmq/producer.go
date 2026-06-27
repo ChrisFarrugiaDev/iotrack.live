@@ -194,15 +194,51 @@ func (p *RabbitMQProducer) Close() {
 
 // ---------------------------------------------------------------------
 
+// isAvailable checks that the RabbitMQ producer exists before using it.
+func (p *RabbitMQProducer) isAvailable(exchangeName, routingKeyName string) bool {
+	if p == nil {
+		logger.Error(
+			"RabbitMQ producer is not available",
+			zap.String("exchange", exchangeName),
+			zap.String("routing_key", routingKeyName),
+		)
+		return false
+	}
+
+	return true
+}
+
+// hasChannel checks that the RabbitMQ channel is ready before publishing.
+func (p *RabbitMQProducer) hasChannel(exchangeName, routingKeyName string) bool {
+	if p.channel == nil || p.channel.IsClosed() {
+		logger.Error(
+			"RabbitMQ channel is not available",
+			zap.String("exchange", exchangeName),
+			zap.String("routing_key", routingKeyName),
+		)
+		return false
+	}
+
+	return true
+}
+
 // SendFanoutMessage sends a message to a fanout exchange (routing key is ignored).
 // Use this for pub/sub or broadcasts.
 func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
+	if !p.isAvailable(exchangeName, "") {
+		return
+	}
+
 	exchange, ok := p.exchangesMap[exchangeName]
 	if !ok {
 		logger.Error(
 			fmt.Sprintf("Exchange '%s' does not exist", exchangeName),
 			zap.Error(errors.New("exchange not found")),
 		)
+		return
+	}
+
+	if !p.hasChannel(exchangeName, "") {
 		return
 	}
 
@@ -229,6 +265,10 @@ func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
 
 // SendDirectMessage sends a message to a direct or topic exchange with a specific routing key.
 func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, message string) {
+	if !p.isAvailable(exchangeName, routingKeyName) {
+		return
+	}
+
 	routingKey, ok := p.routingKeysMap[routingKeyName]
 	if !ok {
 		logger.Error(
@@ -243,6 +283,10 @@ func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, messa
 				routingKeyName, routingKey.Exchange, exchangeName),
 			zap.Error(errors.New("exchange mismatch")),
 		)
+		return
+	}
+
+	if !p.hasChannel(exchangeName, routingKeyName) {
 		return
 	}
 
