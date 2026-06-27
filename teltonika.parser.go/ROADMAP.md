@@ -28,12 +28,6 @@ expected runtime behavior.
   - Consider adding `schema_version` to telemetry payloads only as a coordinated
     parser and writer change.
 
-- [ ] Review latest telemetry locking.
-  - `LastTsMap` and `LastTelemetryMap` are touched from packet handlers and cron
-    flush code.
-  - Check with the race detector after focused tests exist.
-  - Only change locking if a race is confirmed or the fix stays simple.
-
 - [ ] Low priority - parked: watch TCP packet boundary handling.
   - Teltonika packets include `Data Field Length`, so packet boundaries can be
     handled if real device logs prove the current read loop needs it.
@@ -76,11 +70,23 @@ expected runtime behavior.
     response using Teltonika wiki hex packet examples.
   - Tests live in `internal/teltonika/parser_test.go`.
 
+- [x] Review latest telemetry locking.
+  - `LastTsMap` now uses a dedicated lock around timestamp map reads and writes.
+  - `FlushLastTelemetry` snapshots latest telemetry while holding
+    `LatestTelemetryLock`, then writes the snapshot to Redis outside the lock.
+  - `FlatAvlRecord.DeepCopy` prevents the flushed snapshot from sharing the
+    mutable `Elements` map with later telemetry updates.
+  - Added focused tests for latest telemetry merge behavior and deep-copy
+    behavior.
+
 ## Validation Notes
 
 - `GOCACHE=/tmp/gocache go test ./...` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/...` passes.
 - `GOCACHE=/tmp/gocache go test ./cmd/parser` passes.
+- `GOCACHE=/tmp/gocache go test -race ./internal/services ./internal/apptypes
+  ./internal/tcp ./internal/teltonika ./cmd/parser` passes.
+- `GOCACHE=/tmp/gocache go test ./internal/services ./internal/apptypes` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/rabbitmq` passes.
 - `GOCACHE=/tmp/gocache go test ./internal/teltonika` passes.
 - `GOCACHE=/tmp/gocache go build -o /tmp/teltonika-parser-analysis

@@ -313,8 +313,6 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			// i == 0: first message in the packet is the most recent
 			if i == 0 {
 
-				lastTs, ok := s.App.LastTsMap[currentDevice.ID]
-
 				// Parse the new telemetry timestamp from string to time.Time.
 				incomingTs, err := time.Parse(time.RFC3339, avl.HappenedAt)
 				if err != nil {
@@ -326,12 +324,21 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 					continue
 				}
 
-				// Only process if this is the first seen or the newest message
-				if !ok || incomingTs.After(lastTs) {
-					s.Service.UpdateLastTelemetry(currentDevice.ID, telemetry)
-
-					// Update the in-memory cache
+				// Only process if this is the first seen or the newest message.
+				// Read-check-write under LastTsLock: multiple TCP handler goroutines can
+				// reach this point concurrently, so we need the whole sequence atomic.
+				s.App.LastTsLock.Lock()
+				lastTs, ok := s.App.LastTsMap[currentDevice.ID]
+				shouldUpdate := !ok || incomingTs.After(lastTs)
+				if shouldUpdate {
+					// Update the in-memory timestamp cache before releasing the lock.
 					s.App.LastTsMap[currentDevice.ID] = incomingTs
+				}
+				s.App.LastTsLock.Unlock()
+
+				if shouldUpdate {
+					// Merge into the latest-telemetry snapshot (guarded by LatestTelemetryLock inside).
+					s.Service.UpdateLastTelemetry(currentDevice.ID, telemetry)
 
 					// Publish the live JSON message without wrapping it again.
 					s.App.PubCh <- cache.PubMsg{

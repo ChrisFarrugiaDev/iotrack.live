@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"maps"
 
 	"go.uber.org/zap"
 	"iotrack.live/teltonika.parser.go/internal/apptypes"
@@ -45,9 +46,7 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 	if merged.Elements == nil {
 		merged.Elements = make(map[string]any)
 	}
-	for k, v := range telemetry.Elements {
-		merged.Elements[k] = v
-	}
+	maps.Copy(merged.Elements, telemetry.Elements)
 
 	// Save updated telemetry record
 	s.App.LastTelemetryMap[deviceID] = merged
@@ -64,7 +63,8 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 // FlushLastTelemetry stores the latest telemetry for updated devices in Redis.
 // Uses double-buffered A/B sets for concurrency safety.
 func (s *Service) FlushLastTelemetry() {
-	// Lock and swap the active set
+	// Lock, swap the active set, and snapshot telemetry for the affected devices.
+	// Snapshot must happen under the lock to avoid a race with UpdateLastTelemetry writers.
 	s.App.LatestTelemetryLock.Lock()
 	var processSet map[int64]struct{}
 	if s.App.ActiveList == "A" {
@@ -76,12 +76,19 @@ func (s *Service) FlushLastTelemetry() {
 		processSet = s.App.UpdatedDevicesSetB
 		s.App.UpdatedDevicesSetB = make(map[int64]struct{}) // Reset B to empty
 	}
+	// Deep-copy the telemetry for each updated device while still holding the lock.
+	// DeepCopy is required because FlatAvlRecord.Elements is a map (reference type) —
+	// a plain struct copy would share the pointer, letting a concurrent UpdateLastTelemetry
+	// mutate Elements while Cache.Set is JSON-marshalling it below (outside the lock).
+	snapshot := make(map[int64]apptypes.FlatAvlRecord, len(processSet))
+	for deviceID := range processSet {
+		snapshot[deviceID] = s.App.LastTelemetryMap[deviceID].DeepCopy()
+	}
 	s.App.LatestTelemetryLock.Unlock()
 
-	// Prepare a slice to track updated device IDs
-	deviceIDs := make([]int64, 0, len(processSet))
-	for deviceID := range processSet {
-		lt := s.App.LastTelemetryMap[deviceID]
+	// Iterate the snapshot outside the lock — safe, no concurrent writers can touch it.
+	deviceIDs := make([]int64, 0, len(snapshot))
+	for deviceID, lt := range snapshot {
 
 		// Save latest telemetry to Redis with no expiration (-1 means persist)
 		err := s.App.Cache.Set(fmt.Sprintf("device-latest-telemetry:%d", deviceID), lt, -1)

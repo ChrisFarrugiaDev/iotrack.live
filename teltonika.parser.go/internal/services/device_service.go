@@ -46,6 +46,8 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 }
 
 func (s *Service) BuildDeviceTsMap() {
+	s.App.LastTsLock.Lock()
+	defer s.App.LastTsLock.Unlock()
 	for _, d := range s.App.Devices {
 		s.App.LastTsMap[d.ID] = d.LastTelemetryTs
 	}

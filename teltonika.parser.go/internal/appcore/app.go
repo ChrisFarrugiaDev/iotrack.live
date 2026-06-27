@@ -29,6 +29,7 @@ type App struct {
 	UUID              *uuid7.Generator
 
 	LastTsMap           map[int64]time.Time
+	LastTsLock          sync.RWMutex
 	LastTelemetryMap    map[int64]apptypes.FlatAvlRecord
 	UpdatedDevicesSetA  map[int64]struct{}
 	UpdatedDevicesSetB  map[int64]struct{}
