@@ -207,8 +207,9 @@ Command sync consumer:
 Parser cron:
 
 - File: `cmd/parser/cron_jobs.go`
-- Every 20 seconds, `FlushLastTelemetryJob` writes updated latest telemetry to
-  Redis.
+- `LATEST_TELEMETRY_FLUSH_CRON` controls how often
+  `FlushLastTelemetryJob` writes updated latest telemetry to Redis.
+- Default schedule is `0,20,40 * * * * *`, which runs every 20 seconds.
 
 Background sync goroutine:
 
@@ -231,6 +232,7 @@ Important environment variables:
 - `DEBUG`
 - `TCP_PORT`
 - `TCP_TIMEOUT`
+- `LATEST_TELEMETRY_FLUSH_CRON`
 - `MICROSERVICE_NAME`
 - `REDIS_HOST`
 - `REDIS_PORT`

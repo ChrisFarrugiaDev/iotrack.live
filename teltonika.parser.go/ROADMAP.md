@@ -14,6 +14,10 @@ expected runtime behavior.
 - The hot path is the TCP handler: handshake, codec dispatch, Codec 12 command
   lifecycle, telemetry publish, latest telemetry cache update, and live Redis
   publish.
+- Telemetry currently leaves the parser through three paths: all telemetry goes
+  to RabbitMQ for `telemetry.db.writer.node.ts`, latest telemetry snapshots are
+  cached in Redis, and live updates are published through Redis pub/sub for the
+  Socket.IO gateway.
 
 ## Recommended Work
 
@@ -23,6 +27,19 @@ expected runtime behavior.
     badly.
   - Keep the fix small: guard nil channel, log clearly, and return without
     panic.
+  - Next reliability pass should decide whether to use publisher confirms,
+    local retry/backoff, or a dead-letter/failure path before treating telemetry
+    as safely handed off.
+
+- [ ] Make telemetry delivery contracts explicit.
+  - RabbitMQ is the durable/history path.
+  - Redis latest-telemetry keys are the fast current-state path.
+  - Redis pub/sub is the live UI path and is allowed to miss messages because
+    the latest snapshot can be recovered from Redis.
+  - Consider adding `schema_version` to telemetry payloads and changing
+    RabbitMQ message content type from `text/plain` to `application/json`.
+  - Ensure the DB writer is idempotent for duplicate or retried telemetry,
+    ideally using a stable device/timestamp/event identity.
 
 - [ ] Make Redis-dependent tests explicit.
   - `go test ./...` currently fails because `Test_initializeCache` expects local
