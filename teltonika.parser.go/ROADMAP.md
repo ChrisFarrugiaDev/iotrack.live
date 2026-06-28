@@ -21,13 +21,6 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Review telemetry writer idempotency.
-  - `../telemetry.db.writer.node.ts` currently bulk inserts RabbitMQ telemetry.
-  - Decide whether duplicate or retried telemetry should be ignored using a
-    stable device/timestamp/event identity.
-  - Consider adding `schema_version` to telemetry payloads only as a coordinated
-    parser and writer change.
-
 - [ ] Low priority - parked: watch TCP packet boundary handling.
   - Teltonika packets include `Data Field Length`, so packet boundaries can be
     handled if real device logs prove the current read loop needs it.
