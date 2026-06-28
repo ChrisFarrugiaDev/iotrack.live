@@ -1,149 +1,105 @@
 # Codex Instructions for `teltonika.parser.go`
 
-This directory is a standalone Go module for the Teltonika TCP parser service.
-When Codex is opened from this directory, treat this file and `SPEC.md` as the
-main project context.
+Use this file as the primary context when working inside the Teltonika TCP parser
+service. `SPEC.md` remains the source of truth for service behavior and
+contracts.
 
-## Skill
+## Before Editing
 
-A `teltonika-codec` skill provides offline byte-level specs for Codec 8, Codec 8 Extended,
-and Codec 12 (packet layout, IO elements, CRC, TCP ACK, command lifecycle).
-
-- **Claude Code**: invoke the `teltonika-codec` skill via the Skill tool.
-- **Codex / other agents**: read `.agents/skills/teltonika-codec/SKILL.md` and all files
-  under `.agents/skills/teltonika-codec/references/` directly.
-
-Load this skill whenever working on protocol parsing, codec types, or any of the `parse_*.go` files.
-
-## Scope
-
-- Main service entrypoint: `cmd/parser/main.go`
-- Configuration/bootstrap: `cmd/parser/settings.go`
-- TCP connection lifecycle: `internal/tcp`
-- Teltonika protocol parsing: `internal/teltonika`
-- Packet and message types: `internal/apptypes`
-- Redis helpers: `internal/cache`
-- RabbitMQ producer: `internal/rabbitmq`
-- Database models and services: `internal/models`, `internal/services`
-
-## How This Service Fits the Repo
-
-`teltonika.parser.go` is the ingestion edge for the whole `iotrack.live`
-platform. Teltonika devices connect here over TCP. This service parses IMEI
-handshakes, Codec 8, Codec 8 Extended, and Codec 12 packets, then dispatches
-data to Redis and RabbitMQ for the rest of the system.
-
-Related services in the repo:
-
-- `web.backend.node.ts` creates Codec 12 commands and pushes pending command
-  records into Redis for this parser.
-- `telemetry.db.writer.node.ts` consumes parser telemetry from RabbitMQ and
-  syncs parser Redis state back to PostgreSQL.
-- `socketio.gateway.node.ts` subscribes to parser Redis live messages and emits
-  Socket.IO updates to frontend clients.
-- `web.frontend.vue` displays device and asset state using REST data and live
-  Socket.IO telemetry.
-- `initdb-scripts` defines the PostgreSQL schemas/tables used by devices,
-  telemetry, organisations, and Codec 12 commands.
-
-## Working Rules
-
-- Keep changes focused on this module unless the task explicitly crosses service
+- Read `SPEC.md` before changing parsing, Redis/RabbitMQ contracts, Codec 12
+  command lifecycle, latest telemetry state, or startup behavior.
+- Read `ROADMAP.md` for current parser follow-up work.
+- Keep changes inside this Go module unless the task explicitly crosses service
   boundaries.
 - Do not edit `.env`, `.env.development`, encrypted `.gpg` files, or the built
   `teltonika-parser` binary unless explicitly asked.
-- Prefer adding or updating focused tests near the package being changed.
-- Preserve existing Redis key names, RabbitMQ routing keys, JSON field names,
-  and Teltonika ACK/packet behavior unless the task is specifically to change a
+
+## Protocol Reference
+
+Load the `teltonika-codec` skill only when working on protocol parsing, codec
+packet types, CRC, ACK behavior, Codec 12 commands, or `parse_*.go` files.
+
+- Claude Code: invoke the `teltonika-codec` skill via the Skill tool.
+- Codex / other agents: read `.agents/skills/teltonika-codec/SKILL.md` and its
+  referenced files only when the protocol task needs them.
+
+## How This Service Fits the Repo
+
+- Receives Teltonika TCP traffic and publishes parsed telemetry to RabbitMQ and
+  Redis.
+- `../web.backend.node.ts` creates Codec 12 commands that this parser sends to
+  devices.
+- `../telemetry.db.writer.node.ts` persists parser telemetry and syncs parser
+  Redis command/latest state.
+- `../socketio.gateway.node.ts` forwards parser Redis live telemetry to
+  frontend clients.
+- Check `../initdb-scripts` only when changing database-backed device,
+  organisation, telemetry, or command assumptions.
+
+## Project Structure
+
+- `cmd/parser/main.go` starts the service.
+- `cmd/parser/settings.go` handles configuration/bootstrap.
+- `internal/tcp` owns connection lifecycle and dispatch.
+- `internal/teltonika` owns protocol parsing.
+- `internal/apptypes` owns packet and message types.
+- `internal/cache` owns Redis helpers.
+- `internal/rabbitmq` owns RabbitMQ publishing.
+- `internal/models` and `internal/services` own database-facing behavior.
+
+## Contract Safety
+
+- Preserve Redis key names, RabbitMQ routing keys, JSON field names, and
+  Teltonika ACK/packet behavior unless the task is specifically to change a
   contract.
-- When changing cross-service contracts, check the matching Node service before
-  editing:
-  - command API: `../web.backend.node.ts/src/api/controllers/teltonika.controller.ts`
-  - telemetry writer: `../telemetry.db.writer.node.ts/src/rabbitmq/consumer.ts`
-  - command sync writer:
-    `../telemetry.db.writer.node.ts/src/services/update-teltonika-codec12-commands-from-redis.service.ts`
-  - live gateway: `../socketio.gateway.node.ts/src/App.ts`
+- Parser-owned Redis prefix: `teltonika.parser.go:`.
+- Shared app Redis prefix: `iotrack.live:`.
+- RabbitMQ direct exchange: `teltonika`.
+- Main telemetry routing key: `teltonika_telemetry`, queue `telemetry`.
+- Live Redis pub/sub channel: `teltonika:live`.
 
-## VERY IMPORTANT
-- Be simple. Approach tasks in a simple, incremental way.
-- Work incrementally ALWAYS. Small, simple steps. Validate and check each increment before moving on.
-- Use LATEST apis as of NOW
+## Coding Guidelines
 
-## MANDATORY Code Style
-- Do not overengineer. Do not program defensively. Use exception managers only when needed.
-- Identify root cause before fixing issues. Prove with evidence, then fix.
-- Work incrementally with small steps. Validate each increment.
+### Core Approach
+- Work incrementally. Small steps, validate each before moving on.
+- Be simple. Don't overengineer or program defensively.
 - Use latest library APIs.
-- Favor clear, concise docstring comments. Be sparing with comments outside docstrings.
-- Favor short modules, short methods and functions. Name things clearly.
 
-## Important - debugging and fixing
-- When troubleshooting problems, ALWAYS identify root cause BEFORE fixing
-- PROVE THE PROBLEM FIRST — don't guess.
-- Try one test at a time. Be methodical.
-- Don't jump to conclusions. Don't apply workarounds.
+### Code Style
+- Prioritize readability. Prefer direct, step-by-step code over clever abstractions.
+- Favor short modules, methods, and functions. Name things clearly.
+- Use simple control flow.
+- Favor concise docstrings. Be sparing with other comments; add them only to explain intent, contracts, or non-obvious logic.
+- Use exception handling only when needed.
 
-## Coding Style
+### Debugging
+- Identify root cause BEFORE fixing. Prove the problem with evidence first—don't guess.
+- Test one thing at a time. Be methodical.
+- Don't jump to conclusions or apply workarounds.
 
-- Keep Go code very readable and step-by-step, especially in protocol parsing,
-  TCP lifecycle, Redis/RabbitMQ state transitions, and startup/shutdown flows.
-- Preserve and use visible separator comments for large sections, for example:
-  `// ---------------------------------------------------------------------` and
-  `// -------------------- Command Send/Retry Logic --------------------`.
-- Use short comments to explain protocol intent, business intent, or non-obvious
-  state transitions. Avoid comments that only repeat the code.
-- Prefer small helper functions when a function has multiple clear phases, but
-  keep the high-level phase comments at the call site so the flow remains easy
-  to scan.
-- Avoid dense or clever code when a straightforward sequence with clear names is
-  easier to read and maintain.
+### Service Notes
+- Apply step-by-step style especially in protocol parsing, TCP lifecycle, Redis/RabbitMQ state transitions, and startup/shutdown flows.
+- Preserve visible separator comments where the code already uses them.
+- When debugging parser or protocol issues, prefer focused tests near the affected package.
 
-## Useful Commands
+## Verification
 
-Run from `teltonika.parser.go`:
+Run focused checks from this service:
 
-```bash
-GOCACHE=/tmp/gocache go test ./...
-GOCACHE=/tmp/gocache go test ./cmd/parser
-GOCACHE=/tmp/gocache go test ./internal/rabbitmq
+```sh
 GOCACHE=/tmp/gocache go test ./internal/tcp ./internal/teltonika ./internal/util
-go build -o teltonika-parser ./cmd/parser
+GOCACHE=/tmp/gocache go test ./internal/rabbitmq
+GOCACHE=/tmp/gocache go test ./cmd/parser
+GOCACHE=/tmp/gocache go test ./...
 ```
 
-Redis integration tests are opt-in. Run them only when a local Redis test
-instance is available:
+Redis integration tests are opt-in:
 
-```bash
+```sh
 RUN_REDIS_TESTS=1 GOCACHE=/tmp/gocache go test ./cmd/parser
 ```
 
-From the repo root, the existing build target is:
+For docs-only changes, do not run builds unless needed.
 
-```bash
-make teltonika-parser-build
-```
-
-The Docker Compose service name is `teltonika-parser-go`.
-
-## Implementation Notes
-
-- Redis cache prefix for parser-owned keys is `teltonika.parser.go:`.
-- Shared device and organisation hashes currently use the `iotrack.live:`
-  prefix.
-- RabbitMQ direct exchange is `teltonika`.
-- Main telemetry routing key is `teltonika_telemetry`, bound to queue
-  `telemetry`.
-- Live Redis pub/sub channel is `teltonika:live`.
-- Default TCP port is `5027` if `TCP_PORT` is not set.
-- Default TCP timeout is `30` seconds if `TCP_TIMEOUT` is not set.
-- Parser logs use the local Zap wrapper in `internal/logger`.
-
-## Testing Notes
-
-- Redis cache initialization tests are opt-in with `RUN_REDIS_TESTS=1`.
-- Run focused parser tests with `go test ./internal/teltonika`; 
-- Run RabbitMQ producer tests with `go test ./internal/rabbitmq`; 
-
-## Commit Guidelines
-
-Do not add a `Co-Authored-By: Claude ...` trailer (or any AI co-author) to commits. Commits should list only the human author.
+## Commit Style
+- Do not add `Co-Authored-By` or AI co-author trailers to commits.
