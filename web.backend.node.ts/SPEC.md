@@ -107,6 +107,9 @@ Auth flow:
 Permission checks must happen on the backend. Root role behavior and permission
 keys should stay explicit.
 
+The full database/backend/frontend permission flow is documented in
+`../docs/PERMISSIONS.md`.
+
 ## Access Profile
 
 `/api/access-profile` is the frontend hydration endpoint.

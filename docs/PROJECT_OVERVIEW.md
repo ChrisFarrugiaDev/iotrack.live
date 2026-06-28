@@ -122,6 +122,9 @@ Important implementation notes:
 - The Codec 12 command API currently includes:
   - `POST /api/teltonika/codec12/commands/:imei`
 
+Permission setup and cross-service behavior are documented in
+`docs/PERMISSIONS.md`.
+
 This service should be improved after the ingest and persistence contracts are
 clear, so its API behavior can align with stable backend data contracts.
 

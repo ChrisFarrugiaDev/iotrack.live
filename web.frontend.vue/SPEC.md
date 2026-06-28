@@ -114,6 +114,9 @@ Permission checks should be applied in two places:
 
 Permission keys should match backend-provided access profile values, for example `org.view`, `user.view`, `asset.view`, `device.view`, and `group.view`.
 
+The full database/backend/frontend permission flow is documented in
+`../docs/PERMISSIONS.md`.
+
 ## State Management
 
 Pinia stores hold domain state. Keep API-facing domain state in the relevant store:
