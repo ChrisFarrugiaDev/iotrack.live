@@ -139,12 +139,11 @@ permissions.
 ### Backend Contract Dependency
 
 The frontend currently depends on backend response shapes from
-`/api/access-profile`, including the misspelled key:
+`/api/access-profile`, including the authorization metadata key:
 
-- `profile.authorization.permissoins`
+- `profile.authorization.permissions`
 
-Do not rename this frontend usage unless the backend is migrated at the same
-time or a compatibility field is provided.
+Keep this frontend usage coordinated with the backend response shape.
 
 ### Future Sidebar Items
 

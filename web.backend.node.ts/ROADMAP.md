@@ -40,11 +40,6 @@ expected runtime behavior.
     defensive behavior.
   - Preserve the root role bypass for role ID `1`.
 
-- [ ] Plan the access-profile permission key migration.
-  - The current response key is `authorization.permissoins`.
-  - Do not rename it until `web.frontend.vue` is updated in the same change.
-  - Consider a compatibility period that returns both `permissoins` and
-    `permissions`.
 
 ## Completed
 

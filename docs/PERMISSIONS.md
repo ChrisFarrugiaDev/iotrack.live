@@ -84,14 +84,13 @@ Permission-related fields:
 
 - `access.permissions` contains the current user's effective permission keys.
 - `authorization.roles` contains app role metadata for the user-management UI.
-- `authorization.permissoins` contains app permission metadata for the
+- `authorization.permissions` contains app permission metadata for the
   user-management UI.
 - `authorization.role_permissions` contains default role-to-permission mappings.
 
-The key `authorization.permissoins` is misspelled, but it is part of the current
-frontend/backend contract. Do not rename it without a coordinated migration.
-When the app is ready to clean this up, either migrate both services together or
-temporarily return both `permissoins` and `permissions`.
+The access-profile authorization metadata key is now correctly spelled as
+`authorization.permissions`. Keep backend response shape and frontend hydration
+aligned when changing this contract.
 
 ## Frontend Flow
 
@@ -139,5 +138,5 @@ Known permission gaps or cleanup items:
   should also be aligned with backend permission keys.
 - Audit, Reports, and Alarms appear as sidebar items but do not yet have clear
   route and permission behavior.
-- The access-profile spelling `permissoins` should be migrated only as a
-  coordinated backend/frontend contract change.
+- Access-profile authorization metadata now uses
+  `authorization.permissions`.

@@ -12,7 +12,7 @@ export interface AccessProfile {
 
 	authorization: {
 		roles: Record<string, any>;
-		permissoins: Record<string, any>;
+		permissions: Record<string, any>;
 		role_permissions: Record<string, any>;
 	}
 	access: {

@@ -12,7 +12,7 @@ expected runtime behavior.
 - Frontend checks are UX helpers only; backend checks remain the security
   boundary.
 - The frontend currently depends on the access-profile key
-  `authorization.permissoins`.
+  `authorization.permissions`.
 - Some route guards and sidebar/action visibility rules need to be aligned with
   backend permission keys.
 
@@ -37,10 +37,6 @@ expected runtime behavior.
   - Audit, Reports, and Alarms currently appear as future UI sections.
   - Add routes and permission keys before treating them as complete features.
 
-- [ ] Plan the access-profile permission key migration.
-  - The frontend currently reads `profile.authorization.permissoins`.
-  - Do not rename this unless `web.backend.node.ts` returns the new shape in
-    the same change or provides a compatibility field.
 
 ## Completed
 

@@ -129,12 +129,9 @@ are needed.
 
 ### Contract Naming
 
-The access profile response currently includes a misspelled key:
-`permissoins`.
-
-Do not rename it blindly if the frontend depends on it. When ready, migrate the
-frontend and backend together to a correctly named `permissions` key or provide
-a temporary compatibility field.
+The access profile response now uses the correctly spelled
+`authorization.permissions` key. Keep `web.frontend.vue` usage coordinated with
+this backend response shape.
 
 ### Startup Cache Ownership
 

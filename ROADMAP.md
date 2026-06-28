@@ -38,9 +38,6 @@ Start with backend enforcement, then align the frontend.
   - Change the group create tab check from `device.create` to `group.create`.
   - Add route guard coverage for create and update routes.
 
-- [ ] Plan the access-profile naming cleanup.
-  - Current contract key is `authorization.permissoins`.
-  - Do not rename without a coordinated backend/frontend migration.
 
 Reference: `docs/PERMISSIONS.md`.
 

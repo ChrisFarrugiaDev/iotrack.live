@@ -88,5 +88,5 @@ Known current areas to handle carefully:
 
 - Keep API and Socket.IO runtime URL handling aligned with `appStore`.
 - Keep route guards and sidebar visibility aligned with backend permission keys.
-- Do not rename `authorization.permissoins` until backend and frontend migrate together.
+- Keep `authorization.permissions` aligned with the backend access-profile response.
 - Check `go-server` routing when adding new frontend routes that must work on direct refresh.

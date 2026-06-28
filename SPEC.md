@@ -205,7 +205,7 @@ Docker Compose:
   access.
 - Frontend should centralize runtime URL handling and align route guards with
   backend permissions.
-- Frontend currently depends on `authorization.permissoins`; migrate carefully.
+- Frontend currently depends on `authorization.permissions`; keep backend and frontend access-profile shape coordinated.
 - Go frontend server route handling should be checked when adding SPA routes.
 - Computation service needs a defined first responsibility.
 

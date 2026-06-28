@@ -160,7 +160,7 @@ async function fetchAccessProfile() {
             organisationStore.setOrganisationScope(profile.organisation_scope);
             
             authorizationStore.setRoles(profile.authorization.roles);
-            authorizationStore.setPermissions(profile.authorization.permissoins);
+            authorizationStore.setPermissions(profile.authorization.permissions);
             authorizationStore.setRolePermissions(profile.authorization.role_permissions);
 
             authorizationStore.setUserPermissions(

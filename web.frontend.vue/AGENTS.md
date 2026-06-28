@@ -28,7 +28,7 @@ This repository is a Vue 3 + Vite frontend with a small Go server for the produc
 - `src/components/socketio/SocketIo.vue` joins accessible device rooms and forwards `live-update` events into `deviceStore.updateWithLiveData`.
 - `src/components/map/TheMap.vue` renders assets with attached devices and last telemetry.
 - `src/stores/appStore.ts` is the runtime URL source of truth; keep API and Socket.IO URL behavior aligned there.
-- The frontend currently depends on the backend access-profile key `authorization.permissoins`; do not rename it without a coordinated backend/frontend migration.
+- The frontend currently depends on the backend access-profile key `authorization.permissions`; keep backend and frontend coordinated when changing access-profile shape.
 
 ## Build, Test, and Development Commands
 

@@ -128,7 +128,7 @@ Pinia stores hold domain state. Keep API-facing domain state in the relevant sto
 
 `App.vue` currently hydrates stores from `/api/access-profile`.
 
-The access profile currently exposes backend authorization metadata through `profile.authorization.permissoins`. This spelling is part of the current frontend/backend contract. Do not rename it in the frontend without coordinating the backend response shape.
+The access profile exposes backend authorization metadata through `profile.authorization.permissions`. Keep this frontend usage coordinated with the backend response shape.
 
 ## UI & Styling
 

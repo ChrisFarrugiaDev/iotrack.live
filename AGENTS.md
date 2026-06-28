@@ -122,8 +122,8 @@ Known current contract details:
 - Parser-owned Redis keys use prefix `teltonika.parser.go:`.
 - Shared app Redis metadata commonly uses prefix `iotrack.live:`.
 - Frontend currently consumes backend access-profile key
-  `authorization.permissoins`; do not rename without coordinating backend and
-  frontend.
+  `authorization.permissions`; keep backend and frontend coordinated when
+  changing access-profile shape.
 
 ## Verification
 

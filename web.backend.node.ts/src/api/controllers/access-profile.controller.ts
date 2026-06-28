@@ -85,7 +85,7 @@ export class AccessProfileController {
             const groups = utils.indexBy(g , "id");
 
 
-            // 6 fetch authorization permissoins
+            // 6 fetch authorization permissions
             // TODO:  cache these values
             const appRoles = await Role.getAll();
             const appPermissions = await Permissions.getAll();
@@ -116,7 +116,7 @@ export class AccessProfileController {
                 },
                 authorization: {
                     roles: appRoles,
-                    permissoins: appPermissions,
+                    permissions: appPermissions,
                     role_permissions: appRolePermissions,
                 },
             };
