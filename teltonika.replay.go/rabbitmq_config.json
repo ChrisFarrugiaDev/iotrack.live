@@ -1,0 +1,16 @@
+{
+  "reconnect_delay_seconds": 10,
+  "exchanges": [
+    { "name": "teltonika", "type": "direct", "durable": true }
+  ],
+  "queues": [
+    { "name": "telemetry", "durable": true, "type": "quorum" },
+    { "name": "tat240", "durable": true, "type": "classic" },
+    { "name": "command_status", "durable": true, "type": "quorum" }
+  ],
+  "routing_keys": [
+    { "name": "teltonika_telemetry", "exchange": "teltonika", "queue": "telemetry" },
+    { "name": "teltonika_tat240", "exchange": "teltonika", "queue": "tat240" },
+    { "name": "teltonika_command_status", "exchange": "teltonika", "queue": "command_status" }
+  ]
+}

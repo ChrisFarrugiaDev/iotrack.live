@@ -1,0 +1,312 @@
+package rabbitmq
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/GoWebProd/uuid7"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
+	"iotrack.live/teltonika.parser.go/internal/logger"
+)
+
+// RabbitMQProducer manages the connection and publishing to RabbitMQ
+type RabbitMQProducer struct {
+	config     RabbitMQConfig
+	connection *amqp.Connection
+	channel    *amqp.Channel
+
+	exchangesMap   map[string]Exchange
+	queuesMap      map[string]Queue
+	routingKeysMap map[string]RoutingKey
+
+	UUID *uuid7.Generator
+}
+
+var AppRabbitMQProducer *RabbitMQProducer
+
+// NewRabbitMQProducer creates a new producer instance
+func NewRabbitMQProducer(config RabbitMQConfig) *RabbitMQProducer {
+	AppRabbitMQProducer = &RabbitMQProducer{
+		config:         config,
+		exchangesMap:   make(map[string]Exchange),
+		queuesMap:      make(map[string]Queue),
+		routingKeysMap: make(map[string]RoutingKey),
+		UUID:           uuid7.New(),
+	}
+
+	for _, ex := range config.Exchanges {
+		AppRabbitMQProducer.exchangesMap[ex.Name] = ex
+	}
+
+	for _, q := range config.Queues {
+		AppRabbitMQProducer.queuesMap[q.Name] = q
+	}
+
+	for _, rk := range config.RoutingKeys {
+		AppRabbitMQProducer.routingKeysMap[rk.Name] = rk
+	}
+
+	return AppRabbitMQProducer
+}
+
+// ---------------------------------------------------------------------
+
+// Run starts the connection and the publishing process
+func (p *RabbitMQProducer) Run() {
+	for {
+		if p.connect() {
+
+			port, _ := strconv.Atoi(os.Getenv("RABBITMQ_PORT"))
+			logger.Info("Successfully connected to RabbitMQ", zap.Int("Port", port))
+			p.monitorConnection() // Start monitoring the connection for closures
+			break                 // Exit the loop after a successful connection
+		}
+
+		// Wait before retrying the connection
+		logger.Info(fmt.Sprintf("Retrying connection to RabbitMQ in %d...", p.config.ReconnectDelaySecs))
+		time.Sleep(time.Duration(p.config.ReconnectDelaySecs) * time.Second)
+	}
+}
+
+// connect establishes the RabbitMQ connection, opens a channel,
+// and sets up the configured exchanges, queues, and bindings.
+func (p *RabbitMQProducer) connect() bool {
+	var err error
+	p.connection, err = amqp.Dial(p.config.URL)
+	if err != nil {
+		logger.Error("Failed to connect to RabbitMQ", zap.Error(err))
+		return false
+	}
+
+	p.channel, err = p.connection.Channel()
+	if err != nil {
+		if p.connection != nil {
+			p.connection.Close()
+		}
+		logger.Error("Failed to open a channel", zap.Error(err))
+		return false
+	}
+
+	if err := p.setupExchangesAndQueues(); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (p *RabbitMQProducer) setupExchangesAndQueues() error {
+	// Declare Exchanges
+	for _, exchange := range p.config.Exchanges {
+		err := p.channel.ExchangeDeclare(exchange.Name, exchange.Type, exchange.Durable, false, false, false, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Declare Queues
+	for _, queue := range p.config.Queues {
+		args := amqp.Table{}
+
+		switch queue.Type {
+		case "", "classic":
+			// default, no args needed
+
+		case "quorum":
+			if !queue.Durable {
+				return fmt.Errorf("quorum queue %s must be durable", queue.Name)
+			}
+			args["x-queue-type"] = "quorum"
+
+		case "stream":
+			if !queue.Durable {
+				return fmt.Errorf("stream queue %s must be durable", queue.Name)
+			}
+			args["x-queue-type"] = "stream"
+
+		default:
+			return fmt.Errorf("unknown queue type '%s' for queue %s", queue.Type, queue.Name)
+		}
+
+		_, err := p.channel.QueueDeclare(queue.Name, queue.Durable, false, false, false, args)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Binding Queues to Exchanges
+	for _, routingKey := range p.config.RoutingKeys {
+		err := p.channel.QueueBind(routingKey.Queue, routingKey.Name, routingKey.Exchange, false, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// monitorConnection watches for RabbitMQ connection closures
+// and, if the connection closes due to an error, keeps retrying until reconnection succeeds.
+func (p *RabbitMQProducer) monitorConnection() {
+	go func() {
+		for {
+			// Blocks until RabbitMQ reports that the current connection has been closed.
+			reason, ok := <-p.connection.NotifyClose(make(chan *amqp.Error))
+			if !ok {
+				// If Ok is false. The notification channel was closed, so stop monitoring.
+				logger.Info("Channel and connection closed")
+				break
+			}
+			logger.Error("Trying to reconnect...", zap.Error(fmt.Errorf("connection closed: %s", reason)))
+			for {
+				// If the connection closes and RabbitMQ sends an error.
+				// Ok is true and keep retrying until reconnection succeeds.
+				if p.connect() {
+					logger.Info("Reconnection successful")
+					return
+				}
+				time.Sleep(time.Duration(p.config.ReconnectDelaySecs))
+			}
+		}
+	}()
+}
+
+// Close cleanly closes the channel and connection
+func (p *RabbitMQProducer) Close() {
+	if p.channel != nil {
+		if err := p.channel.Close(); err != nil {
+			logger.Error("Failed to close RabbitMQ channel", zap.Error(err))
+		} else {
+			logger.Info("RabbitMQ channel closed gracefully.")
+		}
+	}
+	if p.connection != nil {
+		if err := p.connection.Close(); err != nil {
+			logger.Error("Failed to close RabbitMQ connection", zap.Error(err))
+		} else {
+			logger.Info("RabbitMQ connection closed gracefully.")
+		}
+	}
+}
+
+// ---------------------------------------------------------------------
+
+// isAvailable checks that the RabbitMQ producer exists before using it.
+func (p *RabbitMQProducer) isAvailable(exchangeName, routingKeyName string) bool {
+	if p == nil {
+		logger.Error(
+			"RabbitMQ producer is not available",
+			zap.String("exchange", exchangeName),
+			zap.String("routing_key", routingKeyName),
+		)
+		return false
+	}
+
+	return true
+}
+
+// hasChannel checks that the RabbitMQ channel is ready before publishing.
+func (p *RabbitMQProducer) hasChannel(exchangeName, routingKeyName string) bool {
+	if p.channel == nil || p.channel.IsClosed() {
+		logger.Error(
+			"RabbitMQ channel is not available",
+			zap.String("exchange", exchangeName),
+			zap.String("routing_key", routingKeyName),
+		)
+		return false
+	}
+
+	return true
+}
+
+// SendFanoutMessage sends a message to a fanout exchange (routing key is ignored).
+// Use this for pub/sub or broadcasts.
+func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
+	if !p.isAvailable(exchangeName, "") {
+		return
+	}
+
+	exchange, ok := p.exchangesMap[exchangeName]
+	if !ok {
+		logger.Error(
+			fmt.Sprintf("Exchange '%s' does not exist", exchangeName),
+			zap.Error(errors.New("exchange not found")),
+		)
+		return
+	}
+
+	if !p.hasChannel(exchangeName, "") {
+		return
+	}
+
+	err := p.channel.Publish(
+		exchange.Name, // exchange name to publish to
+		"",            // routing key (empty if not needed)
+		false,         // mandatory
+		false,         // immediate
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json",
+			Body:         []byte(message),
+			MessageId:    p.UUID.Next().String(),
+		},
+	)
+
+	if err != nil {
+		logger.Error(
+			fmt.Sprintf("Failed to publish message to exchange '%s'", exchangeName),
+			zap.Error(err),
+		)
+	}
+}
+
+// SendDirectMessage sends a message to a direct or topic exchange with a specific routing key.
+func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, message string) {
+	if !p.isAvailable(exchangeName, routingKeyName) {
+		return
+	}
+
+	routingKey, ok := p.routingKeysMap[routingKeyName]
+	if !ok {
+		logger.Error(
+			fmt.Sprintf("Routing key '%s' does not exist", routingKeyName),
+			zap.Error(errors.New("routingKey not found")),
+		)
+		return
+	}
+	if routingKey.Exchange != exchangeName {
+		logger.Error(
+			fmt.Sprintf("Routing key '%s' is configured for exchange '%s', but received exchange '%s'",
+				routingKeyName, routingKey.Exchange, exchangeName),
+			zap.Error(errors.New("exchange mismatch")),
+		)
+		return
+	}
+
+	if !p.hasChannel(exchangeName, routingKeyName) {
+		return
+	}
+
+	err := p.channel.Publish(
+		exchangeName,
+		routingKeyName,
+		false, // mandatory
+		false, // immediate
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json",
+			Body:         []byte(message),
+			MessageId:    p.UUID.Next().String(),
+		},
+	)
+
+	if err != nil {
+		logger.Error(
+			fmt.Sprintf("Failed to publish message using routing key '%s' on exchange '%s'", routingKeyName, exchangeName),
+			zap.Error(err),
+		)
+	}
+}
