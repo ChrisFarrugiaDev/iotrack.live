@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gomodule/redigo/redis"
-	"iotrack.live/teltonika.parser.go/internal/models"
+	"iotrack.live/teltonika.replay.go/internal/models"
 )
 
 // HSet adds a key-value pair to a Redis hash map. The value is serialized to JSON before being stored.

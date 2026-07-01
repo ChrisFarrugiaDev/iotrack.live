@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"iotrack.live/teltonika.parser.go/internal/appcore"
-	"iotrack.live/teltonika.parser.go/internal/apptypes"
+	"iotrack.live/teltonika.replay.go/internal/appcore"
+	"iotrack.live/teltonika.replay.go/internal/apptypes"
 )
 
 func newTestService() *Service {

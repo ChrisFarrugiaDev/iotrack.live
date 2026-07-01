@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
-	"iotrack.live/teltonika.parser.go/internal/logger"
-	"iotrack.live/teltonika.parser.go/internal/models"
+	"iotrack.live/teltonika.replay.go/internal/logger"
+	"iotrack.live/teltonika.replay.go/internal/models"
 )
 
 func (s *Service) SyncOrganisatiosFromDBToRedis() error {

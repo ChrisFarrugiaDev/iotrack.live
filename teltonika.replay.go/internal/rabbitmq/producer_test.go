@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.replay.go/internal/logger"
 )
 
 func TestMain(m *testing.M) {

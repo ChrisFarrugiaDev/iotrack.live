@@ -72,7 +72,12 @@ This service is **NOT** responsible for:
   `raw_packets_<YYYY-MM-DD>.csv.gz`
   e.g. `raw_packets_2026-04-10.csv.gz`.
 - All files live in a single directory configured by `REPLAY_DATA_DIR`.
-- Decompressed content is a CSV with **no header row**.
+- Decompressed content is a CSV. A leading **header row may be present** — the
+  real exported dataset begins with `happened_at,imei,raw_data`. The loader does
+  **not** special-case it: with a whitelist active the header's IMEI column
+  (`imei`) is not a whitelisted value and is dropped at the filter step; with an
+  empty, non-required whitelist it fails timestamp parsing and is skipped as a
+  malformed row (logged once at `warn`). Either way it never reaches the parser.
 
 #### Storage location (decided)
 
@@ -98,8 +103,9 @@ This service is **NOT** responsible for:
 
 ### 3.2 Row format
 
-Each row has three tab-or-comma separated columns (delimiter configurable via
-`REPLAY_CSV_DELIMITER`, default tab `\t`):
+Each row has three columns separated by `REPLAY_CSV_DELIMITER` (default tab
+`\t`). The real exported dataset is **comma-delimited**, so deployments using it
+set `REPLAY_CSV_DELIMITER=,`:
 
 | Column | Example | Meaning |
 |--------|---------|---------|
@@ -186,7 +192,7 @@ offset             = today_midnight - file_date          // a time.Duration
 
 `offset` is a whole number of days (midnight-to-midnight), matching the
 described behavior: if the file date is `2025-08-15` and today is `2026-07-27`,
-the offset is `27,302,400` seconds (316 days). Every packet for that day is
+the offset is `29,894,400` seconds (346 days). Every packet for that day is
 shifted by exactly this amount.
 
 > Rationale: shifting by a whole-day, midnight-anchored offset preserves each
@@ -277,16 +283,38 @@ paid all at once on load.
   non-whitelisted devices.
 - Within a device, packets are processed strictly in `happened_at` order so the
   per-device timestamp monotonicity (and `LastTsMap` dedup) holds.
-- Scheduling primitive: compute `wait = (happened_at + offset) - now_UTC`; if
-  `wait > 0`, sleep (interruptible via context) then process; if `wait <= 0`
-  (the packet's scheduled time is already past — e.g. on a mid-day startup),
-  **skip the packet** and move to the next one.
+- Scheduling primitive: compute `wait = (happened_at + offset) - now_UTC`; then,
+  with a small fixed **grace window** `fireGrace` (1s, §5.2.1):
+  - `wait > 0` — sleep (interruptible via context) then process.
+  - `-fireGrace <= wait <= 0` — process **immediately** (scheduled time just
+    passed; this is boundary jitter, not catch-up).
+  - `wait < -fireGrace` — the packet is genuinely past-due (e.g. on a mid-day
+    startup); **skip it** and move to the next one.
+
+#### 5.2.1 Fire grace window (boundary jitter only)
+
+- `fireGrace` is a fixed **1 second** tolerance applied to the skip decision
+  above. A packet whose scheduled time is at most `fireGrace` in the past still
+  fires; a packet more than `fireGrace` in the past is skipped.
+- **Purpose: it absorbs the few milliseconds of timer + goroutine-launch jitter
+  at the UTC midnight switch**, so the freshly-activated day's `00:00:00` packet
+  is not dropped a hair late. It reconciles the strict "skip past-due" rule
+  (§5.2 / §5.4) with the "replay in full from midnight" guarantee (§6.3).
+- The window is deliberately tiny: 1s cannot reintroduce mid-day catch-up —
+  packets that are minutes or hours past (the morning's data on a 14:00 startup)
+  are still well beyond `fireGrace` and remain skipped (§5.4). It only ever
+  rescues packets scheduled essentially "now."
+- The service still never sends a packet *before* its scheduled time.
 
 ### 5.3 Concurrency controls
 
-- `REPLAY_MAX_CONCURRENT_DEVICES` (semaphore) bounds simultaneously active
-  device goroutines to avoid resource exhaustion on large fleets. Default `0`
-  = unbounded.
+- `REPLAY_MAX_CONCURRENT_DEVICES` (semaphore) bounds the **fire-time
+  parse/publish work** running simultaneously, to avoid a resource burst when
+  many devices fire at the same instant (e.g. the `00:00:00` packets at the
+  midnight switch). It caps the concurrent fire-time work, **not** the number of
+  living per-device goroutines — all N goroutines still exist and sleep between
+  packets; the semaphore is only held around the parse+publish of a packet.
+  Default `0` = unbounded.
 - All device goroutines for a day are tracked by a `sync.WaitGroup` and an
   `errgroup`/context so shutdown cancels them cleanly.
 
@@ -302,10 +330,13 @@ paid all at once on load.
   packet scheduled at or after 14:00 and continues on real-time pacing through
   the rest of the day.
 - The service never sends a packet *before* its scheduled time, and never
-  back-fills already-due packets. Past = dropped.
+  back-fills already-due packets. Past = dropped (beyond the `fireGrace` window,
+  §5.2.1).
 - At the next day boundary the next file is loaded and replayed **in full from
   its midnight start** (because the service is now running ahead of midnight,
-  no packets are past-due at that point).
+  no packets are past-due at that point). The `fireGrace` window (§5.2.1)
+  guarantees the `00:00:00` packet fires even if the switch lands a few
+  milliseconds late.
 
 ---
 
@@ -410,9 +441,22 @@ This replaces the live parser's TCP handler. Per packet, per device goroutine:
 ### 7.3 Parse + validate
 
 - Hex-decode (already done at load time).
-- Run the existing Codec 8 parser (`internal/teltonika/parse_codec_8.go`).
-- **CRC-16/IBM validation is mandatory** and runs against the original bytes.
-  A CRC failure logs at `warn` and skips the packet.
+- Run the existing Codec 8 parser (`internal/teltonika/parse_codec_8.go`),
+  which is reused **unchanged**.
+- **CRC-16/IBM validation runs at fire time in the replay layer**, against the
+  original unmodified bytes — computed over the data field (bytes `[8 : len-4]`,
+  i.e. codec ID through the second quantity) with `util.Crc16IBM` and compared to
+  the trailing 4-byte CRC. The original parser only *read* the CRC field without
+  verifying it; the replay service adds the verification step without modifying
+  `parse_codec_8.go`.
+- The action on a CRC mismatch is configurable via `REPLAY_CRC_MODE`:
+  - `reject`: drop the packet and log at `warn`.
+  - `warn` (**default for now**): keep/publish the packet but log at `warn`.
+    Rationale: the CSV is recorded real traffic that the live parser never
+    CRC-checked, so `warn` is used first to confirm the historical packets
+    actually pass before enforcing rejection. Flip to `reject` once verified.
+- **Every CRC failure is logged with the device IMEI and the raw (hex) packet**,
+  regardless of mode, so failing vectors can be inspected.
 
 ### 7.4 Timestamp adjustment + dedup
 
@@ -434,6 +478,26 @@ For each surviving AVL record:
 - Publish the same JSON to Redis pub/sub channel `teltonika:live`.
 
 No ACK is produced (there is no socket to ACK to).
+
+### 7.6 Dry run (no-publish validation)
+
+`REPLAY_DRY_RUN=true` runs the **entire** fire-time pipeline — codec dispatch,
+Codec 8 parse, CRC validation, offset application, scheduling, and the mid-day
+skip — but makes **no external writes**:
+
+- No RabbitMQ publish, no Redis `teltonika:live` pub/sub, no latest-telemetry
+  update (so the flush cron also writes nothing).
+- No unknown-device creation: an IMEI absent from `app.Devices` is logged and
+  skipped instead of being inserted into PostgreSQL / Redis.
+- Each packet that would have been published is logged at `info`
+  (`replay[dry-run]: would publish` with IMEI, device id, adjusted
+  `happened_at`, and record count).
+
+Purpose: because the service shares all contracts with the live parser on the
+same infrastructure (§9, §9.1), dry run lets an operator confirm a replay loads,
+parses, passes CRC, and schedules correctly — at real-time pacing — **before**
+emitting any telemetry. Default is `false`; set it `true` for the first run
+against shared infra, then flip it off once validated.
 
 ---
 
@@ -491,6 +555,11 @@ Redis keys (same as parser):
 
 - `teltonika.parser.go:device-latest-telemetry:<device_id>`  (String, JSON)
 - `teltonika.parser.go:device-latest-telemetry:id`           (Set, index)
+
+> The `teltonika.parser.go:` prefix is a **hardcoded literal** in the replay
+> service (not built from MICROSERVICE_NAME, not renamed to `teltonika.replay.go:`
+> despite the module rename). It is a Redis wire contract: the keys must stay
+> byte-identical to what the live parser writes and existing consumers read.
 
 > **Deployment model (decided):** the replay service runs on the **same shared
 > infrastructure** as the live `teltonika.parser.go` (same Redis, RabbitMQ, and
@@ -573,7 +642,10 @@ Entrypoint: `cmd/replay/main.go`
 1.  Initialize appcore.App state, locks, UUID generator, cron, and maps.
 2.  Load environment variables unless DOCKERIZED=true.
 3.  Initialize logger (zap + lumberjack).
-4.  Connect to Redis and create cache prefix from MICROSERVICE_NAME.
+4.  Connect to Redis. The cache prefix is the **hardcoded literal
+    `teltonika.parser.go:`** — kept byte-identical to the live parser (it is NOT
+    derived from MICROSERVICE_NAME and is NOT renamed to `teltonika.replay.go:`),
+    so existing consumers read the same keys (§9).
 5.  Load rabbitmq_config.json and start the RabbitMQ producer.
 6.  Connect to PostgreSQL and initialize models.
 7.  Start the async Redis publisher.
@@ -631,6 +703,8 @@ New (replay-specific):
 | `REPLAY_PRELOAD_LEAD` | `1h` | duration | How long before UTC midnight the next day's file is background-loaded (decompress + group + sort + offset) |
 | `REPLAY_ON_MISSING_FILE` | `skip` | string | `skip` \| `halt` when the next file is missing at preload time |
 | `REPLAY_MAX_CONCURRENT_DEVICES` | `0` | int | Semaphore bound on active device goroutines (`0` = unbounded) |
+| `REPLAY_CRC_MODE` | `warn` | string | Action on a CRC-16/IBM mismatch: `reject` (drop + warn) or `warn` (log + keep, **default**). Every failure is logged with IMEI + raw packet regardless. |
+| `REPLAY_DRY_RUN` | `false` | bool | When `true`, runs the full pipeline but makes **no external writes** — logs each fired packet instead of publishing (§7.6). Default `false`. |
 
 > The day switch is always anchored to the **UTC midnight tick**; there is no
 > speed multiplier. Replay runs at real time so each file plays across the same
@@ -677,6 +751,8 @@ internal/teltonika/parse_codec_8_extended.go
 internal/teltonika/parse_codec_12.go
 internal/apptypes/codec_12_command.go
 internal/apptypes/codec_12_message.go
+internal/apptypes/teltonika_packet.go  (TeltonikaPacket interface — only the removed
+                                        Codec 8E/12 dispatch in tcp/handler.go used it)
 internal/cache/redis_list.go         (Codec 12 pending-command LPop) — drop if unused
 ```
 
@@ -748,7 +824,10 @@ with goroutine-per-device replacing goroutine-per-connection.
 2. **Never break the Redis key schema / live channel** — keys and
    `teltonika:live` payload must match so `socketio.gateway.node.ts` is
    untouched.
-3. **CRC validation is mandatory** — validate against original bytes; never skip.
+3. **CRC validation always runs** — computed against the original unmodified
+   bytes at fire time; the *enforcement* action is configurable via
+   `REPLAY_CRC_MODE` (`reject` drops, `warn` keeps), and every failure is logged
+   with IMEI + raw packet. Validation itself is never skipped.
 4. **Timestamp dedup is preserved** — `LastTsMap` still guards against duplicate
    records, now keyed on adjusted timestamps.
 5. **Offset is uniform per day** — one whole-day, midnight-anchored offset
@@ -779,7 +858,7 @@ Focused tests to add:
   whitelist size present in file).
 - `internal/replay/offset_test.go` — whole-day offset math across month/year
   boundaries and DST-irrelevant UTC; e.g. `2025-08-15` -> `2026-07-27` yields
-  `27,302,400s`.
+  `29,894,400s` (346 days).
 - `internal/replay/scheduler_test.go` — per-device ordering, mid-day startup
   (packets scheduled before `now` are skipped, sending begins at the first
   still-future packet), context cancellation stops goroutines.
@@ -789,6 +868,9 @@ Focused tests to add:
   the UTC midnight tick.
 - Codec 8 parse test reusing official Teltonika hex vectors and a sample row
   from a real `raw_packets_*.csv`.
+- CRC-16/IBM validation test: a known-good vector passes; a corrupted vector
+  fails; `REPLAY_CRC_MODE=reject` drops the packet while `warn` keeps it, and
+  both log the IMEI + raw packet.
 - Contract tests asserting RabbitMQ body and `teltonika:live` payload field
   names match the live parser's `FlatAvlRecord`.
 
@@ -807,6 +889,7 @@ change as complete.
 | ACK / NACK (`0x01` / `0x00` / 4-byte record-count) | No socket to reply to |
 | Codec 8 Extended (`0x8E`) parser | CSV data is Codec 8 only |
 | Codec 12 (`0x0C`) parser, command lifecycle, retries | Dummy service; no commands |
+| `TeltonikaPacket` interface (`apptypes/teltonika_packet.go`) | Only abstracted the removed Codec 8/8E/12 dispatch; Codec 8 is the only path now |
 | Redis Codec 12 keys (pending/inflight/sync) and `redis_list.go` LPop | No commands |
 | `TCP_PORT`, `TCP_TIMEOUT` env vars | No TCP |
 

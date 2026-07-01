@@ -14,13 +14,13 @@ import (
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
-	"iotrack.live/teltonika.parser.go/internal/appcore"
-	"iotrack.live/teltonika.parser.go/internal/apptypes"
-	"iotrack.live/teltonika.parser.go/internal/cache"
-	"iotrack.live/teltonika.parser.go/internal/logger"
-	"iotrack.live/teltonika.parser.go/internal/rabbitmq"
-	"iotrack.live/teltonika.parser.go/internal/services"
-	"iotrack.live/teltonika.parser.go/internal/tcp"
+	"iotrack.live/teltonika.replay.go/internal/appcore"
+	"iotrack.live/teltonika.replay.go/internal/apptypes"
+	"iotrack.live/teltonika.replay.go/internal/cache"
+	"iotrack.live/teltonika.replay.go/internal/logger"
+	"iotrack.live/teltonika.replay.go/internal/rabbitmq"
+	"iotrack.live/teltonika.replay.go/internal/replay"
+	"iotrack.live/teltonika.replay.go/internal/services"
 )
 
 var app appcore.App
@@ -88,8 +88,6 @@ func main() {
 	// stop() will stop the context from listening for further OS signals
 	defer stop()
 
-	serverClosed := make(chan struct{})
-
 	// -----------------------------------------------------------------
 	// Initialize Service with a pointer to your main app struct.
 	appService := services.NewService(&app)
@@ -104,29 +102,48 @@ func main() {
 
 	// -----------------------------------------------------------------
 
-	// Start the TCP server in a new goroutine so main can keep control.
+	// Start the replay loop: load REPLAY_START_FILE, replay each device's
+	// Codec 8 packets on a wall-clock schedule, and rotate days at each UTC
+	// midnight (§5-6). Everything is bound to ctx for clean shutdown.
+	replayCfg, err := loadReplayConfig()
+	if err != nil {
+		logger.Error("Invalid replay configuration", zap.Error(err))
+		os.Exit(1)
+	}
+
+	dryRun := strings.EqualFold(os.Getenv("REPLAY_DRY_RUN"), "true")
+	if dryRun {
+		logger.Log.Warn("REPLAY_DRY_RUN=true — no telemetry will be published; fired packets are logged only")
+	}
+	processor := replay.NewProcessor(&app, appService, os.Getenv("REPLAY_CRC_MODE"), dryRun)
+	rotator, err := replay.NewRotator(replayCfg, processor)
+	if err != nil {
+		logger.Error("Failed to initialise replay rotator", zap.Error(err))
+		os.Exit(1)
+	}
+
+	replayClosed := make(chan struct{})
 	go func() {
-		tcpServer := tcp.NewTCPServer(&app, appService)
-		tcpServer.Start(ctx)
-		close(serverClosed) // Signal that the server has shut down.
+		rotator.Run(ctx)
+		close(replayClosed) // Signal that the replay loop has stopped.
 	}()
 
 	// -----------------------------------------------------------------
 
 	// Block main goroutine until context is cancelled by an OS signal (e.g. CTRL+C).
-	// This keeps the main function alive while the TCP server runs in the background.
 	<-ctx.Done()
 
 	// -----------------------------------------------------------------
 	// Gracefully shutdown
 
-	// Close Tcp Server
 	logger.Log.Info("Shutdown signal received, attempting graceful shutdown...")
+
+	// Wait for the replay loop (and its device goroutines) to stop.
 	select {
-	case <-serverClosed:
-		logger.Log.Info("TCP server has shut down cleanly.")
+	case <-replayClosed:
+		logger.Log.Info("Replay loop stopped cleanly.")
 	case <-time.After(5 * time.Second):
-		logger.Log.Warn("TCP server shutdown timeout - forcing exit.")
+		logger.Log.Warn("Replay loop shutdown timeout - forcing exit.")
 	}
 
 	stopPublisher()

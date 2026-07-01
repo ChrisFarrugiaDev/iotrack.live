@@ -8,10 +8,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/robfig/cron/v3"
 
-	"iotrack.live/teltonika.parser.go/internal/apptypes"
-	"iotrack.live/teltonika.parser.go/internal/cache"
-	"iotrack.live/teltonika.parser.go/internal/models"
-	"iotrack.live/teltonika.parser.go/internal/rabbitmq"
+	"iotrack.live/teltonika.replay.go/internal/apptypes"
+	"iotrack.live/teltonika.replay.go/internal/cache"
+	"iotrack.live/teltonika.replay.go/internal/models"
+	"iotrack.live/teltonika.replay.go/internal/rabbitmq"
 )
 
 type App struct {

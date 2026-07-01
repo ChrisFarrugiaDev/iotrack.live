@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"iotrack.live/teltonika.parser.go/internal/appcore"
-	"iotrack.live/teltonika.parser.go/internal/logger"
-	"iotrack.live/teltonika.parser.go/internal/services"
+	"iotrack.live/teltonika.replay.go/internal/appcore"
+	"iotrack.live/teltonika.replay.go/internal/logger"
+	"iotrack.live/teltonika.replay.go/internal/services"
 )
 
 const defaultLatestTelemetryFlushCron = "0,20,40 * * * * *"

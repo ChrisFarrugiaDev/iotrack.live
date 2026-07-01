@@ -1,0 +1,15 @@
+# Replay dataset — large, disposable, re-uploadable (REPLAY_DATA_DIR).
+# Kept out of git; in prod this is a mounted volume (see SPEC §3.1).
+/data/
+
+# Loose raw packet files (should be gzipped under data/ instead).
+raw_packets_*.csv
+raw_packets_*.csv.gz
+
+# Built binary
+/teltonika-replay
+
+# Local env + logs
+.env
+.env.development
+/logs/

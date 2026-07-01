@@ -5,8 +5,8 @@ import (
 	"maps"
 
 	"go.uber.org/zap"
-	"iotrack.live/teltonika.parser.go/internal/apptypes"
-	"iotrack.live/teltonika.parser.go/internal/logger"
+	"iotrack.live/teltonika.replay.go/internal/apptypes"
+	"iotrack.live/teltonika.replay.go/internal/logger"
 )
 
 // UpdateLastTelemetry merges non-zero fields and elements from telemetry into the device's record, creating it if missing.
