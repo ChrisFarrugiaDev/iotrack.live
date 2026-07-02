@@ -9,22 +9,15 @@
                 <p class="vform__error">{{ errors.vendor }}</p>
                 <VueSelect v-model="form.vendor" :shouldAutofocusOption="false" :isDisabled="confirmOn"
                     class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]"
-                    :options="[{ label: 'Teltonika', value: 'teltonika' }]" placeholder="" id="vendor" />
+                    :options="vendorOptions" placeholder="" id="vendor" />
             </div>
 
             <div class="vform__group mt-7">
                 <label class="vform__label" for="model">Model<span class="vform__required">*</span></label>
                 <p class="vform__error">{{ errors.model }}</p>
                 <VueSelect v-model="form.model" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]" :options="[
-                        { label: 'FMC130', value: 'FMC130' },
-                        { label: 'FMC150', value: 'FMC150' },
-                        { label: 'GH5200', value: 'GH5200' },
-                        { label: 'FPM100', value: 'FPM100' },
-                        { label: 'TMT250', value: 'TMT250' },
-                        { label: 'TAT240', value: 'TAT240' },
-                        { label: 'FCM130', value: 'FCM130' }
-                    ]" placeholder="" id="model" />
+                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]"
+                    :options="modelOptions" placeholder="" id="model" />
             </div>
         </div>
 
@@ -128,6 +121,7 @@
 
 import VueSelect from "vue3-select-component";
 import { computed, onDeactivated, onMounted, reactive, ref, toRaw, watch } from 'vue';
+
 import type { Device } from "@/types/device.type";
 import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useOrganisationStore } from "@/stores/organisationStore";
@@ -202,6 +196,14 @@ const getOrganisations = computed(() => {
         value: o.id,
     }));
 });
+
+const vendorOptions = computed(() =>
+    deviceStore.getVendors.map(v => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }))
+);
+
+const modelOptions = computed(() =>
+    deviceStore.getModelsForVendor(form.vendor ?? '').map(m => ({ label: m, value: m }))
+);
 
 // - Methods -----------------------------------------------------------
 
@@ -354,6 +356,10 @@ async function updateDevice() {
     }
 
 }
+
+onMounted(() => {
+    deviceStore.fetchCatalog();
+});
 
 defineExpose({
     updateDevice

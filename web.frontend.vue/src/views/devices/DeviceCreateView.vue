@@ -42,28 +42,18 @@
                 <div class="vform__group mb-7">
                     <label class="vform__label">Vendor<span class="vform__required">*</span></label>
                     <VueSelect v-model="form.vendor" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                        :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]" class="vform__group" 
-                        :options="[
-                            { label: 'Teltonika', value: 'teltonika' },
-                        ]" placeholder="" />
+                        :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]" class="vform__group"
+                        :options="vendorOptions" placeholder="" />
                     <p class="vform__error">{{ errors.vendor }}</p>
                 </div>
 
                 <div class="vform__group mb-7">
                     <label class="vform__label">Model<span class="vform__required">*</span></label>
-                    <VueSelect v-model="form.model" 
+                    <VueSelect v-model="form.model"
                         :shouldAutofocusOption="false"
-                        :isDisabled="confirmOn" 
+                        :isDisabled="confirmOn"
                         :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]" class="vform__group"
-                        :options="[
-                            { label: 'FMC130', value: 'FMC130' },
-                            { label: 'FMC150', value: 'FMC150' },
-                            { label: 'GH5200', value: 'GH5200' },
-                            { label: 'FPM100', value: 'FPM100' },
-                            { label: 'TMT250', value: 'TMT250' },
-                            { label: 'TAT240', value: 'TAT240' },
-                            { label: 'FCM130', value: 'FCM130' },
-                        ]" placeholder="" />
+                        :options="modelOptions" placeholder="" />
                     <p class="vform__error">{{ errors.model }}</p>
                 </div>
 
@@ -133,7 +123,7 @@
 
 <script setup lang="ts">
 import VueSelect from "vue3-select-component";
-import { onActivated, onBeforeMount, onMounted, reactive, ref } from 'vue';
+import { onActivated, onBeforeMount, onMounted, reactive, ref, watch } from 'vue';
 import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { computed } from "vue";
 import { useOrganisationStore } from "@/stores/organisationStore";
@@ -196,6 +186,18 @@ const getOrganisations = computed(() => {
         label: o.name,
         value: o.id,
     }));
+});
+
+const vendorOptions = computed(() =>
+    deviceStore.getVendors.map(v => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }))
+);
+
+const modelOptions = computed(() =>
+    deviceStore.getModelsForVendor(form.vendor ?? '').map(m => ({ label: m, value: m }))
+);
+
+watch(() => form.vendor, () => {
+    form.model = null;
 });
 
 // - Methods -----------------------------------------------------------
@@ -278,6 +280,10 @@ async function createDevice() {
 }
 
 
+
+onMounted(() => {
+    deviceStore.fetchCatalog();
+});
 
 onActivated(() => {
     const orgID = settingsStore.getAuthenticatedUser?.organisation.id

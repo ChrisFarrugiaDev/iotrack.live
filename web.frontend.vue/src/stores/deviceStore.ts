@@ -21,12 +21,14 @@ export const useDeviceStore = defineStore('deviceStore', () => {
     // ---- State ------------------------------------------------------
 
     const devices = ref<Record<string, Device> | null>(null);
-    
+    const catalog = ref<Record<string, string[]>>({});
 
     // ---- Getters ----------------------------------------------------
 
     const getDevices = computed(() => devices.value);
     const getDevicesIDs = computed(() => Object.keys(devices.value || {}));
+    const getVendors = computed(() => Object.keys(catalog.value));
+    const getModelsForVendor = computed(() => (vendor: string) => catalog.value[vendor] ?? []);
 
     // Getter for a single device by id
     function useDevice(id: string) {
@@ -47,6 +49,7 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
     function clear() {
         devices.value = null;
+        catalog.value = {};
         activeAnimations.clear();
         lastTs = 0;
     }
@@ -94,6 +97,16 @@ export const useDeviceStore = defineStore('deviceStore', () => {
 
         if (!device) return;
         device.organisation_id = organisationID;
+    }
+
+    async function fetchCatalog() {
+        try {
+            const url = `${appStore.getAppUrl}/api/device/catalog`;
+            const response = await axios.get(url);
+            catalog.value = response.data.data.catalog;
+        } catch (err) {
+            console.error('! deviceStore fetchCatalog !\n', err);
+        }
     }
 
     async function createDevice(payload: Record<string, any>) {
@@ -268,6 +281,9 @@ export const useDeviceStore = defineStore('deviceStore', () => {
         getDevices,
         setDevices,
         uuidToIdMap,
+        getVendors,
+        getModelsForVendor,
+        fetchCatalog,
         createDevice,
         deleteDevices,
         addDeviceToStore,

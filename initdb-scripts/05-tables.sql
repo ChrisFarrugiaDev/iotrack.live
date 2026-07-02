@@ -458,3 +458,24 @@ CREATE TABLE IF NOT EXISTS app.group_organisations (
 
 CREATE INDEX IF NOT EXISTS idx_group_organisations_org_id
     ON app.group_organisations (organisation_id);
+
+-- ---------------------------------------------------------------------
+
+-- device_catalog
+
+CREATE TABLE IF NOT EXISTS app.device_catalog (
+    id      BIGSERIAL PRIMARY KEY,
+    vendor  TEXT NOT NULL,
+    model   TEXT NOT NULL,
+    UNIQUE (vendor, model)
+);
+
+INSERT INTO app.device_catalog (vendor, model) VALUES
+  ('teltonika', 'FMC130'),
+  ('teltonika', 'FMC150'),
+  ('teltonika', 'GH5200'),
+  ('teltonika', 'FPM100'),
+  ('teltonika', 'TMT250'),
+  ('teltonika', 'TAT240'),
+  ('teltonika', 'FCM130')
+ON CONFLICT (vendor, model) DO NOTHING;

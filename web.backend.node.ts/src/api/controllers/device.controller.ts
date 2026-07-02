@@ -4,6 +4,7 @@ import { Device } from "../../models/device.model";
 import { logger } from "../../utils/logger.utils";
 import * as redisUtils from "../../utils/redis.utils";
 import { Prisma } from "../../../generated/prisma";
+import prisma from "../../config/prisma.config";
 import { AccessProfileController } from "./access-profile.controller";
 import { Asset } from "../../models/asset.model";
 
@@ -574,6 +575,38 @@ class DeviceController {
                     error: process.env.DEBUG === "true" && err instanceof Error ? err.message : undefined,
                 },
             });
+        }
+    }
+
+    // -----------------------------------------------------------------
+
+    static async catalog(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const rows = await prisma.$queryRaw<{ vendor: string; model: string }[]>`
+                SELECT vendor, model FROM app.device_catalog ORDER BY vendor, model
+            `;
+
+            const catalog: Record<string, string[]> = {};
+            for (const row of rows) {
+                if (!catalog[row.vendor]) catalog[row.vendor] = [];
+                catalog[row.vendor].push(row.model);
+            }
+
+            return reply.send({
+                success: true,
+                data: { catalog },
+            } as ApiResponse);
+
+        } catch (err: unknown) {
+            logger.error({ err }, "! DeviceController.catalog !");
+            return reply.status(500).send({
+                success: false,
+                message: "Failed to fetch device catalog.",
+                error: {
+                    code: "SERVER_ERROR",
+                    error: process.env.DEBUG === "true" && err instanceof Error ? err.message : undefined,
+                },
+            } as ApiResponse);
         }
     }
 }
