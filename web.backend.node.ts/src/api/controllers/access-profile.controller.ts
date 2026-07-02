@@ -211,7 +211,8 @@ export class AccessProfileController {
                     parent_org_id: org.parent_org_id,
                     parent_org_name: org.parent_org_id ? parentOrgNameMap[org.parent_org_id] || null : null,
                     path: org.path,
-                    can_inherit_key: org.can_inherit_key,
+                    can_inherit_maps_key: org.can_inherit_maps_key,
+                    can_inherit_ai_key: org.can_inherit_ai_key,
                     attributes: org.attributes,
                     created_at: org.created_at
                 };
@@ -290,7 +291,8 @@ export class AccessProfileController {
     static async getUserSettings(user: UserType): Promise<Record<string, any>> {
         const settings: Record<string, any> = {};
 
-        settings['maps_api_key'] = await Organisation.getMapsApiKeyFromCache(user.organisation_id)
+        settings['maps_api_key'] = await Organisation.getMapsApiKeyFromCache(user.organisation_id);
+        settings['ai_api_key'] = await Organisation.getAiApiKeyFromCache(user.organisation_id);
 
         return settings;
     }

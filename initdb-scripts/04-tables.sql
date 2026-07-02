@@ -31,8 +31,11 @@ CREATE TABLE app.organisations (
     parent_org_id   BIGINT REFERENCES app.organisations(id),
     path            TEXT,
 
-    maps_api_key    VARCHAR(255),
-    can_inherit_key BOOLEAN DEFAULT TRUE,
+    maps_api_key         VARCHAR(255),
+    can_inherit_maps_key BOOLEAN DEFAULT TRUE,
+
+    ai_api_key           VARCHAR(255),
+    can_inherit_ai_key   BOOLEAN DEFAULT TRUE,
 
     attributes      JSONB NOT NULL DEFAULT '{}',
 

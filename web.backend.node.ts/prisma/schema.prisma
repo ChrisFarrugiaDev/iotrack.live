@@ -63,7 +63,9 @@ model organisations {
   parent_org_id            BigInt?
   path                     String?
   maps_api_key             String?                    @db.VarChar(255)
-  can_inherit_key          Boolean?                   @default(true)
+  can_inherit_maps_key     Boolean?                   @default(true)
+  ai_api_key               String?                    @db.VarChar(255)
+  can_inherit_ai_key       Boolean?                   @default(true)
   attributes               Json                       @default("{}")
   created_at               DateTime                   @default(now()) @db.Timestamptz(6)
   updated_at               DateTime                   @default(now()) @db.Timestamptz(6)

@@ -133,20 +133,13 @@ export class Organisation {
         });
 
         while (currentOrg) {
-            // If maps_api_key is set, return it
             if (currentOrg.maps_api_key) return currentOrg.maps_api_key;
-
-            // If can_inherit_key is explicitly false, stop and return null
-            if (!currentOrg.can_inherit_key) return null;
-
-            // If no parent or parent's can_inherit_key is false, stop
+            if (!currentOrg.can_inherit_maps_key) return null;
             if (!currentOrg.parent_org_id) return null;
 
             const parentOrg = await prisma.organisations.findUnique({
                 where: { id: currentOrg.parent_org_id }
             });
-
-            // Stop if parent doesn't exist 
             if (!parentOrg) return null;
 
             currentOrg = parentOrg;
@@ -159,24 +152,50 @@ export class Organisation {
         let currentOrg = await redisUtils.hget('organisations', orgId, 'iotrack.live:')
 
         while (currentOrg) {
-
-            // If maps_api_key is set, return it
             if (currentOrg.maps_api_key) return currentOrg.maps_api_key;
-
-
-            // If can_inherit_key is explicitly false, stop and return null
-            if (!currentOrg.can_inherit_key) return null;
-
-
-            // If no parent or parent's can_inherit_key is false, stop
+            if (!currentOrg.can_inherit_maps_key) return null;
             if (!currentOrg.parent_org_id) return null;
 
-
             const parentOrg = await redisUtils.hget('organisations', currentOrg.parent_org_id, 'iotrack.live:')
-
-            // Stop if parent doesn't exist 
             if (!parentOrg) return null;
 
+            currentOrg = parentOrg;
+        }
+
+        return null;
+    }
+
+    static async getAiApiKey(orgId: string): Promise<string | null> {
+        let currentOrg = await prisma.organisations.findUnique({
+            where: { id: BigInt(orgId) }
+        });
+
+        while (currentOrg) {
+            if (currentOrg.ai_api_key) return currentOrg.ai_api_key;
+            if (!currentOrg.can_inherit_ai_key) return null;
+            if (!currentOrg.parent_org_id) return null;
+
+            const parentOrg = await prisma.organisations.findUnique({
+                where: { id: currentOrg.parent_org_id }
+            });
+            if (!parentOrg) return null;
+
+            currentOrg = parentOrg;
+        }
+
+        return null;
+    }
+
+    static async getAiApiKeyFromCache(orgId: string): Promise<string | null> {
+        let currentOrg = await redisUtils.hget('organisations', orgId, 'iotrack.live:')
+
+        while (currentOrg) {
+            if (currentOrg.ai_api_key) return currentOrg.ai_api_key;
+            if (!currentOrg.can_inherit_ai_key) return null;
+            if (!currentOrg.parent_org_id) return null;
+
+            const parentOrg = await redisUtils.hget('organisations', currentOrg.parent_org_id, 'iotrack.live:')
+            if (!parentOrg) return null;
 
             currentOrg = parentOrg;
         }

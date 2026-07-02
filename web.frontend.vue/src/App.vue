@@ -155,6 +155,7 @@ async function fetchAccessProfile() {
             deviceStore.setDevices(profile.access.devices);
             assetStore.setAssets(profile.access.assets);            
             settingsStore.setMapsApiKey(profile.access.settings?.maps_api_key);
+            settingsStore.setAiApiKey(profile.access.settings?.ai_api_key);
 
             organisationStore.setOrganisation(profile.organisation);
             organisationStore.setOrganisationScope(profile.organisation_scope);

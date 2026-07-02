@@ -35,7 +35,9 @@ export const storeSchema = z.object({
     name: nonEmptyString,
     parent_org_id: numericString,
     maps_api_key: nonEmptyString.optional(),
-    can_inherit_key: requiredBoolean,
+    can_inherit_maps_key: requiredBoolean,
+    ai_api_key: nonEmptyString.optional(),
+    can_inherit_ai_key: requiredBoolean,
 
 });
 
@@ -48,7 +50,9 @@ export const updateSchema = z.object({
     name: nonEmptyString.optional(),
     parent_org_id: numericString.optional(),
     maps_api_key: nonEmptyString.optional(),
-    can_inherit_key: requiredBoolean.optional(),
+    can_inherit_maps_key: requiredBoolean.optional(),
+    ai_api_key: nonEmptyString.optional(),
+    can_inherit_ai_key: requiredBoolean.optional(),
 
 }).refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided to update",

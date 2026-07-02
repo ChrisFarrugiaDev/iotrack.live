@@ -162,7 +162,7 @@ const tableCol = ref<TableColumn[]>([
 
     {
         col: "Can Inherit API Keys",
-        data: "can_inherit_key",
+        data: "can_inherit_maps_key",
         sort: true,
         align: "left",
     },

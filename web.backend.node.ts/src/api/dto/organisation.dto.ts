@@ -16,11 +16,12 @@ export async function organisationToPublic(org: OrganisationType) {
 
     return {
         attributes: org.attributes,
-        can_inherit_key: org.can_inherit_key,
+        can_inherit_maps_key: org.can_inherit_maps_key,
+        can_inherit_ai_key: org.can_inherit_ai_key,
         id: org.id?.toString?.() ?? org.id,
         name: org.name,
         parent_org_name,
-        parent_org_id: org.parent_org_id,        
+        parent_org_id: org.parent_org_id,
         path: org.path,
         uuid: org.uuid,
         created_at: org.created_at,

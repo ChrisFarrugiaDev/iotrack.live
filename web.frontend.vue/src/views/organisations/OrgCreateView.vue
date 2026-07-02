@@ -22,25 +22,51 @@
         <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
 
             <div class="vform__group mb-7">
-                <label class="vform__label">Can inherit Maps API key<span class="vform__required">*</span></label>
-                <VueSelect v-model="form.can_inherit_key" class="vform__group"
-                    :shouldAutofocusOption="false" 
-                    :isDisabled="confirmOn" 
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]"  
+                <label class="vform__label">Inherit Maps API key<span class="vform__required">*</span></label>
+                <VueSelect v-model="form.can_inherit_maps_key" class="vform__group"
+                    :shouldAutofocusOption="false"
+                    :isDisabled="confirmOn"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.can_inherit_maps_key)]"
                     :options="[
                         { label: 'Yes', value: true },
                         { label: 'No', value: false },
                     ]" placeholder="" />
-                <p class="vform__error">{{ errors.status }}</p>
+                <p class="vform__error">{{ errors.can_inherit_maps_key }}</p>
             </div>
 
             <div class="vform__group mb-7">
-                <label class="vform__label" for="device_id">Maps Api key </label>
+                <label class="vform__label">Maps API key</label>
                 <input v-model.trim="form.maps_api_key" :class="{ 'vform__input--error': errors.maps_api_key }" class="vform__input"
-                    id="device_id" type="text" 
-                      :placeholder="form.can_inherit_key ? 'Leave blank to inherit from parent' : 'Enter Maps API key'"
+                    type="text"
+                    :placeholder="form.can_inherit_maps_key ? 'Leave blank to inherit from parent' : 'Enter Maps API key'"
                     :disabled="confirmOn">
                 <p class="vform__error">{{ errors.maps_api_key }}</p>
+            </div>
+
+        </div>
+
+        <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
+
+            <div class="vform__group mb-7">
+                <label class="vform__label">Inherit AI API key<span class="vform__required">*</span></label>
+                <VueSelect v-model="form.can_inherit_ai_key" class="vform__group"
+                    :shouldAutofocusOption="false"
+                    :isDisabled="confirmOn"
+                    :style="[vueSelectStyles, selectErrorStyle(!!errors.can_inherit_ai_key)]"
+                    :options="[
+                        { label: 'Yes', value: true },
+                        { label: 'No', value: false },
+                    ]" placeholder="" />
+                <p class="vform__error">{{ errors.can_inherit_ai_key }}</p>
+            </div>
+
+            <div class="vform__group mb-7">
+                <label class="vform__label">AI API key</label>
+                <input v-model.trim="form.ai_api_key" :class="{ 'vform__input--error': errors.ai_api_key }" class="vform__input"
+                    type="text"
+                    :placeholder="form.can_inherit_ai_key ? 'Leave blank to inherit from parent' : 'Enter AI API key'"
+                    :disabled="confirmOn">
+                <p class="vform__error">{{ errors.ai_api_key }}</p>
             </div>
 
 		</div>
@@ -74,8 +100,10 @@ const vueSelectStyles = useVueSelectStyles();
 const errors = ref<Record<string, string>>({
     name: '',
     parent_org_id: '',
-    can_inherit_key: '',
+    can_inherit_maps_key: '',
     maps_api_key: '',
+    can_inherit_ai_key: '',
+    ai_api_key: '',
 });
 
 const {handleFormError} = useFormErrorHandler(errors);
@@ -93,8 +121,10 @@ const confirmOn = ref(false);
 const form = reactive({
     name: null as null | string,
     parent_org_id: null as null | string,
-    can_inherit_key: true,
+    can_inherit_maps_key: true,
     maps_api_key: null as null | string,
+    can_inherit_ai_key: true,
+    ai_api_key: null as null | string,
 });
 
 // - Computed ----------------------------------------------------------
@@ -126,11 +156,14 @@ function clearMessage() {
 
 function initCreateOrganisation() {
     confirmOn.value = true;
-    
+
     errors.value = {
         name: '',
-        can_inherit_key: '',
+        parent_org_id: '',
+        can_inherit_maps_key: '',
         maps_api_key: '',
+        can_inherit_ai_key: '',
+        ai_api_key: '',
     };
 }
 
@@ -146,6 +179,10 @@ async function createOrganisation() {
         if (!form.maps_api_key || form.maps_api_key.trim().length == 0) {
             delete payload.maps_api_key;
         }
+
+        if (!form.ai_api_key || form.ai_api_key.trim().length == 0) {
+            delete payload.ai_api_key;
+        }
     
         const r = await organisationStore.createOrganisation(payload);
 
@@ -156,10 +193,11 @@ async function createOrganisation() {
 
         organisationStore.addOrganisationToScope(newOrganisation);
 
-        // Reset form fields to defaults     
+        // Reset form fields to defaults
         Object.assign(form, {
-			name: null,
-			maps_api_key: null,        
+            name: null,
+            maps_api_key: null,
+            ai_api_key: null,
         });
         
     } catch (err) {

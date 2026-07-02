@@ -61,8 +61,10 @@ class OrganisationController {
             const orgData = {
                 name: data.name,
                 parent_org_id: data.parent_org_id,
-                can_inherit_key: data.can_inherit_key,
+                can_inherit_maps_key: data.can_inherit_maps_key,
                 maps_api_key: data.maps_api_key ?? '',
+                can_inherit_ai_key: data.can_inherit_ai_key,
+                ai_api_key: data.ai_api_key ?? '',
             };
 
             const organisation = await Organisation.create(orgData);
@@ -244,13 +246,17 @@ class OrganisationController {
                 name,
                 parent_org_id,
                 maps_api_key,
-                can_inherit_key,
+                can_inherit_maps_key,
+                ai_api_key,
+                can_inherit_ai_key,
                 attributes,
             } = request.body as Partial<{
                 name: string;
                 parent_org_id: string | null;
                 maps_api_key: string | null;
-                can_inherit_key: boolean;
+                can_inherit_maps_key: boolean;
+                ai_api_key: string | null;
+                can_inherit_ai_key: boolean;
                 attributes: Record<string, any>;
             }>;
 
@@ -287,7 +293,7 @@ class OrganisationController {
                 v === undefined ||
                 (typeof v === "string" && v.trim() === "");
 
-            const CRITICAL: Array<keyof typeof existing> = ["name", "can_inherit_key"];
+            const CRITICAL: Array<keyof typeof existing> = ["name", "can_inherit_maps_key", "can_inherit_ai_key"];
 
             const fieldErrors: Record<string, string[]> = {};
             const body = request.body as Record<string, unknown>;
@@ -295,8 +301,10 @@ class OrganisationController {
             // Check DB first (critical fields missing in DB)
             if (isEmpty(existing.name))
                 fieldErrors["name"] = ["Field cannot be empty (missing in DB)."];
-            if (isEmpty(existing.can_inherit_key))
-                fieldErrors["can_inherit_key"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.can_inherit_maps_key))
+                fieldErrors["can_inherit_maps_key"] = ["Field cannot be empty (missing in DB)."];
+            if (isEmpty(existing.can_inherit_ai_key))
+                fieldErrors["can_inherit_ai_key"] = ["Field cannot be empty (missing in DB)."];
 
             // Validate user-provided values
             for (const field of CRITICAL) {
@@ -338,7 +346,9 @@ class OrganisationController {
             // Other fields
             if (typeof name !== "undefined") data.name = name;
             if (typeof maps_api_key !== "undefined") data.maps_api_key = maps_api_key;
-            if (typeof can_inherit_key !== "undefined") data.can_inherit_key = can_inherit_key;
+            if (typeof can_inherit_maps_key !== "undefined") data.can_inherit_maps_key = can_inherit_maps_key;
+            if (typeof ai_api_key !== "undefined") data.ai_api_key = ai_api_key;
+            if (typeof can_inherit_ai_key !== "undefined") data.can_inherit_ai_key = can_inherit_ai_key;
             if (typeof attributes !== "undefined") data.attributes = attributes as any;
 
             // Reject empty update
