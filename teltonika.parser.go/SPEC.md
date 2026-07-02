@@ -147,9 +147,7 @@ In-memory state:
 
 - `app.LastTelemetryMap`
 - `app.LastTsMap`
-- `app.UpdatedDevicesSetA`
-- `app.UpdatedDevicesSetB`
-- `app.ActiveList`
+- `app.UpdatedDevices`
 
 Redis keys:
 

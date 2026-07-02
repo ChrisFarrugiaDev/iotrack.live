@@ -52,12 +52,13 @@ INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
   (17,  'device.create',         'Create new devices',            'device' ),
   (18,  'device.update',         'Update existing devices',       'device' ),
   (19,  'device.delete',         'Delete devices',                'device' ),
+  (20,  'device.command',        'Send commands to devices',      'device' ),
 
   -- Groups
-  (20,  'group.view',            'View groups',                   'group'  ),
-  (21,  'group.create',          'Create new groups',             'group'  ),
-  (22,  'group.update',          'Update existing groups',        'group'  ),
-  (23,  'group.delete',          'Delete groups',                 'group'  )
+  (21,  'group.view',            'View groups',                   'group'  ),
+  (22,  'group.create',          'Create new groups',             'group'  ),
+  (23,  'group.update',          'Update existing groups',        'group'  ),
+  (24,  'group.delete',          'Delete groups',                 'group'  )
 
   ON CONFLICT (perm_id) DO NOTHING;
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ WHERE key IN (
   'org.view','org.switch','org.create','org.update','org.delete',
   'audit.view',
   'asset.view','asset.create','asset.update','asset.delete','asset.assign-device',
-  'device.view','device.create','device.update','device.delete',
+  'device.view','device.create','device.update','device.delete','device.command',
   'group.view','group.create','group.update','group.delete'
 )
 

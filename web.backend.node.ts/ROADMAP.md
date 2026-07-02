@@ -19,7 +19,7 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Secure the Codec 12 command route.
+- [x] Secure the Codec 12 command route.
   - Add `authMiddleware` to `POST /api/teltonika/codec12/commands/:imei`.
   - Add Zod validation for `imei` and command payloads.
   - Add a command-specific permission, for example `device.command`.
