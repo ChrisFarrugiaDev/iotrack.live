@@ -82,11 +82,14 @@ When adding new frontend routes, check the Go production server so direct page r
 
 Authentication and hydration:
 
-1. User logs in through `web.backend.node.ts`.
-2. JWT is stored by `authStore.ts`.
-3. `axios.ts` attaches the JWT to API requests.
-4. `App.vue` fetches `/api/access-profile`.
-5. App stores are hydrated with devices, assets, organisations, groups, settings, permissions, roles, and authenticated user data.
+1. `AuthView.vue` fetches unauthenticated white-label branding from
+   `/api/white-label/public` (title, background/foreground images) with
+   built-in defaults as fallback.
+2. User logs in through `web.backend.node.ts`.
+3. JWT is stored by `authStore.ts`.
+4. `axios.ts` attaches the JWT to API requests.
+5. `App.vue` fetches `/api/access-profile`.
+6. App stores are hydrated with devices, assets, organisations, groups, settings (including inherited maps/AI keys and white label), permissions, roles, and authenticated user data.
 
 Live telemetry:
 

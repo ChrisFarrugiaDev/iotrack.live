@@ -23,8 +23,8 @@
             </svg>
         </div>
 
-        <div class="menu__link">
-            <div class="menu__text">White Lableling</div>
+        <div v-if="authorizationStore.can('white_label.update')" class="menu__link" @click="goToView('white.label.view')">
+            <div class="menu__text">White Labeling</div>
             <svg class="menu__icon">
                 <use xlink:href="@/ui/svg/sprite.svg#icon-white-lableling"></use>
             </svg>
@@ -82,6 +82,10 @@ const getSidebarTheme = computed(() => {
 
 function logout() {
     router.push({ name: "logout.view" });
+}
+
+function goToView(view: string) {
+    router.push({ name: view });
 }
 
 </script>

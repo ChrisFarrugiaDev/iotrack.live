@@ -58,7 +58,10 @@ INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
   (21,  'group.view',            'View groups',                   'group'  ),
   (22,  'group.create',          'Create new groups',             'group'  ),
   (23,  'group.update',          'Update existing groups',        'group'  ),
-  (24,  'group.delete',          'Delete groups',                 'group'  )
+  (24,  'group.delete',          'Delete groups',                 'group'  ),
+
+  -- White label
+  (25,  'white_label.update',    'Update white label branding',   'white_label' )
 
   ON CONFLICT (perm_id) DO NOTHING;
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -95,7 +98,8 @@ WHERE key IN (
   'audit.view',
   'asset.view','asset.create','asset.update','asset.delete','asset.assign-device',
   'device.view','device.create','device.update','device.delete','device.command',
-  'group.view','group.create','group.update','group.delete'
+  'group.view','group.create','group.update','group.delete',
+  'white_label.update'
 )
 
 UNION ALL
@@ -479,3 +483,23 @@ INSERT INTO app.device_catalog (vendor, model) VALUES
   ('teltonika', 'TAT240'),
   ('teltonika', 'FCM130')
 ON CONFLICT (vendor, model) DO NOTHING;
+
+-- ---------------------------------------------------------------------
+
+-- white_label (per-organisation branding; domain used for pre-login lookup)
+
+CREATE TABLE IF NOT EXISTS app.white_label (
+    id               BIGSERIAL PRIMARY KEY,
+    organisation_id  BIGINT UNIQUE NOT NULL REFERENCES app.organisations(id) ON DELETE CASCADE,
+    domain           VARCHAR(255) UNIQUE,
+    app_title        VARCHAR(128),
+    login_bg_url     TEXT,
+    login_fg_url     TEXT,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER set_updated_at
+BEFORE UPDATE ON app.white_label
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();

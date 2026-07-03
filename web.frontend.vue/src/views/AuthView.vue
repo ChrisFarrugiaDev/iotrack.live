@@ -1,11 +1,11 @@
 <template>
 	<main class="vview__main">
 
-		<div class="background"></div>
+		<div class="background" :style="backgroundStyle"></div>
 
-		<div class="ssign"> 
-            <div class="ssign__image"></div>
-            <component :is="currentFormComponent" />    
+		<div class="ssign">
+            <div class="ssign__image" :style="foregroundStyle"></div>
+            <component :is="currentFormComponent" />
         </div>
 
 	</main>
@@ -17,34 +17,53 @@
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm.vue';
 import LoginForm from '@/components/auth/LoginForm.vue';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm.vue';
-import { computed, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 // -- store ------------------------------------------------------------
 
+const settingsStore = useSettingsStore();
+const { getWhiteLabel } = storeToRefs(settingsStore);
 
 // -- router -----------------------------------------------------------
 const route = useRoute();
 
+// -- data -------------------------------------------------------------
+
+const DEFAULT_BG_URL = '/annie-spratt-BkbbuOdX06A-unsplash.jpg';
+const DEFAULT_FG_URL = '/mika-baumeister-nDciGidCdQo-unsplash.jpg';
+
 // -- computed ---------------------------------------------------------
 
+const backgroundStyle = computed(() => ({
+    backgroundImage: `url("${getWhiteLabel.value?.login_bg_url || DEFAULT_BG_URL}")`,
+}));
+
+const foregroundStyle = computed(() => ({
+    backgroundImage: `url("${getWhiteLabel.value?.login_fg_url || DEFAULT_FG_URL}")`,
+}));
 
 // Determine the correct component based on the route name
 const currentFormComponent = computed(() => {
     if (route.name === 'login.view') {
         return LoginForm;
-        
+
     } else if (route.name === 'forgot.password.view') {
         return ForgotPasswordForm;
-    
+
     } else if (route.name === 'reset.password.view') {
         return ResetPasswordForm;
     }
     return null; // Or a default component if necessary
 });
 
+// -- hooks ------------------------------------------------------------
 
-
+onMounted(() => {
+    settingsStore.fetchPublicWhiteLabel();
+});
 
 </script>
 
@@ -63,7 +82,6 @@ const currentFormComponent = computed(() => {
 }
 
 .background {
-    background-image: url("/annie-spratt-BkbbuOdX06A-unsplash.jpg");
     background-size: cover;
     background-position: center;
     opacity: 0.5;
@@ -99,7 +117,6 @@ const currentFormComponent = computed(() => {
     &__image {
         height: 100%;
         flex: 1;
-        background-image: url("/mika-baumeister-nDciGidCdQo-unsplash.jpg");
         background-size: cover;
         background-position: center;
 

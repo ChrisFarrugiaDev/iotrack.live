@@ -26,12 +26,20 @@ Responsibilities:
 - Publish live telemetry to Redis Pub/Sub.
 - Maintain latest telemetry state.
 - Manage Codec 12 command lifecycle.
+- Sync `app.organisations` rows into the shared Redis
+  `iotrack.live:organisations` hash (startup + periodic); the backend reads
+  maps/AI key inheritance from this hash.
 
 Important docs:
 
 - `teltonika.parser.go/SPEC.md`
 - `teltonika.parser.go/ROADMAP.md`
 - `teltonika.parser.go/AGENTS.md`
+
+### `teltonika.replay.go`
+
+CSV-based telemetry replay service (derived from the parser) for testing and
+demos.
 
 ### `telemetry.db.writer.node.ts`
 
@@ -65,7 +73,10 @@ Responsibilities:
 - Access profile hydration.
 - Backend authorization.
 - Device, asset, organisation, group, and user APIs.
-- Teltonika Codec 12 command creation.
+- White label branding API (`/api/white-label`; its `/public` route is
+  unauthenticated so the login screen can load branding pre-auth).
+- Teltonika Codec 12 command creation (auth + Zod validation +
+  `device.command` permission).
 - Prisma access to PostgreSQL.
 - Redis cache and command queue interaction.
 
@@ -129,7 +140,9 @@ PostgreSQL / TimescaleDB:
 
 Redis:
 
-- Shared device and organisation cache.
+- Shared device and organisation cache (`iotrack.live:organisations` is
+  written by the parser; a flush leaves maps/AI keys unavailable until the
+  parser resyncs).
 - Latest telemetry state.
 - Live Pub/Sub channel.
 - Codec 12 pending/inflight/sync command state.
@@ -201,8 +214,8 @@ Docker Compose:
 - Writer needs explicit malformed message and DLQ/failure policy.
 - Gateway should eventually validate live message shape more strongly and
   decide Socket.IO auth/room authorization.
-- Backend should secure Codec 12 command route and scope list endpoints by user
-  access.
+- Backend should scope list endpoints by user access (Codec 12 command route is
+  now secured).
 - Frontend should centralize runtime URL handling and align route guards with
   backend permissions.
 - Frontend currently depends on `authorization.permissions`; keep backend and frontend access-profile shape coordinated.
@@ -216,6 +229,8 @@ Parent docs:
 - `README.md` gives the public high-level overview.
 - `docs/PROJECT_OVERVIEW.md` gives service orientation.
 - `docs/PROJECT_ANALYSIS.md` gives current analysis and priorities.
+- `docs/WHITE_LABEL.md` gives the white labelling design (per-org branding of
+  auth screens).
 - `AGENTS.md` gives repo-wide agent instructions.
 - `SPEC.md` gives this system-level contract.
 

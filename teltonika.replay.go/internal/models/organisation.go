@@ -11,8 +11,10 @@ type Organisation struct {
 	Name          string                 `db:"name" json:"name"`
 	ParentOrgID   *string                `db:"parent_org_id" json:"parent_org_id,omitempty"`
 	Path          string                 `db:"path" json:"path"`
-	MapsAPIKey    *string                `db:"maps_api_key" json:"maps_api_key,omitempty"`
-	CanInheritKey bool                   `db:"can_inherit_key" json:"can_inherit_key"`
+	MapsAPIKey        *string            `db:"maps_api_key" json:"maps_api_key,omitempty"`
+	CanInheritMapsKey bool               `db:"can_inherit_maps_key" json:"can_inherit_maps_key"`
+	AiAPIKey          *string            `db:"ai_api_key" json:"ai_api_key,omitempty"`
+	CanInheritAiKey   bool               `db:"can_inherit_ai_key" json:"can_inherit_ai_key"`
 	Attributes    map[string]interface{} `db:"attributes" json:"attributes"`
 	CreatedAt     time.Time              `db:"created_at" json:"created_at"`
 	UpdatedAt     time.Time              `db:"updated_at" json:"updated_at"`

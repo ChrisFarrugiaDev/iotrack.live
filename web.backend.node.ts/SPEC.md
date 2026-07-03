@@ -56,6 +56,8 @@ Main route groups:
 - `/api/organisation`
 - `/api/group`
 - `/api/teltonika`
+- `/api/white-label` (its `GET /public` route is intentionally unauthenticated
+  so the login screen can load branding pre-auth)
 
 ## Data And Cache
 

@@ -16,6 +16,7 @@ import { Permissions } from "../../models/permissions.model";
 import { RolePermissions, RolePermissionsType } from "../../models/role-permissions.model";
 import { UserPermissions } from "../../models/user-permissions.model";
 import { Group } from "../../models/group.model";
+import { WhiteLabel } from "../../models/white-label.model";
 
 
 // -------------------------------------------------------------------------
@@ -293,6 +294,7 @@ export class AccessProfileController {
 
         settings['maps_api_key'] = await Organisation.getMapsApiKeyFromCache(user.organisation_id);
         settings['ai_api_key'] = await Organisation.getAiApiKeyFromCache(user.organisation_id);
+        settings['white_label'] = await WhiteLabel.getEffectiveByOrgId(user.organisation_id);
 
         return settings;
     }

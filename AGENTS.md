@@ -19,7 +19,10 @@ a router, then load only the service-local context needed for the task.
 
 - `teltonika.parser.go` owns Teltonika TCP ingestion, protocol parsing, Redis
   live/latest state, RabbitMQ telemetry publishing, and Codec 12 device command
-  lifecycle.
+  lifecycle. It also syncs `app.organisations` rows into the shared Redis
+  `iotrack.live:organisations` hash at startup and periodically.
+- `teltonika.replay.go` owns CSV-based replay of Teltonika telemetry for
+  testing/demo purposes (derived from the parser).
 - `telemetry.db.writer.node.ts` owns RabbitMQ telemetry consumption, durable
   telemetry inserts, latest telemetry DB sync, and Codec 12 status DB sync.
 - `socketio.gateway.node.ts` owns Redis Pub/Sub consumption and Socket.IO room /
@@ -44,6 +47,11 @@ Before changing a shared contract, inspect both producer and consumer:
 - Socket.IO event names, rooms, and payloads.
 - Prisma/database fields, seed data, and migration assumptions.
 - File/image URL contracts.
+- `app.organisations` columns are mirrored by Go structs in
+  `teltonika.parser.go`, `file.server.go`, and `teltonika.replay.go`, and the
+  parser writes them into the Redis `iotrack.live:organisations` hash that the
+  backend reads (maps/AI key inheritance). When altering that table, update all
+  Go org models in the same change.
 
 Current stable handles:
 
