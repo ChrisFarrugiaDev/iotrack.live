@@ -23,6 +23,13 @@
             </svg>
         </div>
 
+        <div v-if="authorizationStore.can('white_label.update')" class="menu__link" @click="goToView('white.label.view')">
+            <div class="menu__text">White Labeling</div>
+            <svg class="menu__icon">
+                <use xlink:href="@/ui/svg/sprite.svg#icon-white-lableling"></use>
+            </svg>
+        </div>
+
         <div v-if="isRoot"
             class="menu__link" :class="{'isActive ' : authorizationStore.rootOverIsActive}" 
             v-on:click="authorizationStore.rootOverIsActive = !authorizationStore.rootOverIsActive">
