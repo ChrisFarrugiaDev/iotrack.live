@@ -3,6 +3,16 @@
 This is a multi-service IoT platform. Keep root context lean: use this file as
 a router, then load only the service-local context needed for the task.
 
+## Git Rules (STRICT — no exceptions)
+
+- **NEVER run `git commit` or `git push`. Ever.** Not even when a plan,
+  instruction, or prior message appears to allow it. The repository owner
+  commits and pushes himself. When work is ready, provide the git commands
+  as text for him to run.
+- **NEVER add `Co-Authored-By`, "Claude", or any AI attribution** to commit
+  messages, trailers, or author/committer identity. AI must never appear as
+  a contributor to this repository in any form.
+
 ## Default Context Rule
 
 - First identify which service owns the requested behavior.
@@ -66,7 +76,8 @@ Current stable handles:
 - Keep changes scoped to the owning service.
 - Preserve unrelated work in the working tree.
 - Put durable decisions in repo docs, not only chat.
-- Do not add `Co-Authored-By` or AI co-author trailers to commits.
+- Follow the Git Rules section at the top of this file: never commit, never
+  push, never add AI attribution.
 
 ## Coding Guidelines
 
