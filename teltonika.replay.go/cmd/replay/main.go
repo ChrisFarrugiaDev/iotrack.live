@@ -102,6 +102,19 @@ func main() {
 
 	// -----------------------------------------------------------------
 
+	// Build the optional meta service (requires REPLAY_META=true and a DB).
+	meta, err := loadMetaService(app.DB)
+	if err != nil {
+		logger.Error("Invalid replay meta configuration", zap.Error(err))
+		os.Exit(1)
+	}
+	if meta != nil {
+		if err := meta.EnsureSchema(ctx); err != nil {
+			logger.Error("Failed to create replay_meta schema", zap.Error(err))
+			os.Exit(1)
+		}
+	}
+
 	// Start the replay loop: load REPLAY_START_FILE, replay each device's
 	// Codec 8 packets on a wall-clock schedule, and rotate days at each UTC
 	// midnight (§5-6). Everything is bound to ctx for clean shutdown.
@@ -110,6 +123,7 @@ func main() {
 		logger.Error("Invalid replay configuration", zap.Error(err))
 		os.Exit(1)
 	}
+	replayCfg.Meta = meta
 
 	dryRun := strings.EqualFold(os.Getenv("REPLAY_DRY_RUN"), "true")
 	if dryRun {
@@ -128,6 +142,16 @@ func main() {
 		close(replayClosed) // Signal that the replay loop has stopped.
 	}()
 
+	metaClosed := make(chan struct{})
+	if meta != nil {
+		go func() {
+			meta.Run(ctx)
+			close(metaClosed)
+		}()
+	} else {
+		close(metaClosed)
+	}
+
 	// -----------------------------------------------------------------
 
 	// Block main goroutine until context is cancelled by an OS signal (e.g. CTRL+C).
@@ -144,6 +168,14 @@ func main() {
 		logger.Log.Info("Replay loop stopped cleanly.")
 	case <-time.After(5 * time.Second):
 		logger.Log.Warn("Replay loop shutdown timeout - forcing exit.")
+	}
+
+	// Wait for the meta service to complete its final flush.
+	select {
+	case <-metaClosed:
+		logger.Log.Info("Replay meta service stopped cleanly.")
+	case <-time.After(10 * time.Second):
+		logger.Log.Warn("Replay meta service shutdown timeout - forcing exit.")
 	}
 
 	stopPublisher()

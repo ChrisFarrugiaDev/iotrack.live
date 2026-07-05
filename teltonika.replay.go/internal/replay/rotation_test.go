@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -131,7 +132,7 @@ func TestPreloadFiresBeforeMidnight(t *testing.T) {
 func TestLoadDayMissingFileReturnsError(t *testing.T) {
 	// Empty data dir => loadDay fails, which drives the skip/halt policy (§6.4).
 	r := newTestRotator(t, "raw_packets_2026-04-10.csv.gz", 1, t.TempDir())
-	_, err := r.loadDay(0, dateUTC(t, "2026-04-10"))
+	_, err := r.loadDay(context.Background(), 0, dateUTC(t, "2026-04-10"))
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}

@@ -75,6 +75,10 @@ file-server-build:
 	cd file.server.go && \
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o file-server ./cmd/web
 
+teltonika-replay-build:
+	cd teltonika.replay.go && \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o teltonika-replay ./cmd/replay
+
 
 	
 # api-docker-build:

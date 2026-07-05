@@ -35,24 +35,33 @@ const scannerMaxLine = 1 << 20
 type Whitelist struct {
 	set      map[string]struct{}
 	required bool
+	allowAll bool // set when "*" appears in the CSV
 }
 
-// NewWhitelist builds a whitelist from a comma-separated IMEI list. required
-// governs the empty-list behaviour: true => replay nothing, false => replay all.
+// NewWhitelist builds a whitelist from a comma-separated IMEI list. A bare "*"
+// entry allows every IMEI unconditionally. required governs the empty-list
+// behaviour: true => replay nothing, false => replay all.
 func NewWhitelist(csv string, required bool) Whitelist {
 	set := make(map[string]struct{})
+	allowAll := false
 	for _, raw := range strings.Split(csv, ",") {
 		imei := strings.TrimSpace(raw)
-		if imei != "" {
+		if imei == "*" {
+			allowAll = true
+		} else if imei != "" {
 			set[imei] = struct{}{}
 		}
 	}
-	return Whitelist{set: set, required: required}
+	return Whitelist{set: set, required: required, allowAll: allowAll}
 }
 
-// Allows reports whether an IMEI should be loaded and replayed. An empty list
-// means "nothing" when required, "everything" otherwise (§3.4).
+// Allows reports whether an IMEI passes the whitelist. "*" in the list allows
+// every IMEI; an empty list means "nothing" when required, "everything"
+// otherwise (§3.4).
 func (w Whitelist) Allows(imei string) bool {
+	if w.allowAll {
+		return true
+	}
 	if len(w.set) == 0 {
 		return !w.required
 	}
@@ -60,19 +69,54 @@ func (w Whitelist) Allows(imei string) bool {
 	return ok
 }
 
-// Size returns the number of explicitly listed IMEIs.
+// Size returns the number of explicitly listed IMEIs (does not count "*").
 func (w Whitelist) Size() int { return len(w.set) }
 
-// Empty reports whether the whitelist has no explicit entries.
-func (w Whitelist) Empty() bool { return len(w.set) == 0 }
+// Empty reports whether the whitelist has no explicit entries and no wildcard.
+func (w Whitelist) Empty() bool { return !w.allowAll && len(w.set) == 0 }
 
-// IMEIs returns the explicitly listed IMEIs (order unspecified).
+// IMEIs returns the explicitly listed IMEIs (order unspecified, excludes "*").
 func (w Whitelist) IMEIs() []string {
 	out := make([]string, 0, len(w.set))
 	for imei := range w.set {
 		out = append(out, imei)
 	}
 	return out
+}
+
+// Blacklist is the set of IMEIs that must never be replayed, regardless of
+// whitelist. It is read once at startup and applied after the whitelist check.
+type Blacklist struct {
+	set     map[string]struct{}
+	denyAll bool // set when "*" appears in the CSV
+}
+
+// NewBlacklist builds a blacklist from a comma-separated IMEI list. A bare "*"
+// entry denies every IMEI unconditionally. An empty string produces a no-op
+// blacklist (nothing denied).
+func NewBlacklist(csv string) Blacklist {
+	set := make(map[string]struct{})
+	denyAll := false
+	for _, raw := range strings.Split(csv, ",") {
+		imei := strings.TrimSpace(raw)
+		if imei == "*" {
+			denyAll = true
+		} else if imei != "" {
+			set[imei] = struct{}{}
+		}
+	}
+	return Blacklist{set: set, denyAll: denyAll}
+}
+
+// Denies reports whether an IMEI is blocked by the blacklist. A blacklist with
+// "*" denies every IMEI; a blacklist with specific IMEIs denies only those;
+// an empty blacklist denies nothing.
+func (b Blacklist) Denies(imei string) bool {
+	if b.denyAll {
+		return true
+	}
+	_, ok := b.set[imei]
+	return ok
 }
 
 // FileName returns the daily file name for a date (§3.1).
@@ -95,11 +139,12 @@ func ParseFileDate(name string) (time.Time, error) {
 	return d, nil
 }
 
-// LoadFile streams a gzipped CSV, filters rows against the whitelist BEFORE
-// hex-decoding (§3.3), and groups surviving rows by IMEI. Only whitelisted
-// devices are ever held in memory. Malformed rows are logged at warn and
-// skipped; they never abort the day.
-func LoadFile(path string, wl Whitelist, delim string) (map[string][]ReplayPacket, error) {
+// LoadFile streams a gzipped CSV, filters rows against the whitelist and
+// blacklist BEFORE hex-decoding (§3.3), masks each surviving IMEI, and groups
+// rows by the masked IMEI. The blacklist is evaluated after the whitelist and
+// always wins. meta may be nil (masking still happens; recording is skipped).
+// Malformed rows are logged at warn and skipped; they never abort the day.
+func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim string) (map[string][]ReplayPacket, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open replay file: %w", err)
@@ -132,7 +177,12 @@ func LoadFile(path string, wl Whitelist, delim string) (map[string][]ReplayPacke
 			continue
 		}
 
-		// 1. IMEI (column 2) as plain text.
+		// 1. Skip the CSV header row silently.
+		if strings.TrimSpace(cols[0]) == "happened_at" {
+			continue
+		}
+
+		// 2. IMEI (column 2) as plain text.
 		imei := strings.TrimSpace(cols[1])
 		if imei == "" {
 			skipped++
@@ -140,12 +190,20 @@ func LoadFile(path string, wl Whitelist, delim string) (map[string][]ReplayPacke
 			continue
 		}
 
-		// 2. Whitelist check — before any decode or allocation (§3.3, §3.4).
-		if !wl.Allows(imei) {
+		// 3. Whitelist + blacklist check — before any decode or allocation (§3.3, §3.4).
+		// Blacklist is evaluated after whitelist and always wins.
+		if !wl.Allows(imei) || bl.Denies(imei) {
 			continue
 		}
 
-		// 3. Timestamp (column 1).
+		// 4. Mask the real IMEI — real identity must never enter downstream systems.
+		realIMEI := imei
+		imei = MaskIMEI(realIMEI)
+		if meta != nil {
+			meta.RecordIMEI(realIMEI, imei)
+		}
+
+		// 5. Timestamp (column 1).
 		ts, err := time.ParseInLocation(happenedAtLayout, strings.TrimSpace(cols[0]), time.UTC)
 		if err != nil {
 			skipped++
@@ -153,7 +211,7 @@ func LoadFile(path string, wl Whitelist, delim string) (map[string][]ReplayPacke
 			continue
 		}
 
-		// 4. Hex-decode the packet (column 3) — only for whitelisted IMEIs.
+		// 6. Hex-decode the packet (column 3) — only for whitelisted IMEIs.
 		raw, err := hex.DecodeString(strings.TrimSpace(cols[2]))
 		if err != nil {
 			skipped++
@@ -182,8 +240,8 @@ func LoadFile(path string, wl Whitelist, delim string) (map[string][]ReplayPacke
 
 // LoadReplayDay loads a file, sorts each device's packets, and computes the
 // whole-day offset against the activation midnight (§5.1 steps 2-4).
-func LoadReplayDay(path string, fileDateUTC, activationMidnight time.Time, wl Whitelist, delim string) (*ReplayDay, error) {
-	byDevice, err := LoadFile(path, wl, delim)
+func LoadReplayDay(path string, fileDateUTC, activationMidnight time.Time, wl Whitelist, bl Blacklist, meta *MetaService, delim string) (*ReplayDay, error) {
+	byDevice, err := LoadFile(path, wl, bl, meta, delim)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 	"iotrack.live/teltonika.replay.go/internal/logger"
 )
 
+
 // On-missing-file policy values for REPLAY_ON_MISSING_FILE (§6.4).
 const (
 	OnMissingSkip = "skip" // advance past the missing day (no telemetry that day)
@@ -24,6 +25,8 @@ type Config struct {
 	OnMissingFile string // OnMissingSkip | OnMissingHalt
 	Delimiter     string
 	Whitelist     Whitelist
+	Blacklist     Blacklist
+	Meta          *MetaService
 	MaxConcurrent int
 }
 
@@ -69,9 +72,16 @@ func midnightAfter(t time.Time) time.Time {
 }
 
 // loadDay loads the file for dayIndex, anchoring its offset to activationMidnight.
-func (r *Rotator) loadDay(dayIndex int, activationMidnight time.Time) (*ReplayDay, error) {
+func (r *Rotator) loadDay(ctx context.Context, dayIndex int, activationMidnight time.Time) (*ReplayDay, error) {
 	date := r.dateForIndex(dayIndex)
-	return LoadReplayDay(r.pathFor(date), date, activationMidnight, r.cfg.Whitelist, r.cfg.Delimiter)
+	day, err := LoadReplayDay(r.pathFor(date), date, activationMidnight, r.cfg.Whitelist, r.cfg.Blacklist, r.cfg.Meta, r.cfg.Delimiter)
+	if err != nil {
+		return nil, err
+	}
+	if r.cfg.Meta != nil {
+		r.cfg.Meta.RecordProgress(ctx, FileName(date), dayIndex, r.cfg.Days)
+	}
+	return day, nil
 }
 
 // emptyDay returns a do-nothing day for a missing file under the skip policy
@@ -95,7 +105,7 @@ func (r *Rotator) Run(ctx context.Context) {
 	// First (boot) day activates immediately; its offset anchors to today's
 	// midnight so a mid-day start skips the already-past packets (§5.4, §6.1).
 	bootMidnight := midnightUTC(r.now())
-	day, err := r.loadDay(dayIndex, bootMidnight)
+	day, err := r.loadDay(ctx, dayIndex, bootMidnight)
 	if err != nil {
 		if r.cfg.OnMissingFile == OnMissingHalt {
 			logger.Error("replay: failed to load start file; halting", zap.String("file", r.cfg.StartFile), zap.Error(err))
@@ -147,7 +157,7 @@ func (r *Rotator) Run(ctx context.Context) {
 				if !preloaded {
 					preloaded = true
 					logger.Info("replay: preloading next day", zap.Int("day_index", nextIndex), zap.String("file", FileName(r.dateForIndex(nextIndex))))
-					prepared, preloadErr = r.loadDay(nextIndex, nextMidnight)
+					prepared, preloadErr = r.loadDay(ctx, nextIndex, nextMidnight)
 					if preloadErr != nil {
 						logger.Error("replay: preload failed", zap.String("file", FileName(r.dateForIndex(nextIndex))), zap.Error(preloadErr))
 					}
@@ -164,7 +174,7 @@ func (r *Rotator) Run(ctx context.Context) {
 		// Safety: if the preload timer never fired (e.g. lead longer than the
 		// time to midnight on a short first day), load now.
 		if !preloaded {
-			prepared, preloadErr = r.loadDay(nextIndex, nextMidnight)
+			prepared, preloadErr = r.loadDay(ctx, nextIndex, nextMidnight)
 		}
 
 		// Apply the missing-file policy.

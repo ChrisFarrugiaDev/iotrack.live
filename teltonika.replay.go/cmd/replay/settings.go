@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"iotrack.live/teltonika.replay.go/internal/cache"
@@ -115,6 +118,7 @@ func loadReplayConfig() (replay.Config, error) {
 	if wl.Empty() && required {
 		logger.Warn("REPLAY_IMEI_WHITELIST is empty and REPLAY_WHITELIST_REQUIRED=true: nothing will be replayed")
 	}
+	bl := replay.NewBlacklist(os.Getenv("REPLAY_IMEI_BLACKLIST"))
 
 	lead := time.Hour
 	if v := os.Getenv("REPLAY_PRELOAD_LEAD"); v != "" {
@@ -153,8 +157,42 @@ func loadReplayConfig() (replay.Config, error) {
 		OnMissingFile: onMissing,
 		Delimiter:     parseDelimiter(os.Getenv("REPLAY_CSV_DELIMITER")),
 		Whitelist:     wl,
+		Blacklist:     bl,
 		MaxConcurrent: maxConc,
 	}, nil
+}
+
+// loadMetaService builds a MetaService when REPLAY_META=true, or returns nil
+// when disabled. REPLAY_META_ENCRYPTION_KEY must be a base64-encoded 32-byte
+// AES key; generate one with: openssl rand -base64 32
+func loadMetaService(db *pgxpool.Pool) (*replay.MetaService, error) {
+	if !strings.EqualFold(os.Getenv("REPLAY_META"), "true") {
+		return nil, nil
+	}
+
+	rawKey := os.Getenv("REPLAY_META_ENCRYPTION_KEY")
+	if rawKey == "" {
+		return nil, fmt.Errorf("REPLAY_META_ENCRYPTION_KEY is required when REPLAY_META=true")
+	}
+	keyBytes, err := base64.StdEncoding.DecodeString(rawKey)
+	if err != nil {
+		return nil, fmt.Errorf("REPLAY_META_ENCRYPTION_KEY must be base64-encoded: %w", err)
+	}
+	if len(keyBytes) != 32 {
+		return nil, fmt.Errorf("REPLAY_META_ENCRYPTION_KEY must decode to exactly 32 bytes (got %d)", len(keyBytes))
+	}
+	var encKey [32]byte
+	copy(encKey[:], keyBytes)
+
+	flushEvery := time.Hour
+	if v := os.Getenv("REPLAY_META_FLUSH_INTERVAL"); v != "" {
+		flushEvery, err = time.ParseDuration(v)
+		if err != nil {
+			return nil, fmt.Errorf("REPLAY_META_FLUSH_INTERVAL must be a duration: %w", err)
+		}
+	}
+
+	return replay.NewMetaService(db, encKey, flushEvery), nil
 }
 
 // parseDelimiter resolves the configured CSV delimiter, interpreting the literal

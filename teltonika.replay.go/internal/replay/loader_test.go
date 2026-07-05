@@ -24,22 +24,22 @@ func TestLoadFileWhitelistFilters(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	wl := NewWhitelist(imeiA+","+imeiC, true)
-	byDevice, err := LoadFile(path, wl, "\t")
+	byDevice, err := LoadFile(path, wl, NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
 
-	// Only whitelisted IMEIs are held; imeiB is dropped before decode.
+	// Only whitelisted IMEIs survive; imeiB is dropped before decode or masking.
 	if len(byDevice) != 2 {
 		t.Fatalf("devices = %d, want 2 (%v)", len(byDevice), keys(byDevice))
 	}
-	if _, ok := byDevice[imeiB]; ok {
+	if _, ok := byDevice[MaskIMEI(imeiB)]; ok {
 		t.Errorf("imeiB should have been filtered out")
 	}
-	if got := len(byDevice[imeiA]); got != 2 {
+	if got := len(byDevice[MaskIMEI(imeiA)]); got != 2 {
 		t.Errorf("imeiA packets = %d, want 2", got)
 	}
-	if got := len(byDevice[imeiC]); got != 1 {
+	if got := len(byDevice[MaskIMEI(imeiC)]); got != 1 {
 		t.Errorf("imeiC packets = %d, want 1", got)
 	}
 }
@@ -53,7 +53,7 @@ func TestLoadFileEmptyWhitelistRequired(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	// required=true + empty whitelist => replay nothing.
-	byDevice, err := LoadFile(path, NewWhitelist("", true), "\t")
+	byDevice, err := LoadFile(path, NewWhitelist("", true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestLoadFileEmptyWhitelistNotRequired(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	// required=false + empty whitelist => replay all.
-	byDevice, err := LoadFile(path, NewWhitelist("", false), "\t")
+	byDevice, err := LoadFile(path, NewWhitelist("", false), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -92,11 +92,11 @@ func TestLoadFileSkipsMalformedRows(t *testing.T) {
 	}
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
-	byDevice, err := LoadFile(path, NewWhitelist(imeiA, true), "\t")
+	byDevice, err := LoadFile(path, NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
-	if got := len(byDevice[imeiA]); got != 2 {
+	if got := len(byDevice[MaskIMEI(imeiA)]); got != 2 {
 		t.Fatalf("kept packets = %d, want 2 (malformed rows skipped)", got)
 	}
 }
@@ -108,11 +108,11 @@ func TestLoadFileDecodesRealRow(t *testing.T) {
 	rows := [][]string{{"2026-04-10 00:00:00+00", imeiA, officialCodec8Hex}}
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
-	byDevice, err := LoadFile(path, NewWhitelist(imeiA, true), "\t")
+	byDevice, err := LoadFile(path, NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
-	pkts := byDevice[imeiA]
+	pkts := byDevice[MaskIMEI(imeiA)]
 	if len(pkts) != 1 {
 		t.Fatalf("packets = %d, want 1", len(pkts))
 	}
@@ -132,9 +132,70 @@ func TestLoadFileDecodesRealRow(t *testing.T) {
 }
 
 func TestLoadFileMissing(t *testing.T) {
-	_, err := LoadFile(t.TempDir()+"/does-not-exist.csv.gz", NewWhitelist(imeiA, true), "\t")
+	_, err := LoadFile(t.TempDir()+"/does-not-exist.csv.gz", NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
 	if err == nil {
 		t.Fatal("expected an error for a missing file")
+	}
+}
+
+func TestLoadFileWildcardWhitelistAllowsAll(t *testing.T) {
+	dir := t.TempDir()
+	rows := [][]string{
+		{"2026-04-10 00:00:00+00", imeiA, officialCodec8Hex},
+		{"2026-04-10 00:01:00+00", imeiB, officialCodec8Hex},
+		{"2026-04-10 00:02:00+00", imeiC, officialCodec8Hex},
+	}
+	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
+
+	// "*" in whitelist => every IMEI passes.
+	byDevice, err := LoadFile(path, NewWhitelist("*", true), NewBlacklist(""), nil, "\t")
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+	if len(byDevice) != 3 {
+		t.Fatalf("devices = %d, want 3 (wildcard allows all)", len(byDevice))
+	}
+}
+
+func TestLoadFileBlacklistDeniesOverWhitelist(t *testing.T) {
+	dir := t.TempDir()
+	rows := [][]string{
+		{"2026-04-10 00:00:00+00", imeiA, officialCodec8Hex},
+		{"2026-04-10 00:01:00+00", imeiB, officialCodec8Hex},
+		{"2026-04-10 00:02:00+00", imeiC, officialCodec8Hex},
+	}
+	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
+
+	// Whitelist allows all three; blacklist removes imeiB.
+	wl := NewWhitelist(imeiA+","+imeiB+","+imeiC, true)
+	bl := NewBlacklist(imeiB)
+	byDevice, err := LoadFile(path, wl, bl, nil, "\t")
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+	if len(byDevice) != 2 {
+		t.Fatalf("devices = %d, want 2 (blacklisted imeiB removed)", len(byDevice))
+	}
+	if _, ok := byDevice[MaskIMEI(imeiB)]; ok {
+		t.Errorf("imeiB should have been denied by blacklist")
+	}
+}
+
+func TestLoadFileWildcardBlacklistDeniesAll(t *testing.T) {
+	dir := t.TempDir()
+	rows := [][]string{
+		{"2026-04-10 00:00:00+00", imeiA, officialCodec8Hex},
+		{"2026-04-10 00:01:00+00", imeiB, officialCodec8Hex},
+	}
+	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
+
+	// "*" in blacklist => nothing passes, even with a permissive whitelist.
+	byDevice, err := LoadFile(path, NewWhitelist("*", true), NewBlacklist("*"), nil, "\t")
+	if err != nil {
+		t.Fatalf("LoadFile: %v", err)
+	}
+	if len(byDevice) != 0 {
+		t.Fatalf("devices = %d, want 0 (wildcard blacklist blocks all)", len(byDevice))
 	}
 }
 
