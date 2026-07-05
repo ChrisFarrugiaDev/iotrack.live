@@ -36,7 +36,6 @@ import GroupUpdateView from '@/views/groups/GroupUpdateView.vue'
 import GroupCreateView from '@/views/groups/GroupCreateView.vue'
 import GroupListView from '@/views/groups/GroupListView.vue'
 import GroupView from '@/views/groups/GroupView.vue'
-import WhiteLabelView from '@/views/settings/WhiteLabelView.vue'
 import { nextTick } from 'vue'
 
 
@@ -120,7 +119,6 @@ const router = createRouter({
 		},
 
 		// Settings
-		{ path: '/white-labeling', name: 'white.label.view', component: WhiteLabelView, meta: { requiresAuth: true } },
 
 		{ path: '/helpers/svg', name: 'viewHelpersSvg', component: SvgSpriteView },
 	],
@@ -177,11 +175,6 @@ router.beforeEach(async (
 	if ( to.name == 'groups.list' &&  !authorizationStore.can('group.view') ) {
 		return next({ name: 'map.view' });
 	}
-
-	if ( to.name == 'white.label.view' &&  !authorizationStore.can('white_label.update') ) {
-		return next({ name: 'map.view' });
-	}
-
 
 
 	// continue with the navigation

@@ -7,7 +7,6 @@ import assetRouter from "./asset.router";
 import userRouter from "./user.router";
 import organisationRoute from "./organisation.router";
 import groupRouter from "./group.router";
-import whiteLabelRouter from "./white-label.router";
 
 // ---------------------------------------------------------------------
 
@@ -21,7 +20,6 @@ export default async function router(fastify: FastifyInstance) {
     await fastify.register(userRouter, {prefix: '/user'});
     await fastify.register(organisationRoute, {prefix: '/organisation'});
     await fastify.register(groupRouter, {prefix: '/group'});
-    await fastify.register(whiteLabelRouter, {prefix: '/white-label'});
 }
 
 // ---------------------------------------------------------------------

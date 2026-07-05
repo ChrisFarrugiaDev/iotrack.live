@@ -73,8 +73,6 @@ Responsibilities:
 - Access profile hydration.
 - Backend authorization.
 - Device, asset, organisation, group, and user APIs.
-- White label branding API (`/api/white-label`; its `/public` route is
-  unauthenticated so the login screen can load branding pre-auth).
 - Teltonika Codec 12 command creation (auth + Zod validation +
   `device.command` permission).
 - Prisma access to PostgreSQL.
@@ -229,8 +227,6 @@ Parent docs:
 - `README.md` gives the public high-level overview.
 - `docs/PROJECT_OVERVIEW.md` gives service orientation.
 - `docs/PROJECT_ANALYSIS.md` gives current analysis and priorities.
-- `docs/WHITE_LABEL.md` gives the white labelling design (per-org branding of
-  auth screens).
 - `AGENTS.md` gives repo-wide agent instructions.
 - `SPEC.md` gives this system-level contract.
 

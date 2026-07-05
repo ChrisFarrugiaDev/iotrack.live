@@ -17,15 +17,8 @@
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm.vue';
 import LoginForm from '@/components/auth/LoginForm.vue';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm.vue';
-import { computed, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useSettingsStore } from '@/stores/settingsStore';
-
-// -- store ------------------------------------------------------------
-
-const settingsStore = useSettingsStore();
-const { getWhiteLabel } = storeToRefs(settingsStore);
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 
 // -- router -----------------------------------------------------------
 const route = useRoute();
@@ -38,11 +31,11 @@ const DEFAULT_FG_URL = '/mika-baumeister-nDciGidCdQo-unsplash.jpg';
 // -- computed ---------------------------------------------------------
 
 const backgroundStyle = computed(() => ({
-    backgroundImage: `url("${getWhiteLabel.value?.login_bg_url || DEFAULT_BG_URL}")`,
+    backgroundImage: `url("${DEFAULT_BG_URL}")`,
 }));
 
 const foregroundStyle = computed(() => ({
-    backgroundImage: `url("${getWhiteLabel.value?.login_fg_url || DEFAULT_FG_URL}")`,
+    backgroundImage: `url("${DEFAULT_FG_URL}")`,
 }));
 
 // Determine the correct component based on the route name
@@ -57,12 +50,6 @@ const currentFormComponent = computed(() => {
         return ResetPasswordForm;
     }
     return null; // Or a default component if necessary
-});
-
-// -- hooks ------------------------------------------------------------
-
-onMounted(() => {
-    settingsStore.fetchPublicWhiteLabel();
 });
 
 </script>

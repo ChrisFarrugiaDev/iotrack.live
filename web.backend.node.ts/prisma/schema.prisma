@@ -77,23 +77,8 @@ model organisations {
   other_organisations      organisations[]            @relation("organisationsToorganisations")
   user_organisation_access user_organisation_access[]
   users                    users[]
-  white_label              white_label?
 
   @@index([name], map: "idx_organisations_name")
-  @@schema("app")
-}
-
-model white_label {
-  id              BigInt        @id @default(autoincrement())
-  organisation_id BigInt        @unique
-  domain          String?       @unique @db.VarChar(255)
-  app_title       String?       @db.VarChar(128)
-  login_bg_url    String?
-  login_fg_url    String?
-  created_at      DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
-  organisations   organisations @relation(fields: [organisation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
   @@schema("app")
 }
 

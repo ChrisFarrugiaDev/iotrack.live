@@ -42,7 +42,6 @@ func Routes() http.Handler {
 	mux.Get("/users/new", vueHandler.ServerIndexWithVariables)
 	mux.Get("/groups", vueHandler.ServerIndexWithVariables)
 	mux.Get("/groups/new", vueHandler.ServerIndexWithVariables)
-	mux.Get("/white-labeling", vueHandler.ServerIndexWithVariables)
 
 	// Build absolute path to the 'dist' directory (Vue build output)
 	workDir, _ := filepath.Abs(".")

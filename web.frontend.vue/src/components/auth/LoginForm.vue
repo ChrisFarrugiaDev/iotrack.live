@@ -1,8 +1,7 @@
 <template>
     <form class="ssign__form" @submit.prevent="submitForm">
         <div>
-            <div v-if="customTitle" class="ssign__title mt-4 mb-6">{{ customTitle }}</div>
-            <div v-else class="ssign__title mt-4 mb-6" v-html="loginPageTitle"></div>
+            <div class="ssign__title mt-4 mb-6" v-html="loginPageTitle"></div>
 
             <div class="ssign__flash-message mb-4 h-7 text-red-600" v-html="flashMessage">
              
@@ -41,10 +40,9 @@ import validator from 'validator';
 import axios from '@/axios';
 import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/appStore';
-import { useSettingsStore } from '@/stores/settingsStore';
 
 
 // - Store -------------------------------------------------------------
@@ -54,18 +52,12 @@ const appStore = useAppStore();
 const authStore = useAuthStore();
 const { getRemeberMe } = storeToRefs(authStore);
 
-const settingsStore = useSettingsStore();
-const { getWhiteLabel } = storeToRefs(settingsStore);
-
 
 // - Data --------------------------------------------------------------
 const router = useRouter();
 
 const email = ref("");
 const password = ref("");
-
-// White label title (plain text, no HTML) — falls back to the default below
-const customTitle = computed(() => getWhiteLabel.value?.app_title || null);
 
 const loginPageTitle = ref("Welcome to <b style='font-weight:600'>IoTrack</b> Live");
 

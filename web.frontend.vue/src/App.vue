@@ -156,7 +156,6 @@ async function fetchAccessProfile() {
             assetStore.setAssets(profile.access.assets);            
             settingsStore.setMapsApiKey(profile.access.settings?.maps_api_key);
             settingsStore.setAiApiKey(profile.access.settings?.ai_api_key);
-            settingsStore.setWhiteLabel(profile.access.settings?.white_label ?? null);
 
             organisationStore.setOrganisation(profile.organisation);
             organisationStore.setOrganisationScope(profile.organisation_scope);
