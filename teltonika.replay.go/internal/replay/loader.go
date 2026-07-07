@@ -3,8 +3,11 @@ package replay
 import (
 	"bufio"
 	"compress/gzip"
+	"context"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -139,19 +142,42 @@ func ParseFileDate(name string) (time.Time, error) {
 	return d, nil
 }
 
+// openSource returns a ReadCloser for src. If src begins with "http://" or
+// "https://" it performs an HTTP GET (e.g. to a public S3 URL); otherwise it
+// opens a local file. The caller is responsible for closing the returned reader.
+func openSource(ctx context.Context, src string) (io.ReadCloser, error) {
+	if strings.HasPrefix(src, "http://") || strings.HasPrefix(src, "https://") {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, src, nil)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, fmt.Errorf("HTTP %d fetching %s", resp.StatusCode, src)
+		}
+		return resp.Body, nil
+	}
+	return os.Open(src)
+}
+
 // LoadFile streams a gzipped CSV, filters rows against the whitelist and
 // blacklist BEFORE hex-decoding (§3.3), masks each surviving IMEI, and groups
 // rows by the masked IMEI. The blacklist is evaluated after the whitelist and
 // always wins. meta may be nil (masking still happens; recording is skipped).
 // Malformed rows are logged at warn and skipped; they never abort the day.
-func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim string) (map[string][]ReplayPacket, error) {
-	f, err := os.Open(path)
+// src may be a local path or an HTTP(S) URL (e.g. a public S3 object URL).
+func LoadFile(ctx context.Context, src string, wl Whitelist, bl Blacklist, meta *MetaService, delim string) (map[string][]ReplayPacket, error) {
+	rc, err := openSource(ctx, src)
 	if err != nil {
 		return nil, fmt.Errorf("open replay file: %w", err)
 	}
-	defer f.Close()
+	defer rc.Close()
 
-	gz, err := gzip.NewReader(f)
+	gz, err := gzip.NewReader(rc)
 	if err != nil {
 		return nil, fmt.Errorf("gzip reader: %w", err)
 	}
@@ -173,7 +199,7 @@ func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim 
 		cols := strings.SplitN(row, delim, 3)
 		if len(cols) < 3 {
 			skipped++
-			logger.Warn("replay: malformed row (want 3 columns)", zap.String("file", path), zap.Int("line", line))
+			logger.Warn("replay: malformed row (want 3 columns)", zap.String("file", src), zap.Int("line", line))
 			continue
 		}
 
@@ -186,7 +212,7 @@ func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim 
 		imei := strings.TrimSpace(cols[1])
 		if imei == "" {
 			skipped++
-			logger.Warn("replay: empty IMEI", zap.String("file", path), zap.Int("line", line))
+			logger.Warn("replay: empty IMEI", zap.String("file", src), zap.Int("line", line))
 			continue
 		}
 
@@ -207,7 +233,7 @@ func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim 
 		ts, err := time.ParseInLocation(happenedAtLayout, strings.TrimSpace(cols[0]), time.UTC)
 		if err != nil {
 			skipped++
-			logger.Warn("replay: bad timestamp", zap.String("file", path), zap.Int("line", line), zap.String("value", cols[0]), zap.Error(err))
+			logger.Warn("replay: bad timestamp", zap.String("file", src), zap.Int("line", line), zap.String("value", cols[0]), zap.Error(err))
 			continue
 		}
 
@@ -215,7 +241,7 @@ func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim 
 		raw, err := hex.DecodeString(strings.TrimSpace(cols[2]))
 		if err != nil {
 			skipped++
-			logger.Warn("replay: bad hex packet", zap.String("file", path), zap.Int("line", line), zap.String("imei", imei), zap.Error(err))
+			logger.Warn("replay: bad hex packet", zap.String("file", src), zap.Int("line", line), zap.String("imei", imei), zap.Error(err))
 			continue
 		}
 
@@ -228,7 +254,7 @@ func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim 
 	}
 
 	logger.Info("replay: file loaded",
-		zap.String("file", path),
+		zap.String("file", src),
 		zap.Int("rows", line),
 		zap.Int("kept", kept),
 		zap.Int("skipped", skipped),
@@ -240,8 +266,9 @@ func LoadFile(path string, wl Whitelist, bl Blacklist, meta *MetaService, delim 
 
 // LoadReplayDay loads a file, sorts each device's packets, and computes the
 // whole-day offset against the activation midnight (§5.1 steps 2-4).
-func LoadReplayDay(path string, fileDateUTC, activationMidnight time.Time, wl Whitelist, bl Blacklist, meta *MetaService, delim string) (*ReplayDay, error) {
-	byDevice, err := LoadFile(path, wl, bl, meta, delim)
+// src may be a local path or an HTTP(S) URL.
+func LoadReplayDay(ctx context.Context, src string, fileDateUTC, activationMidnight time.Time, wl Whitelist, bl Blacklist, meta *MetaService, delim string) (*ReplayDay, error) {
+	byDevice, err := LoadFile(ctx, src, wl, bl, meta, delim)
 	if err != nil {
 		return nil, err
 	}

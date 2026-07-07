@@ -141,16 +141,20 @@ func loadReplayConfig() (replay.Config, error) {
 		}
 	}
 
-	info, err := os.Stat(dataDir)
-	if err != nil {
-		return replay.Config{}, fmt.Errorf("REPLAY_DATA_DIR %q: %w", dataDir, err)
-	}
-	if !info.IsDir() {
-		return replay.Config{}, fmt.Errorf("REPLAY_DATA_DIR %q is not a directory", dataDir)
+	dataURL := os.Getenv("REPLAY_DATA_URL")
+	if dataURL == "" {
+		info, err := os.Stat(dataDir)
+		if err != nil {
+			return replay.Config{}, fmt.Errorf("REPLAY_DATA_DIR %q: %w", dataDir, err)
+		}
+		if !info.IsDir() {
+			return replay.Config{}, fmt.Errorf("REPLAY_DATA_DIR %q is not a directory", dataDir)
+		}
 	}
 
 	return replay.Config{
 		DataDir:       dataDir,
+		DataURL:       dataURL,
 		StartFile:     startFile,
 		Days:          days,
 		PreloadLead:   lead,

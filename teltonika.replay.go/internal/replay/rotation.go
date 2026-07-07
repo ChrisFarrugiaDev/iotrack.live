@@ -3,6 +3,7 @@ package replay
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -19,6 +20,7 @@ const (
 // Config is the replay loop configuration, resolved from the environment (§11-12).
 type Config struct {
 	DataDir       string
+	DataURL       string // base HTTP(S) URL for S3 streaming; takes precedence over DataDir when set
 	StartFile     string
 	Days          int
 	PreloadLead   time.Duration
@@ -61,9 +63,15 @@ func (r *Rotator) dateForIndex(dayIndex int) time.Time {
 	return r.startDate.AddDate(0, 0, dayIndex)
 }
 
-// pathFor returns the absolute file path for a date.
-func (r *Rotator) pathFor(date time.Time) string {
-	return filepath.Join(r.cfg.DataDir, FileName(date))
+// sourceFor returns the file source (URL or local path) for a date. When
+// DataURL is set, it builds an HTTP(S) URL for S3 streaming; otherwise it
+// falls back to a local filesystem path under DataDir.
+func (r *Rotator) sourceFor(date time.Time) string {
+	name := FileName(date)
+	if r.cfg.DataURL != "" {
+		return strings.TrimRight(r.cfg.DataURL, "/") + "/" + name
+	}
+	return filepath.Join(r.cfg.DataDir, name)
 }
 
 // midnightAfter returns the first UTC midnight strictly after t (§6).
@@ -74,7 +82,7 @@ func midnightAfter(t time.Time) time.Time {
 // loadDay loads the file for dayIndex, anchoring its offset to activationMidnight.
 func (r *Rotator) loadDay(ctx context.Context, dayIndex int, activationMidnight time.Time) (*ReplayDay, error) {
 	date := r.dateForIndex(dayIndex)
-	day, err := LoadReplayDay(r.pathFor(date), date, activationMidnight, r.cfg.Whitelist, r.cfg.Blacklist, r.cfg.Meta, r.cfg.Delimiter)
+	day, err := LoadReplayDay(ctx, r.sourceFor(date), date, activationMidnight, r.cfg.Whitelist, r.cfg.Blacklist, r.cfg.Meta, r.cfg.Delimiter)
 	if err != nil {
 		return nil, err
 	}

@@ -78,3 +78,9 @@ database.yml
 docker-compose.yml
 /generated/prisma
 **/generated/prisma/
+
+
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl

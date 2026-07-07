@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"context"
 	"encoding/hex"
 	"testing"
 
@@ -24,7 +25,7 @@ func TestLoadFileWhitelistFilters(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	wl := NewWhitelist(imeiA+","+imeiC, true)
-	byDevice, err := LoadFile(path, wl, NewBlacklist(""), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, wl, NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -53,7 +54,7 @@ func TestLoadFileEmptyWhitelistRequired(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	// required=true + empty whitelist => replay nothing.
-	byDevice, err := LoadFile(path, NewWhitelist("", true), NewBlacklist(""), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, NewWhitelist("", true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -71,7 +72,7 @@ func TestLoadFileEmptyWhitelistNotRequired(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	// required=false + empty whitelist => replay all.
-	byDevice, err := LoadFile(path, NewWhitelist("", false), NewBlacklist(""), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, NewWhitelist("", false), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -92,7 +93,7 @@ func TestLoadFileSkipsMalformedRows(t *testing.T) {
 	}
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
-	byDevice, err := LoadFile(path, NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -108,7 +109,7 @@ func TestLoadFileDecodesRealRow(t *testing.T) {
 	rows := [][]string{{"2026-04-10 00:00:00+00", imeiA, officialCodec8Hex}}
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
-	byDevice, err := LoadFile(path, NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -132,7 +133,7 @@ func TestLoadFileDecodesRealRow(t *testing.T) {
 }
 
 func TestLoadFileMissing(t *testing.T) {
-	_, err := LoadFile(t.TempDir()+"/does-not-exist.csv.gz", NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
+	_, err := LoadFile(context.Background(), t.TempDir()+"/does-not-exist.csv.gz", NewWhitelist(imeiA, true), NewBlacklist(""), nil, "\t")
 	if err == nil {
 		t.Fatal("expected an error for a missing file")
 	}
@@ -148,7 +149,7 @@ func TestLoadFileWildcardWhitelistAllowsAll(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	// "*" in whitelist => every IMEI passes.
-	byDevice, err := LoadFile(path, NewWhitelist("*", true), NewBlacklist(""), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, NewWhitelist("*", true), NewBlacklist(""), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -169,7 +170,7 @@ func TestLoadFileBlacklistDeniesOverWhitelist(t *testing.T) {
 	// Whitelist allows all three; blacklist removes imeiB.
 	wl := NewWhitelist(imeiA+","+imeiB+","+imeiC, true)
 	bl := NewBlacklist(imeiB)
-	byDevice, err := LoadFile(path, wl, bl, nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, wl, bl, nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}
@@ -190,7 +191,7 @@ func TestLoadFileWildcardBlacklistDeniesAll(t *testing.T) {
 	path := writeGzCSV(t, dir, "raw_packets_2026-04-10.csv.gz", "\t", rows)
 
 	// "*" in blacklist => nothing passes, even with a permissive whitelist.
-	byDevice, err := LoadFile(path, NewWhitelist("*", true), NewBlacklist("*"), nil, "\t")
+	byDevice, err := LoadFile(context.Background(), path, NewWhitelist("*", true), NewBlacklist("*"), nil, "\t")
 	if err != nil {
 		t.Fatalf("LoadFile: %v", err)
 	}

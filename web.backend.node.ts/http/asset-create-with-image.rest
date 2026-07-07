@@ -1,0 +1,36 @@
+### Step 1: Create asset (JSON) ----------------------------------------
+### Note the asset id from the response, use it in Step 2.
+
+POST http://57.129.22.122:4001/api/asset
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMzI1Mjk5Mi0zZGEzLTQ5N2QtYTE3ZC00NzE5NDBiNjhiMGYiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsInJvbGVfaWQiOjEsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjoxLCJpYXQiOjE3ODMzNTk3MDAsImV4cCI6MTc4MzQwMjkwMH0.whOcO22y9FJi9tTa0PwB3cwm4bhyu-tEJMC4ySKM7SQ
+
+{
+    "organisation_id": "5",
+    "device_id": "10",
+    "name": "Dazzling Allen",
+    "asset_type": "vehicle",
+    "attributes": {}
+}
+
+### Step 2: Upload image to file server ---------------------------------
+### Replace <asset_id> in entity_id with the id returned from Step 1.
+
+POST http://57.129.22.122:4002/img/upload
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMzI1Mjk5Mi0zZGEzLTQ5N2QtYTE3ZC00NzE5NDBiNjhiMGYiLCJpZCI6IjEiLCJlbWFpbCI6ImRldkB1c2VyLmNvbSIsInJvbGVfaWQiOjEsIm9yZ19pZCI6IjEiLCJ0b2tlbl92ZXJzaW9uIjoxLCJpYXQiOjE3ODMzNTk3MDAsImV4cCI6MTc4MzQwMjkwMH0.whOcO22y9FJi9tTa0PwB3cwm4bhyu-tEJMC4ySKM7SQ
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="entity_type"
+
+asset
+------FormBoundary
+Content-Disposition: form-data; name="entity_id"
+
+<asset_id>
+------FormBoundary
+Content-Disposition: form-data; name="images"; filename="001.jpg"
+Content-Type: image/jpeg
+
+< /home/foxcodenine/foxfiles/Pictures/Painting/001.jpg
+------FormBoundary--
