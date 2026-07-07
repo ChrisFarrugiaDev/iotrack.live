@@ -14,7 +14,7 @@ func ParseCodec8(data []byte) (*apptypes.Codec8AvlRecord, error) {
 
 	offset := 0
 
-	// 1. Header
+	// 1. Header (ref:034)
 	if err := assertCanRead(data, offset, 4+4+1+1, "header"); err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func ParseCodec8(data []byte) (*apptypes.Codec8AvlRecord, error) {
 		}
 
 		avl := apptypes.AvlData{}
-		// Timestamp (8 bytes, ms since epoch)
+		// Timestamp (8 bytes, ms since epoch) (ref:035)
 		ts := util.BytesToUint64(data[offset:])
 		avl.Timestamp = strconv.FormatInt(time.UnixMilli(int64(ts)).UTC().Unix(), 10)
 		avl.HappenedAt = time.UnixMilli(int64(ts)).UTC().Format(time.RFC3339Nano)
@@ -84,7 +84,7 @@ func ParseCodec8(data []byte) (*apptypes.Codec8AvlRecord, error) {
 
 		ioElem.Elements = make(map[string]interface{})
 
-		// --- N1: 1-byte IO elements
+		// --- N1: 1-byte IO elements (ref:036)
 		n1 := int(data[offset])
 		offset += 1
 		for j := 0; j < n1; j++ {
@@ -148,7 +148,7 @@ func ParseCodec8(data []byte) (*apptypes.Codec8AvlRecord, error) {
 
 	}
 
-	// 3. Trailing fields (Quantity2 and CRC)
+	// 3. Trailing fields (Quantity2 and CRC) (ref:037)
 	if err := assertCanRead(data, offset, 1+4, "Quantity2 and CRC"); err != nil {
 		return nil, err
 	}

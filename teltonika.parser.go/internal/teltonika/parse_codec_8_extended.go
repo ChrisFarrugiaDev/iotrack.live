@@ -143,7 +143,7 @@ func ParseCodec8Extended(data []byte) (*apptypes.Codec8AvlRecord, error) {
 			offset += 10
 		}
 
-		// --- NX: Variable length IO elements (advanced/optional)
+		// --- NX: Variable length IO elements (advanced/optional) (ref:038)
 		nx := int(util.BytesToUint16(data[offset : offset+2]))
 		offset += 2
 		for j := 0; j < nx; j++ {

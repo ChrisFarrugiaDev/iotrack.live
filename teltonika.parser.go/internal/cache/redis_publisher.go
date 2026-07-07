@@ -11,7 +11,7 @@ type PubMsg struct {
 }
 
 // StartPublisher launches a background goroutine that listens for PubMsg values
-// on a channel and publishes them to Redis.
+// on a channel and publishes them to Redis. (ref:048)
 //
 //	rc  = your RedisCache instance
 //	buf = buffer size for the internal channel (for burst tolerance)

@@ -13,6 +13,8 @@ import (
 
 // ---------------------------------------------------------------------
 
+// SyncDevicesFromDBToRedis reads all devices from Postgres and atomically
+// replaces the shared iotrack.live:devices hash in Redis. (ref:041)
 func (s *Service) SyncDevicesFromDBToRedis() error {
 	// Fetch all devices from the database
 	devices, err := s.App.Models.Device.GetAllDevices()
@@ -45,6 +47,8 @@ func (s *Service) SyncDevicesFromDBToRedis() error {
 	return nil
 }
 
+// BuildDeviceTsMap seeds LastTsMap with each device's last telemetry timestamp
+// so the hot path can dedup out-of-order records from the first packet. (ref:044)
 func (s *Service) BuildDeviceTsMap() {
 	s.App.LastTsLock.Lock()
 	defer s.App.LastTsLock.Unlock()
@@ -53,6 +57,8 @@ func (s *Service) BuildDeviceTsMap() {
 	}
 }
 
+// SyncDevicesFromRedisToVar loads the Redis devices hash into the in-memory
+// App.Devices map (the map the TCP hot path reads under RLock). (ref:042)
 func (s *Service) SyncDevicesFromRedisToVar() error {
 	items, err := s.App.Cache.HGetAll("devices", "iotrack.live:")
 	if err != nil {

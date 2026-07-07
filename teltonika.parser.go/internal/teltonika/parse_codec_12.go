@@ -30,6 +30,8 @@ func ParseCodec12(data []byte) (*apptypes.Codec12Message, error) {
 
 	typ := data[offset]
 	offset += 1
+	// Parser only accepts responses (type 0x06); outgoing commands (0x05) are
+	// built elsewhere in Codec12Command.ToPacket. (ref:039)
 	if typ != 0x06 {
 		return nil, fmt.Errorf("not a response packet (type != 6)")
 	}

@@ -33,7 +33,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		conn.Write(ack)
 	}
 
-	// (ref_point 9005)
+	// (ref:015)
 	// --- 1. IMEI Handshake: 000F + 15 ASCII bytes (hex, 34 chars) -----
 	if len(packet) == 17 {
 		imei, err := teltonika.ImeiParser(packet)
@@ -47,7 +47,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		currentDevice, ok := s.App.Devices[imei]
 		s.App.DevicesLock.RUnlock()
 
-		// -- If device not found in cache, create it in DB and cache (ref_point 9006)
+		// -- If device not found in cache, create it in DB and cache (ref:025)
 		if !ok {
 			newDevice := &models.Device{
 				ExternalID:     imei,
@@ -85,14 +85,14 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		// -- Build deviceMeta for downstream processing
 		deviceMeta.IMEI = currentDevice.ExternalID
 
-		// Positive ACK (ref_point 9007)
+		// Positive ACK (ref:026)
 		conn.Write([]byte{0x01})
 		return
 	}
 
 	// --- 2. Data Packet: Codec 8/8ex (telemetry) or Codec 12 (commands) ---
 
-	// Retrieve the current device (ref_point 9008)
+	// Retrieve the current device (ref:016)
 	s.App.DevicesLock.RLock()
 	currentDevice := s.App.Devices[deviceMeta.IMEI]
 	s.App.DevicesLock.RUnlock()
@@ -116,7 +116,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 	var dataPacket apptypes.TeltonikaPacket
 	var err error
 
-	switch codecID {
+	switch codecID { // (ref:031)
 	case 8:
 		dataPacket, err = teltonika.ParseCodec8(packet)
 	case 142:
@@ -135,7 +135,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 
 	// -------------------- Command Send/Retry Logic --------------------
 
-	// Check if a Codec 12 command is currently in-flight for this device (ref_point 9009)
+	// Check if a Codec 12 command is currently in-flight for this device (ref:017)
 	inflightKey := "codec12:inflight-commands:" + deviceMeta.IMEI
 	inflightExist, err := s.App.Cache.Exists(inflightKey)
 
@@ -162,7 +162,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 
 		switch dataPacket.GetCodecType() {
 		case "GPRS_Messages":
-			// Codec 12 response: command completed successfully (ref_point 9010)
+			// Codec 12 response: command completed successfully (ref:027)
 			err := s.App.Cache.Delete(inflightKey)
 			if err != nil {
 				fail("Redis error while deleting inflight command", err)
@@ -177,7 +177,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			}
 
 		case "AVL_Data":
-			// Still no Codec 12 response—try resend or fail after N tries (ref_point 9011)
+			// Still no Codec 12 response—try resend or fail after N tries (ref:028)
 			if inflightCommand.Retries < 10 {
 				inflightCommand.SetToInflight() // (should increment retry count)
 				cmd, err = inflightCommand.ToPacket()
@@ -203,7 +203,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		}
 	}
 
-	// If no inflight command, check for pending commands for this device
+	// If no inflight command, check for pending commands for this device (ref:029)
 	pendingKey := "codec12:pending-commands:" + deviceMeta.IMEI
 	pendingExist := false
 	inflightExist, err = s.App.Cache.Exists(inflightKey) // TODO: just update inflightExist to false when s.App.Cache.Delete(inflightKey) (456A)
@@ -252,7 +252,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		}
 	}
 
-	// ------------- Send Command (or Telemetry ACK) to Device ---------
+	// ------------- Send Command (or Telemetry ACK) to Device --------- (ref:018)
 
 	// Teltonika expects a 4-byte ACK (number of records)
 	binary.BigEndian.PutUint32(ack, uint32(dataPacket.GetQuantity1()))
@@ -265,7 +265,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 		conn.Write(ack)
 	}
 
-	// -------------------  Data Forwarding ----------------------------
+	// -------------------  Data Forwarding ---------------------------- (ref:019)
 	// If telemetry, forward to RabbitMQ/Redis for DB and UI consumption
 
 	if dataPacket.GetCodecType() == "AVL_Data" {
@@ -305,12 +305,7 @@ func (s *TCPServer) handleTcpData(packet []byte, conn net.Conn, deviceMeta *appt
 			}
 			s.App.MQProducer.SendDirectMessage("teltonika_telemetry", "teltonika", string(msg))
 
-			// TODO:  remove only for testing
-			if deviceMeta.IMEI == "867747078708748" {
-				s.App.MQProducer.SendDirectMessage("teltonika_tat240", "teltonika", string(msg))
-			}
-
-			// i == 0: first message in the packet is the most recent
+			// i == 0: first message in the packet is the most recent (ref:030)
 			if i == 0 {
 
 				// Parse the new telemetry timestamp from string to time.Time.

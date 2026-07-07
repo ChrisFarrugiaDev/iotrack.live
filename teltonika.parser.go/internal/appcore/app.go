@@ -14,7 +14,7 @@ import (
 	"iotrack.live/teltonika.parser.go/internal/rabbitmq"
 )
 
-type App struct {
+type App struct { // (ref:001)
 	Cache      *cache.RedisCache
 	Cron       *cron.Cron
 	MQProducer *rabbitmq.RabbitMQProducer

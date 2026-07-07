@@ -25,7 +25,7 @@ type Codec12Command struct {
 
 // ToPacket serializes the Codec12Command struct into a Teltonika Codec12 command packet ([]byte),
 // ready to be sent directly to a device via a TCP connection.
-func (c *Codec12Command) ToPacket() ([]byte, error) {
+func (c *Codec12Command) ToPacket() ([]byte, error) { // (ref:040)
 
 	// Protocol constants (as per Teltonika Codec12 specification)
 	preamble := []byte{0x00, 0x00, 0x00, 0x00} // 4 bytes: message start marker

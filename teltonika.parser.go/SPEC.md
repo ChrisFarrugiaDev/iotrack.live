@@ -4,6 +4,11 @@
 telemetry and command state, and forwards that state to the rest of
 `iotrack.live`.
 
+A narrative walkthrough of this service (boot sequence, TCP hot path, codec
+parsing, background branches) lives in `docs/guide/`, starting at
+`docs/guide/01_service_walkthrough.md`. This file stays the authoritative
+contract reference; the guide is the explainer.
+
 ## Service Role
 
 This service is responsible for:
@@ -278,7 +283,6 @@ service before treating the parser change as complete.
 
 ## Current Improvement Targets
 
-- Add focused tests for Codec 8, Codec 8 Extended, Codec 12, and IMEI parsing.
 - Document representative packet examples.
 - Add tests around Codec 12 pending, inflight, retry, completed, and failed
   command transitions.

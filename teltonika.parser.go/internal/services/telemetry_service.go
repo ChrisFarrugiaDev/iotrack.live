@@ -9,7 +9,7 @@ import (
 	"iotrack.live/teltonika.parser.go/internal/logger"
 )
 
-// UpdateLastTelemetry merges non-zero fields and elements from telemetry into the device's record, creating it if missing.
+// UpdateLastTelemetry merges non-zero fields and elements from telemetry into the device's record, creating it if missing. (ref:046)
 func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvlRecord) {
 	s.App.LatestTelemetryLock.Lock()
 	defer s.App.LatestTelemetryLock.Unlock()
@@ -58,7 +58,7 @@ func (s *Service) UpdateLastTelemetry(deviceID int64, telemetry apptypes.FlatAvl
 
 // ---------------------------------------------------------------------
 // FlushLastTelemetry stores the latest telemetry for updated devices in Redis.
-// Uses double-buffered A/B sets for concurrency safety.
+// Uses double-buffered A/B sets for concurrency safety. (ref:020)
 func (s *Service) FlushLastTelemetry() {
 
 	// Lock, swap the active set, and snapshot telemetry for the affected devices.

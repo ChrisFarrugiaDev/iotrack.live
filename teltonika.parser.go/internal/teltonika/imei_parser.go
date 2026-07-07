@@ -7,6 +7,8 @@ import (
 	"iotrack.live/teltonika.parser.go/internal/logger"
 )
 
+// ImeiParser reads a length-prefixed IMEI: byte[0..1] is the length, followed
+// by that many ASCII digits. (ref:033)
 func ImeiParser(packet []byte) (string, error) {
 	if len(packet) < 2 {
 		logger.Error("Packet too short for IMEI")

@@ -9,6 +9,8 @@ import (
 	"iotrack.live/teltonika.parser.go/internal/models"
 )
 
+// Organisation sync mirrors the device sync: DB -> iotrack.live:organisations
+// hash -> in-memory App.Organisations map. (ref:043)
 func (s *Service) SyncOrganisatiosFromDBToRedis() error {
 
 	organisations, err := s.App.Models.Organisation.GetAll()

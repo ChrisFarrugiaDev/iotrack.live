@@ -55,7 +55,8 @@ func NewRabbitMQProducer(config RabbitMQConfig) *RabbitMQProducer {
 
 // ---------------------------------------------------------------------
 
-// Run starts the connection and the publishing process
+// Run starts the connection and the publishing process. connect/monitorConnection
+// handle auto-reconnect; SendDirectMessage publishes telemetry. (ref:049)
 func (p *RabbitMQProducer) Run() {
 	for {
 		if p.connect() {
@@ -264,7 +265,7 @@ func (p *RabbitMQProducer) SendFanoutMessage(exchangeName, message string) {
 }
 
 // SendDirectMessage sends a message to a direct or topic exchange with a specific routing key.
-func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, message string) {
+func (p *RabbitMQProducer) SendDirectMessage(routingKeyName, exchangeName, message string) { // (ref:050)
 	if !p.isAvailable(exchangeName, routingKeyName) {
 		return
 	}

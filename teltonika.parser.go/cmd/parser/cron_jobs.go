@@ -16,7 +16,7 @@ func FlushLastTelemetryJob(s *services.Service) {
 	s.FlushLastTelemetry()
 }
 
-func setupCrons(app *appcore.App, s *services.Service) {
+func setupCrons(app *appcore.App, s *services.Service) { // (ref:047)
 	latestTelemetryFlushCron := strings.TrimSpace(os.Getenv("LATEST_TELEMETRY_FLUSH_CRON"))
 	if latestTelemetryFlushCron == "" {
 		latestTelemetryFlushCron = defaultLatestTelemetryFlushCron

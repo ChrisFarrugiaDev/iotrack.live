@@ -25,7 +25,7 @@ import (
 
 var app appcore.App
 
-func initializeAppCore(app *appcore.App) {
+func initializeAppCore(app *appcore.App) { // (ref:002)
 	// Generates a unique instance ID for this app run.
 	app.UUID = uuid7.New()
 
@@ -52,7 +52,7 @@ func main() {
 
 	loadEnv()
 
-	logger.InitLogger()
+	logger.InitLogger() // (ref:004)
 
 	initializeCache()
 
@@ -65,7 +65,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Start the message producer routine
+	// Start the message producer routine (ref:006)
 	app.MQProducer = rabbitmq.NewRabbitMQProducer(rabbitConfig)
 	go app.MQProducer.Run()
 
@@ -76,13 +76,13 @@ func main() {
 
 	// -----------------------------------------------------------------
 
-	// Initialize Redis publisher (async pub/sub).
+	// Initialize Redis publisher (async pub/sub). (ref:008)
 	ch, stopPublisher := cache.StartPublisher(app.Cache, 2000)
 	app.PubCh = ch
 
 	// -----------------------------------------------------------------
 
-	// Create a context that will be cancelled when an interrupt or termination signal is received.
+	// Create a context that will be cancelled when an interrupt or termination signal is received. (ref:009)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
 	// stop() will stop the context from listening for further OS signals
@@ -95,16 +95,16 @@ func main() {
 	appService := services.NewService(&app)
 
 	// -----------------------------------------------------------------
-	// Start device sync service routines
+	// Start device sync service routines (ref:010)
 	startDeviceSyncRoutines(ctx, appService)
 
 	// -----------------------------------------------------------------
-	// Setup all scheduled cron jobs
+	// Setup all scheduled cron jobs (ref:011)
 	setupCrons(&app, appService)
 
 	// -----------------------------------------------------------------
 
-	// Start the TCP server in a new goroutine so main can keep control.
+	// Start the TCP server in a new goroutine so main can keep control. (ref:012)
 	go func() {
 		tcpServer := tcp.NewTCPServer(&app, appService)
 		tcpServer.Start(ctx)
@@ -113,7 +113,7 @@ func main() {
 
 	// -----------------------------------------------------------------
 
-	// Block main goroutine until context is cancelled by an OS signal (e.g. CTRL+C).
+	// Block main goroutine until context is cancelled by an OS signal (e.g. CTRL+C). (ref:013)
 	// This keeps the main function alive while the TCP server runs in the background.
 	<-ctx.Done()
 
@@ -198,7 +198,7 @@ func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) 
 	// Build in-memory LastTsMap map with the last telemetry timestamp for each device.
 	appService.BuildDeviceTsMap()
 
-	// Periodically sync devices from DB to Redis every 5 minutes.
+	// Periodically sync devices from DB to Redis every minute. (ref:045)
 	go func(ctx context.Context, ds *services.Service) {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()

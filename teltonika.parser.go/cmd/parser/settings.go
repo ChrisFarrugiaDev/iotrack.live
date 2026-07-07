@@ -15,7 +15,7 @@ import (
 
 // ---------------------------------------------------------------------
 
-// loadEnv loads environment variables from a .env file if not running in Docker.
+// loadEnv loads environment variables from a .env file if not running in Docker. (ref:003)
 var envPath = "./"
 
 func loadEnv() error {
@@ -50,7 +50,7 @@ func loadEnv() error {
 // ---------------------------------------------------------------------
 
 func initializeCache() {
-	// Initialize a Redis connection pool
+	// Initialize a Redis connection pool (ref:005)
 	redisPool, err := cache.CreateRedisPool()
 	if err != nil {
 		logger.Error("Failed to connect to Redis", zap.Error(err))
@@ -65,7 +65,7 @@ func initializeCache() {
 // ---------------------------------------------------------------------
 
 func initializeDatabase() {
-	// Initialize database connection
+	// Initialize database connection (ref:007)
 	dbPool, err := db.OpenDB()
 	if err != nil {
 		logger.Error("Error connecting to the database", zap.Error(err))
