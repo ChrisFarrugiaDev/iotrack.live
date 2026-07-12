@@ -60,7 +60,7 @@ const tabsObjectData_1 = reactive({
 watch(
   () => authorizationStore.getUserPermissions.size,
   () => {
-    if (authorizationStore.can('device.create')) {
+    if (authorizationStore.can('group.create')) {
       tabsObjectData_1.tabs['groups.create'] =
         'Create new Group'
     } 

@@ -18,16 +18,6 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Align sidebar visibility with route guards.
-  - Hide `Groups` when `authorizationStore.can("group.view")` is false.
-  - Keep sidebar visibility and router redirects based on the same permission
-    keys.
-
-- [ ] Fix the group create tab permission.
-  - `GroupView.vue` should use `group.create`.
-  - It currently checks `device.create`, which can show or hide the tab for the
-    wrong users.
-
 - [ ] Expand route guard coverage.
   - List routes already check `*.view` permissions.
   - Add matching permission behavior for create and update child routes.
@@ -39,6 +29,15 @@ expected runtime behavior.
 
 
 ## Completed
+
+- [x] Align sidebar visibility with route guards.
+  - `TheSidebar.vue` now hides `Groups` when `group.view` is missing, matching
+    the router redirect and the other permission-gated sidebar items.
+
+- [x] Fix the group create tab permission.
+  - `GroupView.vue` now gates the "Create new Group" tab on `group.create`.
+  - It previously checked `device.create` (copy-paste from `DeviceView.vue`),
+    which showed or hid the tab for the wrong users.
 
 - [x] Document the current permission model.
   - `docs/PERMISSIONS.md` now explains database permission setup, backend
