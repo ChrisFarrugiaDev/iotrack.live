@@ -19,15 +19,15 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Fix cross-org IDOR on `user/:id/*` subroutes (high priority).
-  - `permissions`, `organisations`, `assets`, and `devices` handlers fetch
-    the target user without checking the requester's org scope, so any user
-    with `user.view` can read any user in the system by iterating IDs.
-  - Fix: after loading the target user, 403 unless
-    `target.organisation_id` is within the requester's accessible org set.
+(No open items.)
 
 
 ## Completed
+
+- [x] Fix cross-org IDOR on `user/:id/*` subroutes.
+  - `permissions`, `organisations`, `assets`, and `devices` now 403 unless
+    the target user's organisation is inside the requester's accessible org
+    scope (shared `isUserInRequesterScope` helper in `user.controller.ts`).
 
 - [x] Fix assignment-options scope bypass.
   - `POST /api/user/assignment-options` now returns 403 unless the requested

@@ -658,6 +658,14 @@ class UserController {
                 });
             }
 
+            if (!await isUserInRequesterScope(request, user)) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "You don't have access to this user.",
+                    error: { code: "ORG_ACCESS_DENIED" },
+                });
+            }
+
             // 2. Resolve effective permissions (role + user overrides)
             const userPermissions =
                 await AccessProfileController.getUserPermissions(user, true);
@@ -699,6 +707,14 @@ class UserController {
                 return reply.status(404).send({
                     success: false,
                     message: "User not found.",
+                });
+            }
+
+            if (!await isUserInRequesterScope(request, user)) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "You don't have access to this user.",
+                    error: { code: "ORG_ACCESS_DENIED" },
                 });
             }
 
@@ -745,6 +761,14 @@ class UserController {
                 });
             }
 
+            if (!await isUserInRequesterScope(request, user)) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "You don't have access to this user.",
+                    error: { code: "ORG_ACCESS_DENIED" },
+                });
+            }
+
             const assetIds = await getAccessibleAssetIdsForUser(user);
 
             return reply.send({
@@ -785,6 +809,14 @@ class UserController {
                 });
             }
 
+            if (!await isUserInRequesterScope(request, user)) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "You don't have access to this user.",
+                    error: { code: "ORG_ACCESS_DENIED" },
+                });
+            }
+
             const deviceIds = await getAccessibleDeviceIdsForUser(user);
 
             return reply.send({
@@ -815,6 +847,16 @@ class UserController {
 
 
 
+
+// Returns true when the target user's organisation is inside the
+// requester's accessible org scope (guards against cross-org IDOR).
+async function isUserInRequesterScope(request: FastifyRequest, target: UserType): Promise<boolean> {
+    const requesterOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(
+        request.userOrgID!,
+        request.userID!
+    );
+    return requesterOrgIds.includes(String(target.organisation_id));
+}
 
 async function getAccessibleAssetIdsForUser(user: UserType): Promise<string[]> {
 
