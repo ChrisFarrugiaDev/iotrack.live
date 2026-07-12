@@ -125,6 +125,29 @@ const router = createRouter({
 });
 // ---------------------------------------------------------------------
 
+// Permission required per route name. UX helper only — backend checks
+// remain the security boundary.
+const routePermissions: Record<string, string> = {
+	'organisations.list': 'org.view',
+	'organisations.create': 'org.create',
+	'organisations.edit': 'org.update',
+
+	'users.list': 'user.view',
+	'users.create': 'user.create',
+	'users.edit': 'user.update',
+
+	'assets.list': 'asset.view',
+	'assets.create': 'asset.create',
+
+	'devices.list': 'device.view',
+	'devices.create': 'device.create',
+	'devices.update': 'device.update',
+
+	'groups.list': 'group.view',
+	'groups.create': 'group.create',
+	'groups.edit': 'group.update',
+};
+
 router.beforeEach(async (
 	to: RouteLocationNormalized,
 	from: RouteLocationNormalized,
@@ -156,26 +179,10 @@ router.beforeEach(async (
 
 	await nextTick();
 
-	if ( to.name == 'organisations.list' &&  !authorizationStore.can('org.view') ) {
+	const requiredPermission = routePermissions[String(to.name)];
+	if (requiredPermission && !authorizationStore.can(requiredPermission)) {
 		return next({ name: 'map.view' });
 	}
-
-	if ( to.name == 'users.list' &&  !authorizationStore.can('user.view') ) {
-		return next({ name: 'map.view' });
-	}
-
-	if ( to.name == 'assets.list' &&  !authorizationStore.can('asset.view') ) {
-		return next({ name: 'map.view' });
-	}
-
-	if ( to.name == 'devices.list' &&  !authorizationStore.can('device.view') ) {
-		return next({ name: 'map.view' });
-	}
-
-	if ( to.name == 'groups.list' &&  !authorizationStore.can('group.view') ) {
-		return next({ name: 'map.view' });
-	}
-
 
 	// continue with the navigation
 	next();

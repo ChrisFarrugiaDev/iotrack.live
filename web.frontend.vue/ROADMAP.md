@@ -18,17 +18,17 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Expand route guard coverage.
-  - List routes already check `*.view` permissions.
-  - Add matching permission behavior for create and update child routes.
-  - Keep frontend guards as UX helpers only; backend checks remain final.
-
 - [ ] Define future sidebar items before enabling workflows.
   - Audit, Reports, and Alarms currently appear as future UI sections.
   - Add routes and permission keys before treating them as complete features.
 
 
 ## Completed
+
+- [x] Expand route guard coverage.
+  - `router/index.ts` now maps every list/create/update child route to its
+    permission key in a single `routePermissions` table, replacing the five
+    list-only checks. Guards stay UX helpers; backend checks remain final.
 
 - [x] Align sidebar visibility with route guards.
   - `TheSidebar.vue` now hides `Groups` when `group.view` is missing, matching
