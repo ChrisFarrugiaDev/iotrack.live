@@ -28,8 +28,8 @@ type App struct { // (ref:001)
 	OrganisationsLock sync.RWMutex
 	UUID              *uuid7.Generator
 
-	LastTsMap           map[int64]time.Time
-	LastTsLock          sync.RWMutex
+	LastTsMap        map[int64]time.Time
+	LastTsLock       sync.RWMutex
 	LastTelemetryMap map[int64]apptypes.FlatAvlRecord
 
 	// Set of device IDs that received new telemetry since the last flush.

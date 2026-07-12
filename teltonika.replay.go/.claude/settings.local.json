@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:wiki.teltonika-gps.com)",
+      "Bash(set -e)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(xargs sed -i 's#iotrack.live/teltonika\\\\.parser\\\\.go#iotrack.live/teltonika.replay.go#g')",
+      "Bash(sed -i 's#^module iotrack.live/teltonika\\\\.parser\\\\.go#module iotrack.live/teltonika.replay.go#' go.mod)",
+      "Bash(go mod *)",
+      "Bash(go build *)",
+      "Bash(echo \"build exit: $?\")",
+      "Bash(git -c core.quotepath=false status --short)",
+      "Bash(python3 *)"
+    ]
+  }
+}

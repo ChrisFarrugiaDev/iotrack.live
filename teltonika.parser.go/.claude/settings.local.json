@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:wiki.teltonika-gps.com)",
+      "Bash(GOCACHE=/tmp/gocache go build ./...)",
+      "Bash(sed -i -e 's/^| 9200 |/| `boot_env` |/' -e 's/^| 9201 |/| `boot_logger` |/' -e 's/^| 9202 |/| `boot_cache` |/' -e 's/^| 9203 |/| `boot_rabbitmq` |/' -e 's/^| 9204 |/| `boot_db` |/' -e 's/^| 9205 |/| `boot_publisher` |/' -e 's/^| 9206 |/| `boot_signals` |/' -e 's/^| 9207 |/| `boot_sync` |/' -e 's/^| 9208 |/| `boot_crons` |/' -e 's/^| 9209 |/| `boot_tcp` |/' -e 's/^| 9210 |/| `boot_shutdown` |/' -e 's/^| 9211 |/| `boot_appcore` |/' -e 's/^| 9212 |/| `boot_app_struct` |/' -e 's/^| ref_point | where |$/| ref | where |/' -e 's/## 7. Ref_point index \\(9200 block — startup\\)/## 7. Ref index \\(boot block — startup\\)/' 01_service_walkthrough.md)",
+      "Bash(sed -i -e 's/^| 9100      |/| `codec_imei_parser` |/' -e 's/^| 9101      |/| `codec_bounds_guard` |/' -e 's/^| 9102      |/| `codec8_header` |/' -e 's/^| 9103      |/| `codec8_avl_record` |/' -e 's/^| 9104      |/| `codec8_io_elements` |/' -e 's/^| 9105      |/| `codec8_trailer` |/' -e 's/^| 9106      |/| `codec8e_nx` |/' -e 's/^| 9107      |/| `codec12_response` |/' -e 's/## Quick ref_point index/## Quick ref index/' -e 's/^| ref_point | where /| ref | where /' 03_codec_parsers.md)",
+      "Bash(sed -i -e 's/\\(ref infra_dev_db2redis–9304\\)/\\(ref infra_dev_db2redis … infra_sync_loops\\)/' -e 's/\\(ref infra_update_latest–9306\\)/\\(ref infra_update_latest … infra_flush_swap\\)/' -e 's/sync \\(9300\\)/sync \\(ref infra_dev_db2redis\\)/' -e 's/sync \\(9302\\)/sync \\(ref infra_org_sync\\)/' -e 's/flush \\(9306\\)/flush \\(ref infra_flush_swap\\)/g' -e 's/## 6. Ref_point index \\(9300 block — infra\\)/## 6. Ref index \\(infra block\\)/' -e 's/^| ref_point | where |$/| ref | where |/' -e 's/^| 9300 |/| `infra_dev_db2redis` |/' -e 's/^| 9301 |/| `infra_dev_redis2var` |/' -e 's/^| 9302 |/| `infra_org_sync` |/' -e 's/^| 9303 |/| `infra_ts_map` |/' -e 's/^| 9304 |/| `infra_sync_loops` |/' -e 's/^| 9305 |/| `infra_update_latest` |/' -e 's/^| 9306 |/| `infra_flush_swap` |/' -e 's/^| 9307 |/| `infra_publisher` |/' -e 's/^| 9308 |/| `infra_rabbitmq` |/' 04_infra_branches.md)",
+      "Bash(read _ slug)",
+      "Bash(grep -rq 'ref __TRACKED_VAR__' cmd/ internal/)",
+      "Bash(echo 'OK  __TRACKED_VAR__')",
+      "Bash(echo 'MISSING-IN-CODE  __TRACKED_VAR__')",
+      "Bash(echo \"=== every code slug used once? ===\")",
+      "Bash(awk '$1>1 {print \"DUP:\",$0}')",
+      "Bash(grep -rn \"producer.go:267\\\\|redis_publisher.go:22\\\\|main.go, main.go\\\\|\\(\\\\`main.go\\\\`, main.go\" docs/guide/)"
+    ]
+  }
+}
