@@ -8,6 +8,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 	// ---- State ------------------------------------------------------
 
 	const isUserMenuOpen = ref(false);
+	const isReportsMenuOpen = ref(false);
 	const isLoading = ref(false);
 
 	type Theme = 'light' | 'normal' | 'dark' ;
@@ -23,6 +24,10 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 
 	const getIsUserMenuOpen = computed(()=>{
 		return isUserMenuOpen.value;
+	});
+
+	const getIsReportsMenuOpen = computed(()=>{
+		return isReportsMenuOpen.value;
 	});
 
 	const getIsLoading = computed(() => isLoading.value )
@@ -46,13 +51,25 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 
 	}
 
+	// Only one sidebar flyout is open at a time.
 	function toggleUserMenuState() {
 
 		isUserMenuOpen.value = !isUserMenuOpen.value;
+		if (isUserMenuOpen.value) isReportsMenuOpen.value = false;
 	}
 
 	function updateUserMenuState(val: boolean) {
 		isUserMenuOpen.value = val;
+	}
+
+	function toggleReportsMenuState() {
+
+		isReportsMenuOpen.value = !isReportsMenuOpen.value;
+		if (isReportsMenuOpen.value) isUserMenuOpen.value = false;
+	}
+
+	function updateReportsMenuState(val: boolean) {
+		isReportsMenuOpen.value = val;
 	}
 
 	function setIsLoading(val: boolean) {
@@ -64,6 +81,9 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 		getIsUserMenuOpen,
 		toggleUserMenuState,
 		updateUserMenuState,
+		getIsReportsMenuOpen,
+		toggleReportsMenuState,
+		updateReportsMenuState,
 		getIsLoading,
 		setIsLoading,
 		getTheme,
