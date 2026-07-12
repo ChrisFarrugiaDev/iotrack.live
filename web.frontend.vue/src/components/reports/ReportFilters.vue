@@ -8,10 +8,14 @@
                 <label class="vform__label" for="report_asset">
                     Asset <span class="vform__required">*</span>
                 </label>
+                <!-- Teleported out of Vview's scrolling body, which would clip the
+                     menu. Target is .dashboard rather than body: it carries .v-ui,
+                     so the menu keeps its design tokens and theme. -->
                 <VueSelect
                     v-model="assetUuid"
                     id="report_asset"
                     class="vform__group"
+                    teleport=".dashboard"
                     :shouldAutofocusOption="false"
                     :isDisabled="loading"
                     :style="[vueSelectStyles, selectErrorStyle(!!errors.asset)]"

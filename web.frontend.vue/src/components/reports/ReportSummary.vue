@@ -1,5 +1,35 @@
 <template>
-    <div class="rsummary">
+    <!-- Timeline mode: moving/stationary times are not knowable for a sparse
+         tracker, so we show what we do know rather than a row of zeroes. -->
+    <div v-if="isTimeline" class="rsummary">
+
+        <div class="rsummary__card">
+            <div class="rsummary__label">Sightings</div>
+            <div class="rsummary__value">{{ summary.pointCount }}</div>
+        </div>
+
+        <div class="rsummary__card">
+            <div class="rsummary__label">First seen</div>
+            <div class="rsummary__value rsummary__value--sm">
+                {{ summary.firstPointAt ? formatDateTime(summary.firstPointAt, timezone) : '—' }}
+            </div>
+        </div>
+
+        <div class="rsummary__card">
+            <div class="rsummary__label">Last seen</div>
+            <div class="rsummary__value rsummary__value--sm">
+                {{ summary.lastPointAt ? formatDateTime(summary.lastPointAt, timezone) : '—' }}
+            </div>
+        </div>
+
+        <div class="rsummary__card rsummary__card--journey">
+            <div class="rsummary__label">Straight-line distance</div>
+            <div class="rsummary__value">{{ formatDistance(summary.totalDistanceMeters) }}</div>
+        </div>
+
+    </div>
+
+    <div v-else class="rsummary">
 
         <div class="rsummary__card">
             <div class="rsummary__label">Journeys</div>
@@ -38,10 +68,12 @@
 
 <script setup lang="ts">
 import type { ActivityReportSummary } from '@/types/activity-report.type';
-import { formatDistance, formatDuration } from '@/utils/report.utils';
+import { formatDateTime, formatDistance, formatDuration } from '@/utils/report.utils';
 
 defineProps<{
     summary: ActivityReportSummary;
+    isTimeline: boolean;
+    timezone: string;
 }>();
 </script>
 
@@ -80,6 +112,8 @@ defineProps<{
         font-family: var(--font-mono);
         font-size: 1.35rem;
         color: var(--color-text-1);
+
+        &--sm { font-size: 1rem; }
     }
 }
 </style>

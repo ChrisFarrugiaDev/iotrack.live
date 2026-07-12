@@ -22,6 +22,7 @@ import type {
     JourneySegment,
     ReportPoint,
     StationarySegment,
+    TimelineObservation,
 } from '@/types/activity-report.type';
 
 // - Helpers -----------------------------------------------------------
@@ -350,6 +351,81 @@ export const mockActivityReport: ActivityReportResponse = {
     summary: deriveSummary(segments),
 
     segments,
+};
+
+// - Timeline mode (sparse asset tracker) ------------------------------
+//
+// A trailer that reports every few hours. We know it moved; we do NOT know
+// when it left, what route it took, or where it stopped (§3.3). So the report
+// lists sightings — no journeys, no durations, no speeds (§41.5).
+
+const VALLETTA: LatLng = [35.8989, 14.5146];
+const GOZO: LatLng = [36.0443, 14.2513];
+
+function observation(opts: {
+    id: string;
+    time: string;
+    at: LatLng;
+    moved: boolean;
+    distanceFromPreviousMeters?: number | null;
+    batteryPercent: number;
+}): TimelineObservation {
+    return {
+        id: opts.id,
+        type: 'observation',
+        timestamp: iso(opts.time),
+        location: loc(opts.at),
+        batteryPercent: opts.batteryPercent,
+        movementDetected: opts.moved,
+        communicationStatus: 'ok',
+        changedPositionSincePrevious: opts.moved,
+        distanceFromPreviousMeters: opts.distanceFromPreviousMeters ?? null,
+    };
+}
+
+const observations: TimelineObservation[] = [
+    observation({ id: 'obs-1', time: '02:00:00', at: VALLETTA, moved: false, batteryPercent: 92 }),
+    observation({ id: 'obs-2', time: '08:00:00', at: VALLETTA, moved: false, distanceFromPreviousMeters: 0, batteryPercent: 90 }),
+    observation({ id: 'obs-3', time: '14:00:00', at: MOSTA, moved: true, distanceFromPreviousMeters: 8200, batteryPercent: 88 }),
+    observation({ id: 'obs-4', time: '20:00:00', at: GOZO, moved: true, distanceFromPreviousMeters: 27400, batteryPercent: 85 }),
+];
+
+export const mockTimelineReport: ActivityReportResponse = {
+    report: {
+        from: iso('00:00:00'),
+        to: iso('23:59:59'),
+        generatedAt: iso('23:59:59'),
+        organisationId: 1,
+        mode: 'timeline',
+        timezone: 'Europe/Malta',
+    },
+
+    subject: {
+        assetId: 88,
+        assetUuid: 'c4f0a1d2-7e35-4b91-9f22-1a7c5d3e8b40',
+        assetName: 'Trailer 07',
+        trackerType: 'asset',
+        deviceId: 91,
+        deviceExternalId: '352093089876543',
+    },
+
+    // Most journey-mode figures are unknowable here, so they stay zero rather
+    // than being invented. The UI shows a different set of cards for timeline.
+    summary: {
+        firstPointAt: observations[0].timestamp,
+        lastPointAt: observations[observations.length - 1].timestamp,
+        pointCount: observations.length,
+        journeyCount: 0,
+        totalDistanceMeters: observations.reduce(
+            (sum, o) => sum + (o.distanceFromPreviousMeters ?? 0), 0
+        ),
+        movingSeconds: 0,
+        activeStaticSeconds: 0,
+        stationarySeconds: 0,
+        communicationGapSeconds: 0,
+    },
+
+    segments: observations,
 };
 
 /** An asset with no telemetry in the period — a valid, empty report (§34). */

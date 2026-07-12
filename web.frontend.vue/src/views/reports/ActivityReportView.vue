@@ -39,20 +39,36 @@
                     </span>
                 </section>
 
-                <section v-if="summary" class="report__summary">
-                    <ReportSummary :summary="summary"></ReportSummary>
+                <section v-if="summary && report" class="report__summary">
+                    <ReportSummary
+                        :summary="summary"
+                        :isTimeline="isTimeline"
+                        :timezone="report.report.timezone"
+                    ></ReportSummary>
                 </section>
 
-                <section class="report__map">
+                <section v-if="report" class="report__map">
                     <ReportMap
                         :segments="segments"
+                        :observations="observations"
+                        :timezone="report.report.timezone"
                         :selectedSegmentId="selectedSegmentId"
                         @select="activityReportStore.selectSegment($event)"
                     ></ReportMap>
                 </section>
 
+                <!-- Sparse trackers get sightings, not journeys (§4.2). -->
                 <section v-if="report" class="report__table">
+                    <ReportTimeline
+                        v-if="isTimeline"
+                        :observations="observations"
+                        :timezone="report.report.timezone"
+                        :selectedSegmentId="selectedSegmentId"
+                        @select="activityReportStore.selectSegment($event)"
+                    ></ReportTimeline>
+
                     <ReportTable
+                        v-else
                         :segments="segments"
                         :timezone="report.report.timezone"
                         :selectedSegmentId="selectedSegmentId"
@@ -74,6 +90,7 @@ import ReportFilters from '@/components/reports/ReportFilters.vue';
 import ReportSummary from '@/components/reports/ReportSummary.vue';
 import ReportMap from '@/components/reports/ReportMap.vue';
 import ReportTable from '@/components/reports/ReportTable.vue';
+import ReportTimeline from '@/components/reports/ReportTimeline.vue';
 import { formatDateTime } from '@/utils/report.utils';
 import { storeToRefs } from 'pinia';
 import { onBeforeUnmount } from 'vue';
@@ -83,9 +100,9 @@ import { useActivityReportStore } from '@/stores/activityReportStore';
 
 const activityReportStore = useActivityReportStore();
 const {
-    loading, error, hasReport, isEmpty, selectedSegmentId,
+    loading, error, hasReport, isEmpty, isTimeline, selectedSegmentId,
     getReport: report, getSummary: summary, getSubject: subject,
-    getSegments: segments,
+    getSegments: segments, getObservations: observations,
 } = storeToRefs(activityReportStore);
 
 // - Hooks -------------------------------------------------------------

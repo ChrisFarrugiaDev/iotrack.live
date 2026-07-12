@@ -4,8 +4,10 @@ import type {
     ActivityReportResponse,
     ActivityReportRequest,
     ActivitySegment,
+    TimelineObservation,
 } from '@/types/activity-report.type';
-import { mockActivityReport } from '@/mock/activity-report.mock';
+import { mockActivityReport, mockTimelineReport } from '@/mock/activity-report.mock';
+import { useAssetStore } from './assetStore';
 
 export const useActivityReportStore = defineStore('activityReportStore', () => {
 
@@ -24,12 +26,31 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
     const getSummary = computed(() => report.value?.summary ?? null);
     const getSubject = computed(() => report.value?.subject ?? null);
 
-    /** Segments in chronological order. */
+    /**
+     * Sparse trackers report sightings, not journeys (§4.2). The backend picks
+     * the mode and says so on the response.
+     */
+    const isTimeline = computed(() => report.value?.report.mode === 'timeline');
+
+    /** Segments in chronological order. Empty in timeline mode. */
     const getSegments = computed<ActivitySegment[]>(() => {
-        const segments = (report.value?.segments ?? []) as ActivitySegment[];
+        if (!report.value || isTimeline.value) return [];
+
+        const segments = report.value.segments as ActivitySegment[];
 
         return [...segments].sort(
             (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
+        );
+    });
+
+    /** Observations in chronological order. Empty in journey mode. */
+    const getObservations = computed<TimelineObservation[]>(() => {
+        if (!report.value || !isTimeline.value) return [];
+
+        const observations = report.value.segments as TimelineObservation[];
+
+        return [...observations].sort(
+            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
     });
 
@@ -70,8 +91,16 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
 
         try {
             // --- mock ---
+            // The real backend chooses the mode from the tracker (§4.3); here we
+            // approximate that from the asset's type so both modes are reachable.
             await new Promise(resolve => setTimeout(resolve, 400));
-            report.value = mockActivityReport;
+
+            const asset = Object.values(useAssetStore().getAssets ?? {})
+                .find(a => a.uuid === payload.asset_uuid);
+
+            report.value = asset?.asset_type === 'asset'
+                ? mockTimelineReport
+                : mockActivityReport;
             // --- end mock ---
 
             selectedSegmentId.value = null;
@@ -99,9 +128,11 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
         getSummary,
         getSubject,
         getSegments,
+        getObservations,
         getSelectedSegment,
         hasReport,
         isEmpty,
+        isTimeline,
 
         clear,
         selectSegment,

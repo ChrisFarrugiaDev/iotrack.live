@@ -19,6 +19,7 @@
 
                     <tr
                         class="rtable__row"
+                        :data-segment-id="segment.id"
                         :class="[
                             `rtable__row--${segment.type}`,
                             { 'rtable__row--selected': segment.id === selectedSegmentId },
@@ -114,7 +115,7 @@
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import type { ActivitySegment, ActivityState, ReportPoint } from '@/types/activity-report.type';
 import {
     formatCoords,
@@ -126,7 +127,7 @@ import {
 
 // - Props & Emits -----------------------------------------------------
 
-defineProps<{
+const props = defineProps<{
     segments: ActivitySegment[];
     timezone: string;
     selectedSegmentId: string | null;
@@ -195,6 +196,21 @@ function toggleExpanded(id: string) {
 function select(segment: ActivitySegment) {
     emit('select', segment.id);
 }
+
+// - Watch -------------------------------------------------------------
+
+// Selection can come from the map, so bring the row into view.
+watch(
+    () => props.selectedSegmentId,
+    async (id) => {
+        if (!id) return;
+
+        await nextTick();
+
+        const row = document.querySelector(`[data-segment-id="${id}"]`);
+        row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+);
 </script>
 
 <!-- --------------------------------------------------------------- -->
