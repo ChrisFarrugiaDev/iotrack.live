@@ -9,7 +9,7 @@ import (
 	"iotrack.live/teltonika.replay.go/internal/models"
 )
 
-func (s *Service) SyncOrganisatiosFromDBToRedis() error {
+func (s *Service) SyncOrganisationsFromDBToRedis() error {
 
 	organisations, err := s.App.Models.Organisation.GetAll()
 

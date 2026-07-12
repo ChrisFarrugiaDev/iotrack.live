@@ -88,7 +88,7 @@ queue, database), then the caches are warmed, and only then do the things that
 8. Create the shutdown context: `signal.NotifyContext` gives a `ctx` that
    cancels on `SIGINT`/`SIGTERM`. Every branch receives this `ctx`.
    (`main.go ref:009`)
-9. `startDeviceSyncRoutines` — run the first DB → Redis → memory sync so the
+9. `startSyncRoutines` — run the first DB → Redis → memory sync so the
    caches are warm before any packet arrives, then start the periodic sync
    goroutines. (`main.go ref:010`)
 10. `setupCrons()` — register the telemetry-flush job and start the

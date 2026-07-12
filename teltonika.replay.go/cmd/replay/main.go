@@ -93,8 +93,8 @@ func main() {
 	appService := services.NewService(&app)
 
 	// -----------------------------------------------------------------
-	// Start device sync service routines
-	startDeviceSyncRoutines(ctx, appService)
+	// Start device/organisation sync service routines
+	startSyncRoutines(ctx, appService)
 
 	// -----------------------------------------------------------------
 	// Setup all scheduled cron jobs
@@ -219,84 +219,4 @@ func main() {
 // "invalid argument" sync error for /dev/stderr (common in dev)
 func isInvalidSyncError(err error) bool {
 	return strings.Contains(err.Error(), "invalid argument") && strings.Contains(err.Error(), "/dev/stderr")
-}
-
-// startDeviceSyncRoutines runs initial device syncs and launches periodic sync goroutine
-func startDeviceSyncRoutines(ctx context.Context, appService *services.Service) {
-
-	// Initial sync at startup: DB -> Redis
-	err := appService.SyncDevicesFromDBToRedis()
-	if err != nil {
-		logger.Error("Initial device sync from DB to Redis failed", zap.Error(err))
-	}
-
-	err = appService.SyncOrganisatiosFromDBToRedis()
-	if err != nil {
-		logger.Error("Initial organisation sync from DB to Redis failed", zap.Error(err))
-	}
-
-	// Initial sync at startup: Redis -> in-memory map
-	if err := appService.SyncDevicesFromRedisToVar(); err != nil {
-		logger.Error("Initial device sync from Redis to in-memory variable failed", zap.Error(err))
-	}
-
-	if err := appService.SyncOrganisationsFromRedisToVar(); err != nil {
-		logger.Error("Initial organisations sync from Redis to in-memory variable failed", zap.Error(err))
-	}
-
-	// Build in-memory LastTsMap map with the last telemetry timestamp for each device.
-	appService.BuildDeviceTsMap()
-
-	// Periodically sync devices from DB to Redis every 5 minutes.
-	go func(ctx context.Context, ds *services.Service) {
-		ticker := time.NewTicker(1 * time.Minute)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				logger.Info("DB→Redis device sync goroutine exiting")
-				return
-			case <-ticker.C:
-				if err := ds.SyncDevicesFromDBToRedis(); err != nil {
-					logger.Error("Periodic device sync from DB to Redis failed", zap.Error(err))
-				} else {
-					logger.Debug("Periodic device sync from DB to Redis completed successfully")
-				}
-
-				if err := ds.SyncOrganisatiosFromDBToRedis(); err != nil {
-					logger.Error("Periodic organisation sync from DB to Redis failed", zap.Error(err))
-				} else {
-					logger.Debug("Periodic organisation sync from DB to Redis completed successfully")
-				}
-			}
-		}
-	}(ctx, appService)
-
-	// Periodically sync devices from Redis to in-memory map every 20 seconds.
-	go func(ctx context.Context, ds *services.Service) {
-		ticker := time.NewTicker(20 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				logger.Info("Redis→Var device sync goroutine exiting")
-				return
-			case <-ticker.C:
-				if err := ds.SyncDevicesFromRedisToVar(); err != nil {
-					logger.Error("Periodic device sync from Redis to in-memory variable failed", zap.Error(err))
-				} else {
-					logger.Debug("Periodic device sync from Redis to in-memory variable completed successfully")
-				}
-
-				if err := ds.SyncOrganisationsFromRedisToVar(); err != nil {
-					logger.Error("Periodic organisation sync from Redis to in-memory variable failed", zap.Error(err))
-				} else {
-					logger.Debug("Periodic organisation sync from Redis to in-memory variable completed successfully")
-				}
-			}
-		}
-	}(ctx, appService)
-
 }

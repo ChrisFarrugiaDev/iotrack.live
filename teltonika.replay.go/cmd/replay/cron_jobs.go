@@ -16,6 +16,12 @@ func FlushLastTelemetryJob(s *services.Service) {
 	s.FlushLastTelemetry()
 }
 
+// setupCrons registers the scheduled jobs and starts the cron scheduler.
+// Currently there is one job: the latest-telemetry flush, which pushes the
+// in-memory latest telemetry (LastTelemetryMap, for devices marked dirty in
+// UpdatedDevices) outward to Redis. The schedule is set by the
+// LATEST_TELEMETRY_FLUSH_CRON env var (seconds-precision cron expression);
+// if unset it falls back to defaultLatestTelemetryFlushCron.
 func setupCrons(app *appcore.App, s *services.Service) {
 	latestTelemetryFlushCron := strings.TrimSpace(os.Getenv("LATEST_TELEMETRY_FLUSH_CRON"))
 	if latestTelemetryFlushCron == "" {

@@ -11,7 +11,7 @@ import (
 
 // Organisation sync mirrors the device sync: DB -> iotrack.live:organisations
 // hash -> in-memory App.Organisations map. (ref:043)
-func (s *Service) SyncOrganisatiosFromDBToRedis() error {
+func (s *Service) SyncOrganisationsFromDBToRedis() error {
 
 	organisations, err := s.App.Models.Organisation.GetAll()
 
