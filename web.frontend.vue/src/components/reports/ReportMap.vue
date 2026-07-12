@@ -288,8 +288,10 @@ function courseAt(point: ReportPoint): number | null {
 // FORWARD_CLOSED_ARROW, which is oriented for polylines and points backwards.
 const ARROW_PATH = 'M 0,-15 L 13,14 L 0,9 L -13,14 Z';
 
-// Matches DEFAULT_PALETTE.activeFill / activeLine on the live map.
-const ARROW_FILL = '#3754fa';
+// Same shape and white outline as the live map's marker, but red here: the
+// report draws journeys in blue, so a blue arrow would vanish into the route.
+// The live map keeps its own blue.
+const ARROW_FILL = '#dc2626'; // red-600
 const ARROW_LINE = '#ffffff';
 
 /**
