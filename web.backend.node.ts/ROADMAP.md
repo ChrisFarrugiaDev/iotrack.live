@@ -19,16 +19,29 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Verify remaining read-endpoint scoping.
-  - `GET /api/group/:type/:id` — confirm the controller scopes results to the
-    requester's accessible organisations.
-  - `POST /api/user/assignment-options` — confirm assignable resources are
-    scoped to the requester's access.
-  - `user/:id/*` subroutes — confirm the target user is inside the
-    requester's organisation scope (IDOR check).
+- [ ] Fix cross-org IDOR on `user/:id/*` subroutes (high priority).
+  - `permissions`, `organisations`, `assets`, and `devices` handlers fetch
+    the target user without checking the requester's org scope, so any user
+    with `user.view` can read any user in the system by iterating IDs.
+  - Fix: after loading the target user, 403 unless
+    `target.organisation_id` is within the requester's accessible org set.
 
 
 ## Completed
+
+- [x] Fix assignment-options scope bypass.
+  - `POST /api/user/assignment-options` now returns 403 unless the requested
+    `org_id` is inside the requester's accessible org set (computed from the
+    JWT identity).
+  - The root user ID (`"1"`) in the resource lookups is kept deliberately:
+    assignment options must list the org's full resources, not filtered by
+    the requester's personal overrides. The old TODO comment is replaced by
+    an explanation.
+
+- [x] Verify group read-endpoint scoping.
+  - `GET /api/group/:type/:id` denies access unless the group belongs to the
+    requester's own organisation. Note: this is stricter than the org-subtree
+    scope used elsewhere (a parent-org admin cannot view child-org groups).
 
 - [x] Review authenticated list endpoints.
   - Read routes now require matching view permissions: `asset.view` on the

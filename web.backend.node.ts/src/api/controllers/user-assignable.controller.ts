@@ -13,22 +13,37 @@ class UserAssignmentController {
 
 
         try {
-            const userID = (request as any)?.userID;
-            const { org_id } = (request as any).body;  
+            const { org_id } = (request as any).body;
 
-            // TODO:  validate org_id is within user's allowed scope
+            // 1. Guard: the requested org must be inside the requester's own
+            // org scope (org_id comes from the client and cannot be trusted).
+            const requesterOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(
+                request.userOrgID!,
+                request.userID!
+            );
 
-             // 1. Compute all accessible org IDs for this user in this org context
+            if (!requesterOrgIds.includes(String(org_id))) {
+                return reply.status(403).send({
+                    success: false,
+                    message: "You don't have access to this organisation.",
+                    error: { code: "ORG_ACCESS_DENIED" },
+                } as ApiResponse);
+            }
+
+            // 2. Compute all accessible org IDs for the requested org context.
+            // User "1" (root) is intentional: assignment options must list the
+            // org's full resources, not filtered by the requester's own
+            // per-user overrides.
             const accessibleOrgIds = await AccessProfileController.computeAccessibleOrganisationIds(
-                org_id, 
+                org_id,
                 // userID
                 "1"
             );
 
-             // 2. Build organisation metadata map for response
+             // 3. Build organisation metadata map for response
             const organisation = await AccessProfileController.buildOrganisationInfoMap(accessibleOrgIds);
 
-            // 3. Get all assignable assets/devices
+            // 4. Get all assignable assets/devices
             const assets = await AccessProfileController.getAccessibleAssetsForUser(
                 // userID,
                 "1", 
@@ -47,7 +62,7 @@ class UserAssignmentController {
 
        
 
-            // 4. Respond with all assignable entities
+            // 5. Respond with all assignable entities
             return reply.send({
                 success: true,
                 message: 'Assignable resources fetched successfully',
