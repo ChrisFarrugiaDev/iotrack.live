@@ -11,6 +11,8 @@
                 :disabled="confirmOn"
                 :show-count="true"
                 :disable-branch-nodes="true"
+                :limit="10"
+                :limit-text="limitText"
                 placeholder=""
             />
         </div>
@@ -46,6 +48,11 @@ const userAssignableStore = useUserAssignableStore();
 
 // - Data --------------------------------------------------------------
 const treeKey = ref(1); // Used to force Treeselect re-render
+
+// Collapses selected chips beyond :limit into a single "and N more" tag.
+function limitText(count: number) {
+    return `and ${count} more`;
+}
 
 const assets = ref<any>();
 const assetsOptions = ref<Record<string, any>[]>([]);

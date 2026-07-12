@@ -11,7 +11,9 @@
                 placeholder=""
                 :disabled="confirmOn" 
                 :disable-branch-nodes="true"
-                :show-count="true" 
+                :show-count="true"
+                :limit="10"
+                :limit-text="limitText"
                 :flat="true"/>
         </div>
     </div>
@@ -47,6 +49,11 @@ const emit = defineEmits<{
 
 // - Data --------------------------------------------------------------
 const treeKey = ref(1); // Used to force Treeselect re-render
+
+// Collapses selected chips beyond :limit into a single "and N more" tag.
+function limitText(count: number) {
+    return `and ${count} more`;
+}
 
 const organisations = ref<any>();
 const organisationsOptions = ref<Record<string, any>[]>([]);
