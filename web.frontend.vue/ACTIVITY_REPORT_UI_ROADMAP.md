@@ -79,42 +79,44 @@ Four rules that decide whether this saves time or creates rework:
 
 ### Phase C — Filter form
 
-- [ ] Build the filter row (§7 version 1 fields only).
+- [x] Build the filter row (§7 version 1 fields only).
   - Asset picker (single select, from the existing asset store).
   - Start and end date/time (`v-calendar`).
   - "Generate Report" button.
   - Organisation is **not** a field — it comes from the JWT context (§7).
-- [ ] Wire the button to `activityReportStore.fetchActivityReport(...)`.
-- [ ] Handle the three UI states: loading, empty report, error.
+- [x] Wire the button to `activityReportStore.fetchActivityReport(...)`.
+- [x] Handle the three UI states: loading, empty report, error.
 
 ### Phase D — Summary cards
 
-- [ ] Render the §19.3 `summary` block as cards: journey count, total distance,
+- [x] Render the §19.3 `summary` block as cards: journey count, total distance,
   moving time, active-stationary time, stationary time, communication gap.
-- [ ] Format units in the UI only — metres and km/h stay raw in the data (§22).
+- [x] Format units in the UI only — metres and km/h stay raw in the data (§22).
+  - Formatters live in `src/utils/report.utils.ts`.
 
 ### Phase E — Segment table
 
-- [ ] Build the grouped activity table (§26), chronological by segment.
+- [x] Build the grouped activity table (§26), chronological by segment.
   - Columns: Type, Start, End, Duration, Distance, Details.
   - **Context-aware cells** — do not force irrelevant values (a stationary row
     has no distance or max speed; show `—`).
   - Use the UI label **"Active Stationary"** for `active_static` (§8.2).
-- [ ] Row selection state (drives map highlighting in Phase F).
-- [ ] Expandable journey rows showing detailed points (§27) — coordinates,
+  - Partial segments (§43) are marked with a `…` on the clipped edge.
+- [x] Row selection state (drives map highlighting in Phase F).
+- [x] Expandable journey rows showing detailed points (§27) — coordinates,
   speed, ignition, activity. Keep the raw parameter dump out by default.
 
 ### Phase F — Map
 
-- [ ] Build `components/reports/ReportMap.vue` on `vue3-google-map`.
-- [ ] Render per segment type (§24):
+- [x] Build `components/reports/ReportMap.vue` on `vue3-google-map`.
+- [x] Render per segment type (§24):
   - journey → solid polyline + start/end markers;
   - active_static → distinct work/activity marker with duration;
   - stationary → parked marker;
   - **data_gap → dotted connector, never a solid route** (§8.4 — the route
     through a gap is unknown and must not be implied).
-- [ ] Fit bounds to the report's points on load.
-- [ ] Sync selection: selecting a table row highlights its map segment.
+- [x] Fit bounds to the report's points on load.
+- [x] Sync selection: selecting a table row highlights its map segment.
 
 ### Phase G — Review pass
 

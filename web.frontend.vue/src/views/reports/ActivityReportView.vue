@@ -9,20 +9,57 @@
         <div class="report">
 
             <section class="report__filters">
-                <div class="report__placeholder">Filters — asset, date range, generate (Phase C)</div>
+                <ReportFilters></ReportFilters>
             </section>
 
-            <section class="report__summary">
-                <div class="report__placeholder">Summary cards (Phase D)</div>
-            </section>
+            <!-- States ---------------------------------------------- -->
 
-            <section class="report__map">
-                <div class="report__placeholder">Map (Phase F)</div>
-            </section>
+            <p v-if="error" class="report__state report__state--error">{{ error }}</p>
 
-            <section class="report__table">
-                <div class="report__placeholder">Activity table (Phase E)</div>
-            </section>
+            <p v-else-if="loading" class="report__state">Generating report…</p>
+
+            <p v-else-if="!hasReport" class="report__state">
+                Choose an asset and a date range, then generate a report.
+            </p>
+
+            <p v-else-if="isEmpty" class="report__state">
+                No telemetry was found for the selected period.
+            </p>
+
+            <!-- Report ---------------------------------------------- -->
+
+            <template v-else>
+                <section v-if="subject && report" class="report__subject">
+                    <span class="report__subject-name">{{ subject.assetName }}</span>
+                    <span class="report__subject-meta">
+                        {{ formatDateTime(report.report.from, report.report.timezone) }}
+                        —
+                        {{ formatDateTime(report.report.to, report.report.timezone) }}
+                        · {{ report.report.timezone }}
+                    </span>
+                </section>
+
+                <section v-if="summary" class="report__summary">
+                    <ReportSummary :summary="summary"></ReportSummary>
+                </section>
+
+                <section class="report__map">
+                    <ReportMap
+                        :segments="segments"
+                        :selectedSegmentId="selectedSegmentId"
+                        @select="activityReportStore.selectSegment($event)"
+                    ></ReportMap>
+                </section>
+
+                <section v-if="report" class="report__table">
+                    <ReportTable
+                        :segments="segments"
+                        :timezone="report.report.timezone"
+                        :selectedSegmentId="selectedSegmentId"
+                        @select="activityReportStore.selectSegment($event)"
+                    ></ReportTable>
+                </section>
+            </template>
 
         </div>
     </Vview>
@@ -33,12 +70,23 @@
 <script setup lang="ts">
 import { Vview } from '@/ui';
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
+import ReportFilters from '@/components/reports/ReportFilters.vue';
+import ReportSummary from '@/components/reports/ReportSummary.vue';
+import ReportMap from '@/components/reports/ReportMap.vue';
+import ReportTable from '@/components/reports/ReportTable.vue';
+import { formatDateTime } from '@/utils/report.utils';
+import { storeToRefs } from 'pinia';
 import { onBeforeUnmount } from 'vue';
 import { useActivityReportStore } from '@/stores/activityReportStore';
 
 // - Store -------------------------------------------------------------
 
 const activityReportStore = useActivityReportStore();
+const {
+    loading, error, hasReport, isEmpty, selectedSegmentId,
+    getReport: report, getSummary: summary, getSubject: subject,
+    getSegments: segments,
+} = storeToRefs(activityReportStore);
 
 // - Hooks -------------------------------------------------------------
 
@@ -56,20 +104,36 @@ onBeforeUnmount(() => {
     gap: 1.5rem;
     padding-top: 2rem;
 
-    &__placeholder {
+    &__subject {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 6rem;
-        border: 1px dashed var(--color-zinc-300);
-        border-radius: var(--radius-md);
-        color: var(--color-text-2);
-        font-family: var(--font-display);
-        font-size: .9rem;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: .75rem;
     }
 
-    &__map .report__placeholder {
-        min-height: 20rem;
+    &__subject-name {
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--color-text-1);
+    }
+
+    &__subject-meta {
+        font-family: var(--font-mono);
+        font-size: .85rem;
+        color: var(--color-text-2);
+    }
+
+    &__state {
+        padding: 3rem 0;
+        text-align: center;
+        color: var(--color-text-2);
+        font-family: var(--font-display);
+        font-size: .95rem;
+
+        &--error {
+            color: var(--color-orange-500);
+        }
     }
 }
 </style>
