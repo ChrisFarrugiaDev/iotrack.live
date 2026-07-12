@@ -10,7 +10,7 @@
                 :options="assetsOptions"
                 :disabled="confirmOn"
                 :show-count="true"
-                :disable-branch-nodes="true"
+                value-consists-of="LEAF_PRIORITY"
                 :limit="10"
                 :limit-text="limitText"
                 placeholder=""

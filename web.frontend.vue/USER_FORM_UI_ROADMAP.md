@@ -23,7 +23,7 @@ Components involved:
     `<Treeselect>` components so selections collapse to one row.
   - No payload or model change.
 
-- [ ] Step 2 — Selectable org branches on Assets/Devices.
+- [x] Step 2 — Selectable org branches on Assets/Devices.
   - Remove `:disable-branch-nodes="true"` from `UserAssets.vue` and
     `UserDevices.vue` so one click on an org node selects all its items.
   - Add `value-consists-of="LEAF_PRIORITY"` so the emitted payload stays
