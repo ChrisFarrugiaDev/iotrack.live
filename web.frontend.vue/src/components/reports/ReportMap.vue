@@ -400,6 +400,10 @@ watch(
     (id) => {
         if (!mapRef.value?.ready) return;
 
+        // While scrubbing, the segment changes as the track crosses a boundary.
+        // Refitting bounds there would lurch the map; the point watcher pans.
+        if (props.selectedPoint) return;
+
         if (!id) return fitToReport();
 
         const segment = props.segments.find(s => s.id === id);

@@ -58,6 +58,18 @@
                     ></ReportMap>
                 </section>
 
+                <!-- Scrub the track. Journey mode only: sightings are too sparse
+                     to scrub through meaningfully. -->
+                <section v-if="report && !isTimeline && allPoints.length" class="report__slider">
+                    <ReportSlider
+                        :points="allPoints"
+                        :segments="segments"
+                        :timezone="report.report.timezone"
+                        :index="selectedPointIndex"
+                        @scrub="activityReportStore.scrubTo($event)"
+                    ></ReportSlider>
+                </section>
+
                 <!-- Sparse trackers get sightings, not journeys (§4.2). -->
                 <section v-if="report" class="report__table">
                     <ReportTimeline
@@ -92,6 +104,7 @@ import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import ReportFilters from '@/components/reports/ReportFilters.vue';
 import ReportSummary from '@/components/reports/ReportSummary.vue';
 import ReportMap from '@/components/reports/ReportMap.vue';
+import ReportSlider from '@/components/reports/ReportSlider.vue';
 import ReportTable from '@/components/reports/ReportTable.vue';
 import ReportTimeline from '@/components/reports/ReportTimeline.vue';
 import { formatDateTime } from '@/utils/report.utils';
@@ -106,6 +119,7 @@ const {
     loading, error, hasReport, isEmpty, isTimeline, selectedSegmentId, selectedPoint,
     getReport: report, getSummary: summary, getSubject: subject,
     getSegments: segments, getObservations: observations,
+    getAllPoints: allPoints, getSelectedPointIndex: selectedPointIndex,
 } = storeToRefs(activityReportStore);
 
 // - Hooks -------------------------------------------------------------

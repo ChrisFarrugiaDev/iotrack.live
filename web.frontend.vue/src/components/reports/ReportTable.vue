@@ -205,11 +205,13 @@ function select(segment: ActivitySegment) {
 
 // - Watch -------------------------------------------------------------
 
-// Selection can come from the map, so bring the row into view.
+// Selection can come from the map, so bring the row into view. Not while
+// scrubbing though: the slider pins a point, and scrolling the page to the
+// table would drag it out from under the cursor.
 watch(
     () => props.selectedSegmentId,
     async (id) => {
-        if (!id) return;
+        if (!id || props.selectedPointId) return;
 
         await nextTick();
 

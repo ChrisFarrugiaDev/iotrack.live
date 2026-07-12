@@ -62,6 +62,21 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
         getSegments.value.find(s => s.id === selectedSegmentId.value) ?? null
     );
 
+    /**
+     * Every telemetry point in the report, in order — the track the slider
+     * scrubs along. Data gaps contribute nothing, so scrubbing jumps across
+     * them rather than inventing points inside them.
+     */
+    const getAllPoints = computed<ReportPoint[]>(() =>
+        getSegments.value.flatMap(s => ('points' in s ? s.points : []))
+    );
+
+    const getSelectedPointIndex = computed(() => {
+        if (!selectedPoint.value) return -1;
+
+        return getAllPoints.value.findIndex(p => p.id === selectedPoint.value!.id);
+    });
+
     const hasReport = computed(() => report.value !== null);
     const isEmpty = computed(() => report.value?.summary.pointCount === 0);
 
@@ -86,6 +101,23 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
     function selectPoint(point: ReportPoint | null) {
         selectedPoint.value =
             point && point.id === selectedPoint.value?.id ? null : point;
+    }
+
+    /**
+     * Move to a point on the track, selecting the segment it belongs to.
+     * Unlike selectSegment this keeps the point pinned — it is the same
+     * gesture, not a new one.
+     */
+    function scrubTo(index: number) {
+        const point = getAllPoints.value[index];
+        if (!point) return;
+
+        const segment = getSegments.value.find(
+            s => 'points' in s && s.points.some(p => p.id === point.id)
+        );
+
+        selectedSegmentId.value = segment?.id ?? null;
+        selectedPoint.value = point;
     }
 
     /**
@@ -145,6 +177,8 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
         getSegments,
         getObservations,
         getSelectedSegment,
+        getAllPoints,
+        getSelectedPointIndex,
         hasReport,
         isEmpty,
         isTimeline,
@@ -152,6 +186,7 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
         clear,
         selectSegment,
         selectPoint,
+        scrubTo,
         fetchActivityReport,
     };
 })
