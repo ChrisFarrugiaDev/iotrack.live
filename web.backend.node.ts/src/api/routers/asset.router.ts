@@ -9,7 +9,7 @@ import { requirePermissions } from "../middleware/permission.middleware";
 // ---------------------------------------------------------------------
 
 export default async function assetRouter(fastify: FastifyInstance) {
-    fastify.get("/", {preHandler: [authMiddleware]}, AssetController.index);
+    fastify.get("/", {preHandler: [authMiddleware, requirePermissions(["asset.view"])]}, AssetController.index);
     fastify.post("/", {preHandler: [authMiddleware, validateBody(storeSchema), requirePermissions(["asset.create"])]}, AssetController.store);
     fastify.delete("/", {preHandler: [authMiddleware, validateBody(destroySchema), requirePermissions(["asset.delete"]) ] }, AssetController.destroy);
     fastify.patch("/:id", {preHandler: [authMiddleware, validateBody(updateSchema), requirePermissions(["asset.update"])]}, AssetController.update )

@@ -14,7 +14,16 @@ class AssetController {
     // List all assets
     static async index(request: FastifyRequest, reply: FastifyReply) {
         try {
-            const result = await Asset.getAll();
+            // Scope to the user's accessible organisations and per-asset overrides,
+            // matching the access-profile visibility rules.
+            const orgIds = await AccessProfileController.computeAccessibleOrganisationIds(
+                request.userOrgID!, request.userID!
+            );
+            const assetMap = await AccessProfileController.getAccessibleAssetsForUser(
+                request.userID!, orgIds
+            );
+            const result = Object.values(assetMap);
+
             return reply.send({
                 success: true,
                 message: "Assets fetched",

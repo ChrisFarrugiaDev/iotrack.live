@@ -12,7 +12,16 @@ class DeviceController {
 
     static async index(request: FastifyRequest, reply: FastifyReply) {
         try {
-            const result = await Device.getAll();
+            // Scope to the user's accessible organisations and per-device overrides,
+            // matching the access-profile visibility rules.
+            const orgIds = await AccessProfileController.computeAccessibleOrganisationIds(
+                request.userOrgID!, request.userID!
+            );
+            const deviceMap = await AccessProfileController.getAccessibleDevicesForUser(
+                request.userID!, orgIds
+            );
+            const result = Object.values(deviceMap);
+
             return reply.send({
                 success: true,
                 message: "Devices fetched.",

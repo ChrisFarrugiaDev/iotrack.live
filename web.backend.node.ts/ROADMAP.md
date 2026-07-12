@@ -19,16 +19,27 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [ ] Review authenticated list endpoints.
-  - Confirm whether each list route should require a matching `*.view`
-    permission.
-  - Scope broad list responses by the authenticated user's accessible
-    organisations, assets, or devices.
-  - Keep backend authorization as the final authority even when the frontend
-    hides restricted UI.
+- [ ] Verify remaining read-endpoint scoping.
+  - `GET /api/group/:type/:id` — confirm the controller scopes results to the
+    requester's accessible organisations.
+  - `POST /api/user/assignment-options` — confirm assignable resources are
+    scoped to the requester's access.
+  - `user/:id/*` subroutes — confirm the target user is inside the
+    requester's organisation scope (IDOR check).
 
 
 ## Completed
+
+- [x] Review authenticated list endpoints.
+  - Read routes now require matching view permissions: `asset.view` on the
+    asset list, `device.view` on the device list and detail, `user.view` on
+    the user list and `user/:id/*` subroutes.
+  - Asset and device index responses are now scoped via
+    `computeAccessibleOrganisationIds` and the access-profile
+    `getAccessibleAssetsForUser` / `getAccessibleDevicesForUser` helpers
+    (org scope plus per-user deny overrides) instead of `getAll()`.
+  - `device/catalog`, `user/assignment-options`, and `access-profile` stay
+    open to any authenticated user by design.
 
 - [x] Simplify permission middleware.
   - `requirePermissions` now uses `request.userPerms` loaded by

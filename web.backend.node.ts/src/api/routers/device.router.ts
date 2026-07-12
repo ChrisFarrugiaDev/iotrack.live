@@ -10,8 +10,8 @@ import { requirePermissions } from "../middleware/permission.middleware";
 
 export default async function deviceRouter(fastify: FastifyInstance) {
     fastify.get("/catalog", { preHandler: [authMiddleware] }, DeviceController.catalog);
-    fastify.get("/", { preHandler: [authMiddleware] }, DeviceController.index);
-    fastify.get("/:id", { preHandler: [authMiddleware, validateParams(getSchema)] }, DeviceController.get);
+    fastify.get("/", { preHandler: [authMiddleware, requirePermissions(["device.view"])] }, DeviceController.index);
+    fastify.get("/:id", { preHandler: [authMiddleware, validateParams(getSchema), requirePermissions(["device.view"])] }, DeviceController.get);
     fastify.post("/", { preHandler: [authMiddleware, validateBody(storeSchema), requirePermissions(["device.create"]),] }, DeviceController.store);
     fastify.patch(
         "/:id",

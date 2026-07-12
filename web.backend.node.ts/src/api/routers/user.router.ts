@@ -11,7 +11,7 @@ export default async function userRouter(fastify: FastifyInstance) {
 
     fastify.get(
         "/",
-        { preHandler: [authMiddleware] },
+        { preHandler: [authMiddleware, requirePermissions(["user.view"])] },
         UserController.index
     );
 
@@ -36,28 +36,28 @@ export default async function userRouter(fastify: FastifyInstance) {
     // User permissions
     fastify.get(
         "/:id/permissions",
-        { preHandler: [authMiddleware] },
+        { preHandler: [authMiddleware, requirePermissions(["user.view"])] },
         UserController.permissions
     );
 
     // User organisations
     fastify.get(
         "/:id/organisations",
-        { preHandler: [authMiddleware] },
+        { preHandler: [authMiddleware, requirePermissions(["user.view"])] },
         UserController.organisations
     );
 
     // User assets
     fastify.get(
         "/:id/assets",
-        { preHandler: [authMiddleware] },
+        { preHandler: [authMiddleware, requirePermissions(["user.view"])] },
         UserController.assets
     );
 
     // User devices
     fastify.get(
         "/:id/devices",
-        { preHandler: [authMiddleware] },
+        { preHandler: [authMiddleware, requirePermissions(["user.view"])] },
         UserController.devices
     );
 
