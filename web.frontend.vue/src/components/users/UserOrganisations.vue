@@ -1,20 +1,34 @@
 <template>
     <div class="vform__row " :class="{ 'vform__disabled': confirmOn }">
-        <div class="vform__group mb-7 w-full">
+        <div class="vform__group tree-field mb-7 w-full">
             <label class="vform__label" for="organisations">Organisations</label>
 
-            <Treeselect 
-                :key="treeKey" 
-                v-model="organisations" 
-                :multiple="true" 
-                :options="organisationsOptions" 
+            <Treeselect
+                :key="treeKey"
+                v-model="organisations"
+                :multiple="true"
+                :options="organisationsOptions"
                 placeholder=""
-                :disabled="confirmOn" 
+                :disabled="confirmOn"
                 :disable-branch-nodes="true"
                 :show-count="true"
                 :limit="10"
                 :limit-text="limitText"
                 :flat="true"/>
+
+            <!-- Sprite icons matching the standard select fields -->
+            <div class="tree-field__icons">
+                <svg
+                    v-if="!confirmOn && organisations?.length"
+                    class="tree-field__icon tree-field__icon--clear"
+                    @mousedown.prevent.stop="clearOrganisations"
+                >
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-select-x"></use>
+                </svg>
+                <svg class="tree-field__icon tree-field__icon--arrow">
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-select-chevron"></use>
+                </svg>
+            </div>
         </div>
     </div>
 </template>
@@ -53,6 +67,11 @@ const treeKey = ref(1); // Used to force Treeselect re-render
 // Collapses selected chips beyond :limit into a single "and N more" tag.
 function limitText(count: number) {
     return `and ${count} more`;
+}
+
+function clearOrganisations() {
+    organisations.value = [];
+    treeKey.value++;
 }
 
 const organisations = ref<any>();
@@ -102,6 +121,45 @@ watch(organisations, (v, oldV) => {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
+// Sprite icons overlaid on the Treeselect so it matches the standard
+// select fields. Treeselect exposes no slots for its own indicators, so
+// they are hidden below and these are positioned in their place.
+.tree-field {
+    position: relative;
+}
+
+.tree-field__icons {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: .5rem;
+    padding: 1.9rem 0 .5rem; // mirrors --vs-padding so icons sit low like the other fields
+    display: flex;
+    align-items: center;
+    gap: 0;         // matches --vs-indicators-gap
+    pointer-events: none; // clicks fall through to the control
+    z-index: 5;
+}
+
+.tree-field__icon {
+    // Same glyphs, size and fill vue3-select-component uses for its indicators.
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    color: var(--color-text-1);
+
+    &--clear {
+        pointer-events: auto;
+        cursor: pointer;
+    }
+}
+
+// Hide Treeselect's own arrow and clear icons.
+:deep(.vue-treeselect__control-arrow-container),
+:deep(.vue-treeselect__x-container) {
+    display: none;
+}
+
 :deep(.vue-treeselect) {
     min-height: 4rem;
     overflow: visible !important;
@@ -142,7 +200,7 @@ watch(organisations, (v, oldV) => {
     width: 100%;
 
     display: inline-block;
-    padding: 1.5rem .5rem .5rem .5rem;
+    padding: 1.5rem 4.5rem .5rem .5rem; // right gap for the overlaid icons
 }
 
 // --items

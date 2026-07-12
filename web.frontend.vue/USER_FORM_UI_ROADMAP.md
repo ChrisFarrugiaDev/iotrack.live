@@ -31,7 +31,7 @@ Components involved:
   - Leave Permissions and Organisations as they are (Organisations uses
     `:flat="true"` deliberately).
 
-- [ ] Step 3 — "Add by group" quick-pick.
+- [x] Step 3 — "Add by group" quick-pick.
   - Small single-select next to the Assets/Devices field listing groups of
     the matching type (`groupStore.getGroups`).
   - On pick: fetch members (`GET /api/group/:type/:id`), merge the returned
@@ -40,9 +40,17 @@ Components involved:
   - Groups are not nested inside the tree — an item can belong to several
     groups and duplicate node ids break treeselect.
 
-- [ ] Step 4 — Verify and close out.
+- [x] Step 4 — Verify and close out.
   - `npm run build` after each step; manual test of create and edit flows.
   - Tick these checkboxes and reference this file from `ROADMAP.md`.
+
+- [x] Step 5 — Match the Treeselect indicators to the standard selects.
+  - `vue3-select-component` draws heroicons-mini glyphs (filled, `0 0 20 20`)
+    at 20px with no gap; Treeselect's own icons are a light grey triangle and
+    cross and it exposes no slots to replace them.
+  - Added `icon-select-x` / `icon-select-chevron` to `src/ui/svg/sprite.svg`,
+    hid Treeselect's indicators, and overlaid the sprite icons in the field
+    wrapper, mirroring `--vs-padding` so they sit at the same height.
 
 ## Later (out of scope for now)
 

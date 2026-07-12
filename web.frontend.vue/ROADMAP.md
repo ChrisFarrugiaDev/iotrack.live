@@ -47,6 +47,10 @@ expected runtime behavior.
 
 ## Completed
 
+- [x] Improve user form asset/device/org selectors.
+  - Chip walls capped, whole-org selection, and group quick-pick; tracked in
+    `USER_FORM_UI_ROADMAP.md`.
+
 - [x] Expand route guard coverage.
   - `router/index.ts` now maps every list/create/update child route to its
     permission key in a single `routePermissions` table, replacing the five

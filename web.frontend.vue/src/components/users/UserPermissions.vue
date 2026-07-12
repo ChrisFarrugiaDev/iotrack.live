@@ -1,6 +1,6 @@
 <template>
     <div class="vform__row" :class="{ 'vform__disabled': confirmOn }">
-        <div class="vform__group mb-7 w-full" style="height: fit-content;">
+        <div class="vform__group tree-field mb-7 w-full" style="height: fit-content;">
             <label class="vform__label" for="permissions">Permissions</label>
             <!-- TreeSelect (force re-render with :key to sync changes instantly) -->
             <Treeselect
@@ -15,6 +15,20 @@
                 :limit-text="limitText"
                 placeholder=""
             />
+
+            <!-- Sprite icons matching the standard select fields -->
+            <div class="tree-field__icons">
+                <svg
+                    v-if="!confirmOn && permissions?.length"
+                    class="tree-field__icon tree-field__icon--clear"
+                    @mousedown.prevent.stop="clearPermissions"
+                >
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-select-x"></use>
+                </svg>
+                <svg class="tree-field__icon tree-field__icon--arrow">
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-select-chevron"></use>
+                </svg>
+            </div>
         </div>
     </div>
 </template>
@@ -51,6 +65,11 @@ const emit = defineEmits<{
 // Collapses selected chips beyond :limit into a single "and N more" tag.
 function limitText(count: number) {
     return `and ${count} more`;
+}
+
+function clearPermissions() {
+    permissions.value = [];
+    treeKey.value++;
 }
 
 const permissions = ref<number[]>([]);
@@ -90,6 +109,45 @@ watch(permissions, (p, oldP) => {
 <!-- --------------------------------------------------------------- -->
 
 <style lang="scss" scoped>
+// Sprite icons overlaid on the Treeselect so it matches the standard
+// select fields. Treeselect exposes no slots for its own indicators, so
+// they are hidden below and these are positioned in their place.
+.tree-field {
+    position: relative;
+}
+
+.tree-field__icons {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: .5rem;
+    padding: 1.9rem 0 .5rem; // mirrors --vs-padding so icons sit low like the other fields
+    display: flex;
+    align-items: center;
+    gap: 0;         // matches --vs-indicators-gap
+    pointer-events: none; // clicks fall through to the control
+    z-index: 5;
+}
+
+.tree-field__icon {
+    // Same glyphs, size and fill vue3-select-component uses for its indicators.
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    color: var(--color-text-1);
+
+    &--clear {
+        pointer-events: auto;
+        cursor: pointer;
+    }
+}
+
+// Hide Treeselect's own arrow and clear icons.
+:deep(.vue-treeselect__control-arrow-container),
+:deep(.vue-treeselect__x-container) {
+    display: none;
+}
+
 :deep(.vue-treeselect) {
     min-height: 4rem;
     overflow: visible !important;
@@ -128,7 +186,7 @@ watch(permissions, (p, oldP) => {
     min-height: 3rem;
     width: 100%;
     display: inline-block;
-    padding: 1.5rem .5rem .5rem .5rem;
+    padding: 1.5rem 4.5rem .5rem .5rem; // right gap for the overlaid icons
 }
 
 // --items

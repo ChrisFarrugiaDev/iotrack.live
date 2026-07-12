@@ -4,7 +4,7 @@
 **Project:** iotrack.live  
 **Primary services involved:**
 - `web.frontend.vue`
-- `web.backend.node.ts.api`
+- `web.backend.node.ts`
 - Future candidate: `web.backend.go`
 - Existing telemetry ingestion and database writer services
 
@@ -281,13 +281,13 @@ This keeps the first release achievable while preserving the full architecture.
 
 # 6. User Interface
 
-The Activity Report page should contain four main areas:
+The Activity Report page should contain five main areas:
 
 1. Filter form
 2. Summary
 3. Map
 4. Grouped table
-5. Timeline slider later
+5. Timeline slider (later)
 
 A practical layout is:
 
@@ -1301,6 +1301,20 @@ The example omits detailed points for readability.
 
 The report must always run in the current active organisation context from the JWT.
 
+## Permission key
+
+The route is gated by a dedicated permission key:
+
+- Key: `report.view` (matching the proposal in `web.frontend.vue/ROADMAP.md`).
+- Seed it in `initdb-scripts/05-tables.sql` with deliberate role defaults.
+- Backend: `requirePermissions(["report.view"])` in the route `preHandler`,
+  after `authMiddleware` and validation.
+- Frontend: add `reports.list` → `report.view` to the `routePermissions`
+  map in `src/router/index.ts` and gate the Reports sidebar item with
+  `authorizationStore.can("report.view")`.
+
+## Access rules
+
 The endpoint must:
 
 1. Read the active organisation ID from authenticated request context.
@@ -1556,22 +1570,26 @@ The backend should fetch only telemetry required for:
 
 - selected asset;
 - selected date range;
-- attached device;
 - active organisation.
 
-The query must be indexed by fields equivalent to:
+The `app.telemetry` table stores `asset_id` (and `organisation_id`) on every
+row at ingestion time, so the report should query by asset, not by device:
 
-- device ID;
-- telemetry timestamp.
+```sql
+SELECT ... FROM app.telemetry
+WHERE asset_id = $1 AND happened_at BETWEEN $2 AND $3
+ORDER BY happened_at ASC;
+```
 
 Recommended logical index:
 
 ```sql
 CREATE INDEX ...
-ON telemetry_table (device_id, happened_at);
+ON app.telemetry (asset_id, happened_at);
 ```
 
-The exact table name depends on the current telemetry schema.
+Rows with a `NULL` `asset_id` (device not attached to an asset at ingestion
+time) never belong to an asset report.
 
 Use ascending timestamp order.
 
@@ -1631,7 +1649,7 @@ Do not introduce persisted report IDs until there is a real need.
 
 # 32. Backend Ownership
 
-The first implementation may be created in `web.backend.node.ts.api` because:
+The first implementation may be created in `web.backend.node.ts` because:
 
 - authentication already exists;
 - organisation context already exists;
@@ -2420,28 +2438,60 @@ This is useful for debugging and customer support.
 
 # 42. Open Questions for the Agent
 
-The implementation agent should confirm these before finalising code:
+Most data questions are now answered from the actual schema and telemetry.
 
-1. Which telemetry table contains the source data?
-2. Is there one telemetry table or several?
-3. What is the timestamp column?
-4. Are timestamps stored in UTC?
-5. What is the speed unit in storage?
-6. Is odometer data available and reliable?
-7. Which parameter identifies ignition?
-8. Which parameter identifies PTO or working activity?
-9. Is there an existing movement flag?
-10. Is GPS accuracy available?
-11. How are tracker categories stored?
-12. Can an asset change device during the selected period?
-13. What should happen when the device assignment changes?
-14. What maximum date range is acceptable?
-15. Is reverse geocoding already available?
-16. Which map library is used?
-17. Does the frontend already have a reusable telemetry-map component?
+Answered:
+
+1. **Which telemetry table contains the source data?**
+   `app.telemetry` (TimescaleDB). Columns include `id`, `device_id`,
+   `asset_id`, `organisation_id`, `happened_at`, `protocol`, `vendor`,
+   `model`, `telemetry` (jsonb), `created_at`.
+2. **Is there one telemetry table or several?** One.
+3. **What is the timestamp column?** `happened_at` (`timestamptz`). The
+   jsonb payload also carries a unix `timestamp`; use `happened_at`.
+4. **Are timestamps stored in UTC?** Yes (`timestamptz`).
+5. **What is the speed unit in storage?** Top-level `speed` in the jsonb
+   payload, in km/h (Teltonika GPS element).
+6. **Is odometer data available?** Yes — AVL ID 16 (`elements["16"]`),
+   total odometer in metres. Reliability per device still to be confirmed.
+7. **Which parameter identifies ignition?** `elements["239"]`
+   (Teltonika AVL ID 239, 0/1).
+8. **Which parameter identifies PTO or working activity?** Installation
+   specific — typically a digital input (for example `elements["1"]` for
+   DIN1). Activity mapping must be configurable per asset/tracker profile.
+9. **Is there an existing movement flag?** Yes — `elements["240"]`
+   (Teltonika AVL ID 240, 0/1).
+10. **Is GPS accuracy available?** Not directly; `satellites` and
+    `elements["181"]/["182"]` (GNSS PDOP/HDOP ×10) are usable quality
+    proxies.
+11. **How are tracker categories stored?** `app.assets.asset_type`
+    (`VARCHAR(32)`), plus a free-form `attributes` jsonb column.
+12. **Can an asset change device during the selected period?** Yes, but it
+    is handled: every telemetry row stores the `asset_id` at ingestion time
+    (see section 45).
+13. **What should happen when the device assignment changes?** Nothing
+    special — query by `asset_id`.
+15. **Is reverse geocoding already available?** Not implemented, but each
+    organisation has a Google Maps API key (`maps_api_key` setting), so the
+    Google Geocoding API is a natural later option.
+16. **Which map library is used?** `vue3-google-map` (Google Maps).
+17. **Does the frontend already have a reusable telemetry-map component?**
+    `src/components/map/TheMap.vue` renders the live map; the report map can
+    reuse its patterns, though it is built for live tracking rather than
+    historical playback.
+
+Remaining product decisions:
+
+14. What maximum date range is acceptable? (Suggested start: 7 days for
+    vehicles.)
 18. Should very long stationary periods be included in the report?
 19. Should report boundaries create partial segments?
-20. Should a journey that began before the selected range be marked as partial?
+20. Should a journey that began before the selected range be marked as
+    partial? (Section 43 recommends yes, via look-behind.)
+
+Note: the jsonb `elements` object may contain additional Teltonika IO IDs
+per device model and configuration; the normalisation layer should tolerate
+unknown keys.
 
 ---
 
@@ -2490,15 +2540,21 @@ Do not assume ingestion order is always chronological.
 
 # 45. Asset-to-Device History
 
-A future concern is device reassignment.
+Device reassignment is already handled by the data model.
 
-If an asset can be assigned to different trackers over time, the report query must use assignment history rather than only the current device.
+Each `app.telemetry` row stores the `asset_id` that the device was attached
+to at ingestion time. Querying telemetry by `asset_id` therefore returns the
+correct history even when the asset changed device during the requested
+period — no assignment-history table is needed.
 
-For version 1, document the assumption:
+Consequences:
 
-> The selected asset uses its currently assigned device for the entire requested period.
-
-If this assumption is not valid, assignment history must be implemented before the report is considered fully correct.
+- the report query must filter by `asset_id`, never by the asset's current
+  `device_id`;
+- points recorded while the device was not attached to any asset have a
+  `NULL` `asset_id` and are naturally excluded;
+- the `subject.deviceId` in the response reflects the currently assigned
+  device and may not apply to every point in the period.
 
 ---
 
