@@ -86,17 +86,21 @@
                                         <th class="rpoints__th">Time</th>
                                         <th class="rpoints__th">Position</th>
                                         <th class="rpoints__th rtable__th--num">Speed</th>
-                                        <th class="rpoints__th">Heading</th>
                                         <th class="rpoints__th">Ignition</th>
                                         <th class="rpoints__th">Activity</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="point in pointsOf(segment)" :key="point.id" class="rpoints__row">
+                                    <tr
+                                        v-for="point in pointsOf(segment)"
+                                        :key="point.id"
+                                        class="rpoints__row"
+                                        :class="{ 'rpoints__row--selected': point.id === selectedPointId }"
+                                        @click.stop="emit('select-point', point)"
+                                    >
                                         <td class="rpoints__cell">{{ formatTime(point.timestamp, timezone) }}</td>
                                         <td class="rpoints__cell">{{ formatCoords(point.latitude, point.longitude) }}</td>
                                         <td class="rpoints__cell rtable__cell--num">{{ formatSpeed(point.speedKph) }}</td>
-                                        <td class="rpoints__cell">{{ point.heading ?? '—' }}°</td>
                                         <td class="rpoints__cell">{{ boolLabel(point.ignitionOn) }}</td>
                                         <td class="rpoints__cell">{{ boolLabel(point.activityOn) }}</td>
                                     </tr>
@@ -131,10 +135,12 @@ const props = defineProps<{
     segments: ActivitySegment[];
     timezone: string;
     selectedSegmentId: string | null;
+    selectedPointId?: string | null;
 }>();
 
 const emit = defineEmits<{
     (e: 'select', id: string): void
+    (e: 'select-point', point: ReportPoint): void
 }>();
 
 // - Data --------------------------------------------------------------
@@ -349,8 +355,23 @@ watch(
         white-space: nowrap;
     }
 
-    &__row:nth-of-type(odd) {
-        background: var(--color-bg-hi);
+    &__row {
+        cursor: pointer;
+
+        &:nth-of-type(odd) {
+            background: var(--color-bg-hi);
+        }
+
+        &:hover {
+            background: var(--color-blue-100);
+        }
+
+        // Pinned on the map.
+        &--selected,
+        &--selected:nth-of-type(odd) {
+            background: var(--color-blue-100);
+            box-shadow: inset 3px 0 0 var(--color-blue-500);
+        }
     }
 }
 </style>

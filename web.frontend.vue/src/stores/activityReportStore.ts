@@ -4,6 +4,7 @@ import type {
     ActivityReportResponse,
     ActivityReportRequest,
     ActivitySegment,
+    ReportPoint,
     TimelineObservation,
 } from '@/types/activity-report.type';
 import { mockActivityReport, mockTimelineReport } from '@/mock/activity-report.mock';
@@ -18,6 +19,9 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
 
     // Segment the user has selected in the table; drives map highlighting.
     const selectedSegmentId = ref<string | null>(null);
+
+    // A single telemetry point picked from an expanded segment; pinned on the map.
+    const selectedPoint = ref<ReportPoint | null>(null);
 
 
     // ---- Getters ----------------------------------------------------
@@ -68,10 +72,20 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
         report.value = null;
         error.value = null;
         selectedSegmentId.value = null;
+        selectedPoint.value = null;
     }
 
     function selectSegment(id: string | null) {
         selectedSegmentId.value = id;
+
+        // The pinned point belongs to whatever segment was open; moving on drops it.
+        selectedPoint.value = null;
+    }
+
+    /** Click the same point again to unpin it. */
+    function selectPoint(point: ReportPoint | null) {
+        selectedPoint.value =
+            point && point.id === selectedPoint.value?.id ? null : point;
     }
 
     /**
@@ -123,6 +137,7 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
         loading,
         error,
         selectedSegmentId,
+        selectedPoint,
 
         getReport,
         getSummary,
@@ -136,6 +151,7 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
 
         clear,
         selectSegment,
+        selectPoint,
         fetchActivityReport,
     };
 })

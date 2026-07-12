@@ -46,6 +46,10 @@
 
             </template>
 
+            <!-- Where the asset was at the telemetry point picked in the table.
+                 Drawn last so it sits above the routes. -->
+            <Marker v-if="selectedPoint" :options="pointMarker(selectedPoint)" />
+
             <!-- Timeline mode: sightings only. The connector is dashed because
                  the route between them is unknown and must not be implied (§41.5). -->
             <template v-if="observations.length">
@@ -66,40 +70,34 @@
 
         <div v-else class="rmap__loading">Loading map…</div>
 
-        <!-- Without this nobody knows amber means "working" and red means
-             "we don't know what happened here". -->
-        <ul v-if="apiKey" class="rlegend">
-            <template v-if="observations.length">
-                <li class="rlegend__item">
-                    <span class="rlegend__swatch rlegend__swatch--observation"></span>Sighting
-                </li>
-                <li class="rlegend__item">
-                    <span class="rlegend__swatch rlegend__swatch--data_gap"></span>Route between sightings unknown
-                </li>
-            </template>
+        <!-- Details for the telemetry point picked in the table. Sits in the
+             corner rather than over the arrow, which it would otherwise hide. -->
+        <div v-if="selectedPoint" class="rpin">
+            <div class="rpin__time">{{ formatTime(selectedPoint.timestamp, timezone) }}</div>
 
-            <template v-else>
-                <li class="rlegend__item">
-                    <span class="rlegend__swatch rlegend__swatch--journey"></span>Journey
-                </li>
-                <li class="rlegend__item">
-                    <span class="rlegend__swatch rlegend__swatch--active_static"></span>Active Stationary
-                </li>
-                <li class="rlegend__item">
-                    <span class="rlegend__swatch rlegend__swatch--stationary"></span>Stationary
-                </li>
-                <li class="rlegend__item">
-                    <span class="rlegend__swatch rlegend__swatch--data_gap"></span>Data gap — route unknown
-                </li>
-            </template>
-        </ul>
+            <div class="rpin__rows">
+                <span class="rpin__label">Speed</span>
+                <span class="rpin__value">{{ formatSpeed(selectedPoint.speedKph) }}</span>
+
+                <span class="rpin__label">Ignition</span>
+                <span class="rpin__value">{{ boolLabel(selectedPoint.ignitionOn) }}</span>
+
+                <span class="rpin__label">Activity</span>
+                <span class="rpin__value">{{ boolLabel(selectedPoint.activityOn) }}</span>
+
+                <span class="rpin__label">Position</span>
+                <span class="rpin__value">
+                    {{ formatCoords(selectedPoint.latitude, selectedPoint.longitude) }}
+                </span>
+            </div>
+        </div>
     </div>
 </template>
 
 <!-- --------------------------------------------------------------- -->
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 
@@ -110,9 +108,17 @@ import type {
     DataGapSegment,
     JourneySegment,
     ReportLocation,
+    ReportPoint,
     TimelineObservation,
 } from '@/types/activity-report.type';
-import { formatDateTime, formatDuration } from '@/utils/report.utils';
+import {
+    bearingBetween,
+    formatCoords,
+    formatDateTime,
+    formatDuration,
+    formatSpeed,
+    formatTime,
+} from '@/utils/report.utils';
 
 // - Props & Emits -----------------------------------------------------
 
@@ -121,9 +127,11 @@ const props = withDefaults(defineProps<{
     observations?: TimelineObservation[];
     timezone?: string;
     selectedSegmentId: string | null;
+    selectedPoint?: ReportPoint | null;
 }>(), {
     observations: () => [],
     timezone: 'UTC',
+    selectedPoint: null,
 });
 
 const emit = defineEmits<{
@@ -244,6 +252,77 @@ function markerFor(location: ReportLocation, kind: string, title: string) {
     };
 }
 
+/**
+ * Direction of travel at a point, computed from the surrounding fixes.
+ *
+ * The device's own `heading` is not used: it depends on how the tracker was
+ * mounted and is frequently wrong. The course between consecutive positions is
+ * what actually happened.
+ */
+function courseAt(point: ReportPoint): number | null {
+    const segment = props.segments.find(
+        s => 'points' in s && s.points.some(p => p.id === point.id)
+    );
+    if (!segment || !('points' in segment)) return null;
+
+    const points = segment.points;
+    const i = points.findIndex(p => p.id === point.id);
+
+    // Prefer the leg into this point; for the first fix, the leg out of it.
+    const previous = points[i - 1];
+    if (previous) {
+        const course = bearingBetween(previous, point);
+        if (course !== null) return course;
+    }
+
+    const next = points[i + 1];
+    if (next) return bearingBetween(point, next);
+
+    return null;
+}
+
+// The live map's vehicle arrow (MarkerVehicle.vue), recentred on the origin so
+// Google can rotate it: its `M 20 5 L 33 34 L 20 29 L 7 34 Z` in a 40x40 box
+// becomes this once 20,20 is subtracted. Tip at negative y = north at rotation
+// 0, so `rotation: course` means what it says — unlike SymbolPath's built-in
+// FORWARD_CLOSED_ARROW, which is oriented for polylines and points backwards.
+const ARROW_PATH = 'M 0,-15 L 13,14 L 0,9 L -13,14 Z';
+
+// Matches DEFAULT_PALETTE.activeFill / activeLine on the live map.
+const ARROW_FILL = '#3754fa';
+const ARROW_LINE = '#ffffff';
+
+/**
+ * The asset at a single moment, styled like the live map's vehicle marker: an
+ * arrow pointing the way it was travelling, or a dot when there is no direction
+ * to show (a stationary fix, or a lone point) rather than an arrow aimed north
+ * by default. Mirrors MarkerVehicle.vue's moving/stationary split.
+ */
+function pointMarker(point: ReportPoint) {
+    const course = courseAt(point);
+
+    return {
+        position: { lat: point.latitude, lng: point.longitude },
+        title: `${formatTime(point.timestamp, props.timezone)} · ${formatSpeed(point.speedKph)}`,
+        zIndex: 20,
+        icon: {
+            path: course === null ? 0 : ARROW_PATH, // 0 = CIRCLE
+            scale: course === null ? 9 : 1.1,       // the arrow path is ~29 units tall
+            rotation: course ?? 0,
+            fillColor: ARROW_FILL,
+            fillOpacity: 0.9,
+            strokeColor: ARROW_LINE,
+            strokeWeight: 1.2,
+        },
+    };
+}
+
+/** null is not false — an unknown input must not read as "Off" (§41.4). */
+function boolLabel(value: boolean | null): string {
+    if (value === null) return '—';
+    return value ? 'On' : 'Off';
+}
+
 function activeStaticTitle(segment: ActiveStaticSegment): string {
     const source = segment.activitySource === 'unknown'
         ? ''
@@ -300,6 +379,18 @@ watch(
     { immediate: true, deep: true }
 );
 
+// Stepping through telemetry rows pans rather than refits — keeping the zoom
+// steady so you can follow the vehicle along the route.
+watch(
+    () => props.selectedPoint,
+    (point) => {
+        const map = mapRef.value?.map;
+        if (!map || !point) return;
+
+        map.panTo({ lat: point.latitude, lng: point.longitude });
+    }
+);
+
 // Selecting should take you to it — highlighting alone is no use if it's off
 // screen. Deselecting reframes the whole report.
 watch(
@@ -341,60 +432,47 @@ watch(
     }
 }
 
-.rlegend {
+// Detail card for the pinned point, in the map's bottom-left corner.
+.rpin {
     position: absolute;
     left: .75rem;
     bottom: .75rem;
     z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: .3rem;
-    margin: 0;
     padding: .6rem .75rem;
-    list-style: none;
-    background: var(--color-bg-hi);
+    background: var(--color-bg-li);
     border: 1px solid var(--color-zinc-300);
     border-radius: var(--radius-md);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+    white-space: nowrap;
+    pointer-events: none;
 
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
+    &__time {
+        margin-bottom: .3rem;
         font-family: var(--font-display);
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--color-text-1);
+    }
+
+    &__rows {
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: .1rem .6rem;
+    }
+
+    &__label {
+        font-family: var(--font-display);
+        font-size: .7rem;
+        text-transform: uppercase;
+        color: var(--color-text-2);
+    }
+
+    &__value {
+        font-family: var(--font-mono);
         font-size: .75rem;
         color: var(--color-text-1);
-        white-space: nowrap;
-    }
-
-    &__swatch {
-        width: 1rem;
-        height: 3px;
-        border-radius: 2px;
-
-        &--journey       { background: #3b82f6; }
-        &--stationary    { background: #71717a; }
-
-        &--observation {
-            width: .7rem;
-            height: .7rem;
-            border-radius: 50%;
-            background: #3b82f6;
-        }
-
-        &--active_static {
-            width: .7rem;
-            height: .7rem;
-            border-radius: 50%;
-            background: #f59e0b;
-        }
-
-        // Dashed, exactly as it is drawn on the map.
-        &--data_gap {
-            height: 0;
-            border-top: 3px dashed #ef4444;
-            background: none;
-        }
+        text-align: right;
     }
 }
+
 </style>

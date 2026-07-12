@@ -53,6 +53,7 @@
                         :observations="observations"
                         :timezone="report.report.timezone"
                         :selectedSegmentId="selectedSegmentId"
+                        :selectedPoint="selectedPoint"
                         @select="activityReportStore.selectSegment($event)"
                     ></ReportMap>
                 </section>
@@ -72,7 +73,9 @@
                         :segments="segments"
                         :timezone="report.report.timezone"
                         :selectedSegmentId="selectedSegmentId"
+                        :selectedPointId="selectedPoint?.id ?? null"
                         @select="activityReportStore.selectSegment($event)"
+                        @select-point="activityReportStore.selectPoint($event)"
                     ></ReportTable>
                 </section>
             </template>
@@ -100,7 +103,7 @@ import { useActivityReportStore } from '@/stores/activityReportStore';
 
 const activityReportStore = useActivityReportStore();
 const {
-    loading, error, hasReport, isEmpty, isTimeline, selectedSegmentId,
+    loading, error, hasReport, isEmpty, isTimeline, selectedSegmentId, selectedPoint,
     getReport: report, getSummary: summary, getSubject: subject,
     getSegments: segments, getObservations: observations,
 } = storeToRefs(activityReportStore);
