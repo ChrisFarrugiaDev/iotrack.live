@@ -69,12 +69,23 @@ Route checks:
 
 Important current behavior:
 
-- Some routes only require authentication and do additional scope checks inside
-  controllers.
-- Backend list endpoints should still be reviewed so broad lists are scoped by
-  the authenticated user's accessible organisations, assets, or devices.
-- `requirePermissions` currently reloads permission keys even though
-  `authMiddleware` already attaches `request.userPerms`.
+- `requirePermissions` uses `request.userPerms` attached by `authMiddleware`,
+  with a fallback lookup only when it is missing.
+- Read routes require matching view permissions: `asset.view` on the asset
+  list, `device.view` on the device list and detail, `user.view` on the user
+  list and `user/:id/*` subroutes. `device/catalog`,
+  `user/assignment-options`, and `access-profile` stay open to any
+  authenticated user by design.
+- Asset and device list responses are scoped to the requester's accessible
+  organisations (with per-user deny overrides), matching access-profile
+  visibility.
+- `POST /api/user/assignment-options` rejects `org_id` values outside the
+  requester's accessible org scope. Its resource lookups intentionally run as
+  root so options are not filtered by the requester's personal overrides.
+- `user/:id/*` subroutes return 403 when the target user's organisation is
+  outside the requester's accessible org scope.
+- Some routes additionally do org scope checks inside controllers (for
+  example device detail and group reads).
 
 ## Access Profile Contract
 
@@ -116,8 +127,9 @@ Runtime checks:
 Route and UI behavior:
 
 - Authenticated routes require a JWT in `authStore`.
-- List routes for organisations, users, assets, devices, and groups redirect to
-  `map.view` if the matching `*.view` permission is missing.
+- List, create, and update routes for organisations, users, assets, devices,
+  and groups redirect to `map.view` when the matching permission is missing
+  (see the `routePermissions` map in `src/router/index.ts`).
 - Buttons for create, update, delete, and assign-device actions are hidden when
   the related permission is missing.
 - User create/update screens use role defaults plus selected permissions to
@@ -125,18 +137,19 @@ Route and UI behavior:
 
 ## Current Findings
 
-Known permission gaps or cleanup items:
+Remaining gaps:
 
-- `POST /api/teltonika/codec12/commands/:imei` currently queues physical device
-  commands and should require auth, validation, and a command-specific
-  permission.
-- Frontend `Groups` appears in the sidebar even when `group.view` is missing,
-  while the router guard redirects direct access.
-- `GroupView.vue` uses `device.create` to show the group create tab. It should
-  use `group.create`.
-- Frontend route guards cover list routes, but create and update child routes
-  should also be aligned with backend permission keys.
-- Audit, Reports, and Alarms appear as sidebar items but do not yet have clear
-  route and permission behavior.
-- Access-profile authorization metadata now uses
-  `authorization.permissions`.
+- Audit, Reports, and Alarms appear as sidebar placeholders without routes or
+  permission gating. Proposed keys and routes are defined in
+  `web.frontend.vue/ROADMAP.md`.
+
+Previously listed gaps that are now resolved (see the service `ROADMAP.md`
+files for details):
+
+- The Codec 12 command route requires auth, validation, and `device.command`.
+- The `Groups` sidebar item is hidden without `group.view`, and the group
+  create tab checks `group.create`.
+- Frontend route guards cover list, create, and update child routes.
+- Backend read routes require view permissions, list responses are org-scoped,
+  and assignment-options and `user/:id/*` reject out-of-scope targets.
+- Access-profile authorization metadata uses `authorization.permissions`.
