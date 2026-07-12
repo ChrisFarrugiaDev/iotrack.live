@@ -19,8 +19,30 @@ expected runtime behavior.
 ## Recommended Work
 
 - [ ] Define future sidebar items before enabling workflows.
-  - Audit, Reports, and Alarms currently appear as future UI sections.
-  - Add routes and permission keys before treating them as complete features.
+  - Audit, Reports, and Alarms currently appear in `TheSidebar.vue` as
+    placeholder items with no click handler, no routes, and no permission
+    gating; they are visible to every user.
+  - Current state of permission keys:
+    - `audit.view` already exists in `initdb-scripts/05-tables.sql`
+      (category `admin`) but is unused by backend and frontend.
+    - Reports and Alarms have no permission keys yet.
+  - Proposed keys, following the existing `<entity>.<action>` convention:
+    - Audit: `audit.view` (read-only section; no create/update planned).
+    - Reports: `report.view`, plus `report.create` if report definitions
+      become user-editable.
+    - Alarms: `alarm.view`, `alarm.create`, `alarm.update`, `alarm.delete`.
+  - Proposed routes, following the existing route naming convention:
+    - `/audit` → `audit.list`.
+    - `/reports` → `reports.list` (+ `reports.create` if needed).
+    - `/alarms` → `alarms.list`, `alarms.create`, `alarms.edit`.
+  - Implementation order when a section is picked up:
+    1. Seed permission keys in `initdb-scripts` and enforce them in
+       `web.backend.node.ts` (security boundary).
+    2. Add routes and views, plus entries in the router
+       `routePermissions` map.
+    3. Gate the sidebar item with `authorizationStore.can(...)` and wire
+       its `goToView(...)` click handler.
+  - Until then the sidebar items stay as visible placeholders by choice.
 
 
 ## Completed

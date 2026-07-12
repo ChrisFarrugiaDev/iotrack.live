@@ -19,13 +19,6 @@ expected runtime behavior.
 
 ## Recommended Work
 
-- [x] Secure the Codec 12 command route.
-  - Add `authMiddleware` to `POST /api/teltonika/codec12/commands/:imei`.
-  - Add Zod validation for `imei` and command payloads.
-  - Add a command-specific permission, for example `device.command`.
-  - Add the new permission to `initdb-scripts/05-tables.sql` and assign safe
-    role defaults deliberately.
-
 - [ ] Review authenticated list endpoints.
   - Confirm whether each list route should require a matching `*.view`
     permission.
@@ -34,14 +27,21 @@ expected runtime behavior.
   - Keep backend authorization as the final authority even when the frontend
     hides restricted UI.
 
-- [ ] Simplify permission middleware.
-  - Prefer `request.userPerms` when `authMiddleware` has already loaded it.
-  - Keep a fallback to `AccessProfileController.getUserPermissionKeys` for
-    defensive behavior.
-  - Preserve the root role bypass for role ID `1`.
-
 
 ## Completed
+
+- [x] Simplify permission middleware.
+  - `requirePermissions` now uses `request.userPerms` loaded by
+    `authMiddleware`, falling back to
+    `AccessProfileController.getUserPermissionKeys` only when missing.
+  - The root role bypass for role ID `1` is unchanged.
+
+- [x] Secure the Codec 12 command route.
+  - `POST /api/teltonika/codec12/commands/:imei` now runs `authMiddleware`,
+    Zod validation for the `imei` param and command body, and
+    `requirePermissions(["device.command"])`.
+  - `device.command` is seeded in `initdb-scripts/05-tables.sql` with role
+    defaults.
 
 - [x] Document the current permission model.
   - `docs/PERMISSIONS.md` now explains database permission setup, backend

@@ -11,7 +11,9 @@ export const requirePermissions = (required: string[]) => {
             return;
         }
 
-        const perms = await AccessProfileController.getUserPermissionKeys(
+        // Prefer the permissions authMiddleware already attached; fall back
+        // to a fresh lookup if the request reached us without them.
+        const perms = request.userPerms ?? await AccessProfileController.getUserPermissionKeys(
             { id: request.userID!, role_id: Number(request.userRoleID!) }
         );
 
