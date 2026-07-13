@@ -6,7 +6,7 @@ This app is the user-facing dashboard for the platform. It handles login,
 management screens, permission-aware navigation, map views, and live telemetry
 updates.
 
-For deeper architecture notes and current risks, read `FRONTEND_ANALYSIS.md`.
+For deeper architecture notes and current risks, read `docs/FRONTEND_ANALYSIS.md`.
 
 ## How It Fits
 

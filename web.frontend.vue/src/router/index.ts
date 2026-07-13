@@ -123,7 +123,7 @@ const router = createRouter({
 
 		// Reports
 		// Placeholder UI on mocked data. No routePermissions entry yet — the
-		// report.view key is not seeded (see ACTIVITY_REPORT_UI_ROADMAP.md).
+		// report.view key is not seeded (see docs/features/ACTIVITY_REPORT_UI_ROADMAP.md).
 		{
 			path: '/reports/activity',
 			name: 'reports.activity',

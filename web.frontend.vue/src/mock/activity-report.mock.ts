@@ -1,6 +1,6 @@
 // Mock Activity Report — placeholder UI only, no backend involved.
 //
-// Deliberately awkward data (see ACTIVITY_REPORT_UI_ROADMAP.md guardrail 3).
+// Deliberately awkward data (see docs/features/ACTIVITY_REPORT_UI_ROADMAP.md guardrail 3).
 // A clean three-journey day would produce a UI that looks great and then breaks
 // on real telemetry, so this fixture covers the cases from design doc §36.2:
 //

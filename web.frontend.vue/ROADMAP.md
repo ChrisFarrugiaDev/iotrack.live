@@ -24,7 +24,7 @@ expected runtime behavior.
     is not seeded, there is no `routePermissions` entry, and the report is
     built from **mocked telemetry**. It is reachable by every user.
   - Seed the key, add `'reports.activity': 'report.view'` to the router map,
-    and gate the sidebar item. See `ACTIVITY_REPORT_UI_ROADMAP.md` and design
+    and gate the sidebar item. See `docs/features/ACTIVITY_REPORT_UI_ROADMAP.md` and design
     doc §20.
 
 - [ ] Define future sidebar items before enabling workflows.
@@ -58,7 +58,7 @@ expected runtime behavior.
 
 - [x] Improve user form asset/device/org selectors.
   - Chip walls capped, whole-org selection, and group quick-pick; tracked in
-    `USER_FORM_UI_ROADMAP.md`.
+    `docs/features/USER_FORM_UI_ROADMAP.md`.
 
 - [x] Expand route guard coverage.
   - `router/index.ts` now maps every list/create/update child route to its
