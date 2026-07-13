@@ -32,15 +32,15 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 1 — HTTP skeleton
 
-- [ ] `internal/httpserver/httpserver.go` — `NewHttpServer(app, port,
+- [x] `internal/httpserver/httpserver.go` — `NewHttpServer(app, port,
       closedCh)` + graceful shutdown, modelled on
       `file.server.go/internal/httpserver`.
-- [ ] `internal/api/routers/router.go` — chi root router (Recoverer,
+- [x] `internal/api/routers/router.go` — chi root router (Recoverer,
       RequestID, CORS as in the file server), everything mounted under
       `/compute`.
-- [ ] `GET /compute/health` — returns 200 and the service name; lives in
+- [x] `GET /compute/health` — returns 200 and the service name; lives in
       `internal/api/handlers/health_handler.go`.
-- [ ] Rewrite `cmd/app/main.go` to the SPEC boot sequence (logger → env →
+- [x] Rewrite `cmd/app/main.go` to the SPEC boot sequence (logger → env →
       appcore → DB → signal ctx → HTTP → graceful shutdown). The prototype
       one-shot query goes away here.
 - Verify: `go run ./cmd/app`, `curl localhost:4004/compute/health`, Ctrl+C
@@ -54,8 +54,10 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
       context keys, not bare strings).
 - [ ] Wire it onto the `/compute/reports` sub-router only — `/compute/health`
       stays open.
-- Verify: no token → 401; garbage token → 401; real token from a Node login
-  → passes through to a stub 200.
+- [ ] `jwt_auth_middleware_test.go` — httptest table: no token, malformed
+      header, bad signature, expired token → 401; valid token → next handler
+      sees userID/roleID/orgID in context.
+- Verify: tests pass, plus a real token from a Node login → stub 200.
 
 ### Step 3 — Seed `report.view`
 
@@ -74,8 +76,9 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
       `web.backend.node.ts` `requirePermissions`: `role_id == 1` bypasses;
       otherwise the role must hold the key per `app.role_permissions_view`.
 - [ ] Wire onto `/compute/reports` after the JWT middleware.
-- Verify: token for a role without the key → 403; with the key (and root)
-  → passes.
+- [ ] `permission_middleware_test.go` — httptest table: role without the key
+      → 403; role with the key → passes; role_id 1 → passes without lookup.
+- Verify: tests pass, plus the same checks with real tokens.
 
 ### Step 5 — Models and repositories
 
@@ -93,9 +96,12 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 - [ ] `telemetry_repository.go` — `RangeByAsset(ctx, assetID, from, to)`
       ordered by `happened_at ASC` (§29, §45: by asset_id, never device_id),
       raw pgx.
-- Verify: `go test ./internal/repository` with a couple of query-shape
-  tests (or a short `go run` harness against the dev DB) returning sorted
-  rows for a known asset.
+- [ ] Repository integration tests gated behind `RUN_DB_TESTS=1` (the
+      parser's `RUN_REDIS_TESTS` pattern): known asset returns sorted rows,
+      unknown asset returns none. Skipped without the flag so
+      `go test ./...` stays green anywhere.
+- Verify: `RUN_DB_TESTS=1 GOCACHE=/tmp/gocache go test ./internal/repository`
+  against the dev DB.
 
 ### Step 6 — Config and appcore
 
@@ -127,7 +133,10 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
       waiters queue, they don't fail.
 - [ ] `internal/api/routers/report_router.go` — `POST /compute/reports/activity`
       behind JWT + permission middlewares.
-- Verify: the curl matrix below.
+- [ ] `report_handler_test.go` — validation table: missing fields, bad
+      dates, `from >= to`, over-limit range → 400 with the right §34 code in
+      the body. Pins the error contract the frontend depends on.
+- Verify: tests pass, then the curl matrix below.
 
 ### Step 9 — Request logging
 

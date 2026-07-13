@@ -1,46 +1,68 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"go.uber.org/zap"
+
 	"iotrack.live/computation.server.go/internal/appcore"
 	"iotrack.live/computation.server.go/internal/db"
+	"iotrack.live/computation.server.go/internal/httpserver"
 	"iotrack.live/computation.server.go/internal/logger"
-	"iotrack.live/computation.server.go/internal/models"
 )
 
 var app appcore.App
 
 func main() {
+	// Init logging ASAP so any init problems are visible.
+	logger.InitLogger()
+	logger.Info("Booting computation server...")
 
-	// Load ENV
 	loadEnv()
 
-	// Setup Logger
-	logger.InitLogger()
-
-	// Setup DB pools
-	db, err := db.OpenDB()
+	// Setup DB pool
+	pool, err := db.OpenDB()
 	if err != nil {
-		logger.Error("Error connection to the database", zap.Error(err))
+		logger.Error("Error connecting to the database", zap.Error(err))
 		os.Exit(1)
 	}
-	app.DB = db
+	app.DB = pool
 
-	// Setup Models
-	m, err := models.New(db)
-	app.Models = m
+	// -----------------------------------------------------------------
 
-	test, err := app.Models.Telemetry.GetByID(7001786)
+	// Context cancelled on interrupt or termination signal.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	if err != nil {
-		fmt.Println(err)
+	// Channel to know when the HTTP server has fully shut down.
+	httpClosedCh := make(chan struct{})
+
+	port := os.Getenv("HTTP_PORT")
+	if port == "" {
+		port = "4004"
+	}
+	srv := httpserver.NewHttpServer(&app, port, httpClosedCh)
+	go srv.Start(ctx)
+
+	// -----------------------------------------------------------------
+	// Block until a shutdown signal arrives, then shut down gracefully.
+
+	<-ctx.Done()
+	logger.Info("Shutdown signal received, beginning graceful shutdown...")
+
+	select {
+	case <-httpClosedCh:
+		logger.Info("HTTP server shut down cleanly.")
+	case <-time.After(10 * time.Second):
+		logger.Warn("HTTP server shutdown timeout - exiting anyway.")
 	}
 
-	b, _ := json.MarshalIndent(test, "", "  ")
-	fmt.Println(string(b))
-
+	if app.DB != nil {
+		app.DB.Close()
+		logger.Info("Database connection pool closed gracefully.")
+	}
 }

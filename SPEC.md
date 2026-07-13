@@ -102,7 +102,7 @@ Important docs:
 
 - `web.frontend.vue/SPEC.md`
 - `web.frontend.vue/AGENTS.md`
-- `web.frontend.vue/FRONTEND_ANALYSIS.md`
+- `web.frontend.vue/docs/FRONTEND_ANALYSIS.md`
 
 ### `file.server.go`
 
@@ -240,7 +240,7 @@ Service docs:
 - `web.backend.node.ts/BACKEND_ANALYSIS.md`
 - `web.frontend.vue/SPEC.md`
 - `web.frontend.vue/AGENTS.md`
-- `web.frontend.vue/FRONTEND_ANALYSIS.md`
+- `web.frontend.vue/docs/FRONTEND_ANALYSIS.md`
 
 ## Development Approach
 
