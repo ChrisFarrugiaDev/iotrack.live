@@ -13,6 +13,7 @@ import (
 	"iotrack.live/computation.server.go/internal/db"
 	"iotrack.live/computation.server.go/internal/httpserver"
 	"iotrack.live/computation.server.go/internal/logger"
+	"iotrack.live/computation.server.go/internal/repository"
 )
 
 var app appcore.App
@@ -39,6 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 	app.DB = pool
+	app.Repo = repository.NewRepository(pool)
 
 	// -----------------------------------------------------------------
 

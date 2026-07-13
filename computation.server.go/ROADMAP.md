@@ -72,11 +72,11 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 4 — Permission middleware
 
-- [ ] `internal/api/middlewares/permission_middleware.go` — mirrors
+- [x] `internal/api/middlewares/permission_middleware.go` — mirrors
       `web.backend.node.ts` `requirePermissions`: `role_id == 1` bypasses;
       otherwise the role must hold the key per `app.role_permissions_view`.
-- [ ] Wire onto `/compute/reports` after the JWT middleware.
-- [ ] `permission_middleware_test.go` — httptest table: role without the key
+- [x] Wire onto `/compute/reports` after the JWT middleware.
+- [x] `permission_middleware_test.go` — httptest table: role without the key
       → 403; role with the key → passes; role_id 1 → passes without lookup.
 - Verify: tests pass, plus the same checks with real tokens.
 
