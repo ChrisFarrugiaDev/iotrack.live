@@ -61,11 +61,11 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 3 — Seed `report.view`
 
-- [ ] Add `report.view` to `app.permissions` in
+- [x] Add `report.view` to `app.permissions` in
       `initdb-scripts/05-tables.sql` with deliberate `role_permissions`
       defaults (§20). This is the same seed the frontend sidebar gating
       needs — one seed serves both (frontend ROADMAP "security debt" item).
-- [ ] Apply the same INSERTs manually to the running dev database —
+- [x] Apply the same INSERTs manually to the running dev database —
       initdb scripts only run on a fresh volume.
 - Verify: `SELECT * FROM app.role_permissions_view WHERE key='report.view';`
   shows the intended roles.
