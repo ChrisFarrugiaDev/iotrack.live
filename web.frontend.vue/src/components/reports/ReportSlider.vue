@@ -42,13 +42,22 @@
                 ></span>
             </div>
 
+            <!-- The input runs on the same time axis as the bands, not on point
+                 index — points are dense in journeys and absent in gaps, so an
+                 index-driven thumb drifts off the band it belongs to. Dragging
+                 picks the nearest point in time. -->
             <input
                 class="rslider__input"
                 type="range"
                 min="0"
-                :max="points.length - 1"
-                :value="index < 0 ? 0 : index"
-                @input="scrub(($event.target as HTMLInputElement).valueAsNumber)"
+                :max="spanMs"
+                step="1000"
+                :value="valueMs"
+                @input="scrubToTime(($event.target as HTMLInputElement).valueAsNumber)"
+                @keydown.left.prevent="step(-1)"
+                @keydown.right.prevent="step(1)"
+                @keydown.down.prevent="step(-1)"
+                @keydown.up.prevent="step(1)"
             />
         </div>
 
@@ -79,36 +88,66 @@ const emit = defineEmits<{
 
 const current = computed<ReportPoint | null>(() => props.points[props.index] ?? null);
 
+const ms = (iso: string) => new Date(iso).getTime();
+
+/** The report's window. Bands and the thumb share this one axis. */
+const startMs = computed(() => (props.segments.length ? ms(props.segments[0].startAt) : 0));
+const spanMs = computed(() => {
+    if (!props.segments.length) return 0;
+
+    return Math.max(0, ms(props.segments[props.segments.length - 1].endAt) - startMs.value);
+});
+
+/** Where the selected point sits on the time axis. */
+const valueMs = computed(() =>
+    current.value ? ms(current.value.timestamp) - startMs.value : 0
+);
+
 /**
  * The report's whole span, laid out proportionally in time. Data gaps take up
  * real width here even though they contain no points — the day did not pause.
  */
 const bands = computed(() => {
-    if (!props.segments.length) return [];
-
-    const start = new Date(props.segments[0].startAt).getTime();
-    const end = new Date(props.segments[props.segments.length - 1].endAt).getTime();
-    const span = end - start;
-    if (span <= 0) return [];
+    if (!spanMs.value) return [];
 
     return props.segments.map(segment => {
-        const from = new Date(segment.startAt).getTime();
-        const to = new Date(segment.endAt).getTime();
+        const from = ms(segment.startAt);
+        const to = ms(segment.endAt);
 
         return {
             id: segment.id,
             type: segment.type,
             label: segment.type.replace('_', ' '),
-            start: ((from - start) / span) * 100,
-            width: ((to - from) / span) * 100,
+            start: ((from - startMs.value) / spanMs.value) * 100,
+            width: ((to - from) / spanMs.value) * 100,
         };
     });
 });
 
 // - Methods -----------------------------------------------------------
 
-function scrub(index: number) {
-    emit('scrub', index);
+/**
+ * Snap a point on the time axis to the nearest telemetry point. A gap holds no
+ * points, so dragging across one lands on the fix either side of it rather than
+ * inventing a position inside it.
+ */
+function scrubToTime(offsetMs: number) {
+    if (!props.points.length) return;
+
+    const target = startMs.value + offsetMs;
+
+    let nearest = 0;
+    let best = Infinity;
+
+    props.points.forEach((point, i) => {
+        const distance = Math.abs(ms(point.timestamp) - target);
+        if (distance < best) {
+            best = distance;
+            nearest = i;
+        }
+    });
+
+    if (nearest !== props.index) emit('scrub', nearest);
 }
 
 function step(delta: number) {
@@ -208,10 +247,12 @@ function step(delta: number) {
         top: 0;
         bottom: 0;
 
+        // Same segment colours as the table, summary and map — one colour
+        // language across the report.
         &--journey       { background: var(--color-blue-500); }
         &--active_static { background: var(--color-amber-500); }
-        &--stationary    { background: var(--color-zinc-400); }
-        &--data_gap      { background: var(--color-red-500); opacity: .55; }
+        &--stationary    { background: var(--color-zinc-500); }
+        &--data_gap      { background: var(--color-red-500); }
     }
 
     &__input {
