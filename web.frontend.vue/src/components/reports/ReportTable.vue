@@ -88,6 +88,7 @@
                                         <th class="rpoints__th rtable__th--num">Speed</th>
                                         <th class="rpoints__th">Ignition</th>
                                         <th class="rpoints__th">Activity</th>
+                                        <th class="rpoints__th">iButton / RFID</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -103,6 +104,7 @@
                                         <td class="rpoints__cell rtable__cell--num">{{ formatSpeed(point.speedKph) }}</td>
                                         <td class="rpoints__cell">{{ boolLabel(point.ignitionOn) }}</td>
                                         <td class="rpoints__cell">{{ boolLabel(point.activityOn) }}</td>
+                                        <td class="rpoints__cell">{{ driverTag(point.parameters) ?? '—' }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -122,6 +124,7 @@
 import { nextTick, ref, watch } from 'vue';
 import type { ActivitySegment, ActivityState, ReportPoint } from '@/types/activity-report.type';
 import {
+    driverTag,
     formatCoords,
     formatDistance,
     formatDuration,

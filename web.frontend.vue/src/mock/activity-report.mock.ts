@@ -67,8 +67,9 @@ function buildPoints(opts: {
     ignitionOn: boolean | null;
     activityOn: boolean | null;
     stopAt?: { from: number; to: number };
+    parameters?: Record<string, unknown>;
 }): ReportPoint[] {
-    const { startAt, endAt, path, count, speedKph, ignitionOn, activityOn, stopAt } = opts;
+    const { startAt, endAt, path, count, speedKph, ignitionOn, activityOn, stopAt, parameters } = opts;
 
     const start = new Date(startAt).getTime();
     const total = new Date(endAt).getTime() - start;
@@ -94,6 +95,7 @@ function buildPoints(opts: {
             altitude: 20 + (i % 15),
             ignitionOn,
             activityOn,
+            parameters,
         };
     });
 }
@@ -107,6 +109,13 @@ const MARSA: LatLng = [35.8617, 14.4885];
 const RESUME: LatLng = [35.8410, 14.5390]; // where data comes back after the gap
 
 const loc = ([latitude, longitude]: LatLng) => ({ latitude, longitude });
+
+// - Driver tags -------------------------------------------------------
+// IO 78 (iButton) and IO 207 (RFID). A fix carries at most one. The morning
+// driver signs in with an iButton; a second driver takes over after the break
+// with an RFID card; nobody is signed in while the vehicle is parked.
+const DRIVER_IBUTTON = '122600709064491241';
+const DRIVER_RFID = '4207891635';
 
 // - Segments ----------------------------------------------------------
 
@@ -134,6 +143,7 @@ const journey1: JourneySegment = {
         ignitionOn: true,
         activityOn: false,
         stopAt: { from: 0.45, to: 0.52 }, // traffic light — must not split the journey
+        parameters: { ibutton: DRIVER_IBUTTON },
     }),
     pointCount: 0,
 };
@@ -155,6 +165,7 @@ const activeStatic: ActiveStaticSegment = {
         speedKph: 0,
         ignitionOn: true,
         activityOn: true,
+        parameters: { ibutton: DRIVER_IBUTTON },
     }),
     pointCount: 0,
 };
@@ -179,6 +190,7 @@ const journey2: JourneySegment = {
         speedKph: 35,
         ignitionOn: true,
         activityOn: false,
+        parameters: { ibutton: DRIVER_IBUTTON },
     }),
     pointCount: 0,
 };
@@ -222,6 +234,7 @@ const journey3: JourneySegment = {
         speedKph: 45,
         ignitionOn: true,
         activityOn: false,
+        parameters: { rfid: DRIVER_RFID }, // second driver, RFID card not iButton
     }),
     pointCount: 0,
 };
@@ -258,6 +271,7 @@ const journey4: JourneySegment = {
         speedKph: 30,
         ignitionOn: true,
         activityOn: false,
+        parameters: { rfid: DRIVER_RFID },
     }),
     pointCount: 0,
 };

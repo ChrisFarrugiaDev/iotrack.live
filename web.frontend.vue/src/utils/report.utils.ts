@@ -51,6 +51,23 @@ export function formatCoords(latitude: number, longitude: number): string {
     return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 }
 
+/**
+ * The driver tag on a fix: iButton (IO 78) or RFID (IO 207). A payload carries
+ * at most one, so they share a column.
+ *
+ * Teltonika reports 0 when no tag is present — that is "nobody signed in", not
+ * an identifier, so it reads as absent.
+ */
+export function driverTag(parameters?: Record<string, unknown>): string | null {
+    const raw = parameters?.ibutton ?? parameters?.rfid;
+
+    if (raw === undefined || raw === null) return null;
+
+    const tag = String(raw);
+
+    return tag === '0' || tag === '' ? null : tag;
+}
+
 type Coord = { latitude: number; longitude: number };
 
 /**
