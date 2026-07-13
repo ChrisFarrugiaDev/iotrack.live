@@ -18,7 +18,7 @@
                     teleport=".dashboard"
                     :shouldAutofocusOption="false"
                     :isDisabled="loading"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.asset)]"
+                    :style="selectErrorStyle(!!errors.asset)"
                     :options="assetOptions"
                     placeholder=""
                 />
@@ -79,7 +79,7 @@ import { computed, reactive, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import VueSelect from 'vue3-select-component';
 
-import { useVueSelectStyles, selectErrorStyle } from '@/composables/useVueSelectStyles';
+import { selectErrorStyle } from '@/composables/useVueSelectStyles';
 import { useAssetStore } from '@/stores/assetStore';
 import { useActivityReportStore } from '@/stores/activityReportStore';
 
@@ -91,7 +91,6 @@ const { loading } = storeToRefs(activityReportStore);
 
 // - Data --------------------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 // The pickers work in the browser's local timezone and are converted to UTC on
 // submit (§21). The report's display timezone is a separate thing and comes

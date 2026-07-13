@@ -14,7 +14,7 @@
 				<VueSelect v-model="form.type" 
 					:shouldAutofocusOption="false"
 					:isDisabled="confirmOn" 
-					:style="[vueSelectStyles, selectErrorStyle(!!errors.type)]" class="vform__group"
+					:style="selectErrorStyle(!!errors.type)" class="vform__group"
 					:options="[
 						{ label: 'Assets Group',  value: 'asset' },
 						{ label: 'Devices Group', value: 'device' },
@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import VueSelect from "vue3-select-component";
 import { useFormErrorHandler } from '@/composables/useFormErrorHandler';
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useMessageStore } from '@/stores/messageStore';
 import { reactive, ref } from 'vue';
 import { useGroupStore } from "@/stores/groupStore";
@@ -49,7 +49,6 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 
 // - Composable --------------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
 	name: '',

@@ -12,7 +12,7 @@
             <div class="vform__group mt-7">
                 <label class="vform__label">Asset Type<span class="vform__required">*</span></label>
                 <VueSelect v-model="form.asset_type" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.asset_type)]" class="vform__group" :options="[
+                    :style="selectErrorStyle(!!errors.asset_type)" class="vform__group" :options="[
                         { label: 'Vehicle', value: 'vehicle' },
                         { label: 'Equipment / Asset', value: 'asset' },
                         { label: 'Personal', value: 'personal' },
@@ -25,14 +25,14 @@
             <div class="vform__group mt-7">
                 <label class="vform__label">Organisation<span class="vform__required">*</span></label>
                 <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]" class="vform__group"
+                    :style="selectErrorStyle(!!errors.organisation_id)" class="vform__group"
                     :options="getOrganisations" placeholder="" />
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>
             <div class="vform__group mt-7">
                 <label class="vform__label">Device</label>
                 <VueSelect v-model="form.device_id" :shouldAutofocusOption="false" :isDisabled="confirmOn || !authorizationStore.can('asset.assign-device')"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.device_id)]" class="vform__group"
+                    :style="selectErrorStyle(!!errors.device_id)" class="vform__group"
                     :options="getDevices" placeholder="" />
                 <p class="vform__error">{{ errors.device_id }}</p>
             </div>
@@ -50,7 +50,7 @@
 					v-model="form.speed_units"
 					:shouldAutofocusOption="false"
 					:isDisabled="confirmOn"
-					:style="[vueSelectStyles, selectErrorStyle(!!errors.speed_units)]"
+					:style="selectErrorStyle(!!errors.speed_units)"
 					class="vform__group"
 					:options="[
 						{ label: 'km/h', value: 'kmh' },
@@ -163,7 +163,7 @@ import { computed, reactive, ref, toRaw, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import VueSelect from 'vue3-select-component';
 
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useAssetStore } from '@/stores/assetStore';
 import { useDeviceStore } from '@/stores/deviceStore';
 import { useOrganisationStore } from '@/stores/organisationStore';
@@ -175,7 +175,6 @@ import { useFormErrorHandler } from '@/composables/useFormErrorHandler';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
 
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
     name: '',

@@ -7,6 +7,13 @@ Use this file as the primary context when working inside the Vue frontend.
 - Read `SPEC.md` before changing routing, permissions, runtime configuration,
   state hydration, deployment behavior, or user-facing behavior.
 - Read `ROADMAP.md` for current frontend follow-up work.
+- Read `ACTIVITY_REPORT_UI_ROADMAP.md` before touching anything under
+  `src/components/reports/`, `src/views/reports/`, `src/stores/activityReportStore.ts`
+  or `src/mock/`. That feature runs on a **mock fixture with no backend**, and the
+  file lists invariants (data gaps are never solid routes, `null` is not `false`,
+  course over ground not device heading) that look like quirks but are not.
+- Read `USER_FORM_UI_ROADMAP.md` before changing the user create/edit form
+  selectors.
 - Read `FRONTEND_ANALYSIS.md` only when you need deeper architecture notes,
   risks, or priority context.
 - Do not load broader project docs unless the task crosses service boundaries or

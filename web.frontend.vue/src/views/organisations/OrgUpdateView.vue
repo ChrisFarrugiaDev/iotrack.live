@@ -14,7 +14,7 @@
                 <label class="vform__label" for="parent_org_id">Parent Organisation<span
                         class="vform__required">*</span></label>
                 <VueSelect v-model="form.parent_org_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.parent_org_id)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.parent_org_id)"
                     :options="getOrganisations" placeholder="" id="parent_org_id" />
                 <p class="vform__error">{{ errors.parent_org_id }}</p>
             </div>
@@ -25,7 +25,7 @@
             <div class="vform__group mb-7">
                 <label class="vform__label">Inherit Maps API key<span class="vform__required">*</span></label>
                 <VueSelect v-model="form.can_inherit_maps_key" class="vform__group" :shouldAutofocusOption="false"
-                    :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.can_inherit_maps_key)]" :options="[
+                    :isDisabled="confirmOn" :style="selectErrorStyle(!!errors.can_inherit_maps_key)" :options="[
                         { label: 'Yes', value: true },
                         { label: 'No', value: false },
                     ]" placeholder="" />
@@ -48,7 +48,7 @@
             <div class="vform__group mb-7">
                 <label class="vform__label">Inherit AI API key<span class="vform__required">*</span></label>
                 <VueSelect v-model="form.can_inherit_ai_key" class="vform__group" :shouldAutofocusOption="false"
-                    :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.can_inherit_ai_key)]" :options="[
+                    :isDisabled="confirmOn" :style="selectErrorStyle(!!errors.can_inherit_ai_key)" :options="[
                         { label: 'Yes', value: true },
                         { label: 'No', value: false },
                     ]" placeholder="" />
@@ -86,7 +86,7 @@ import VueSelect from "vue3-select-component";
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useFormErrorHandler } from '@/composables/useFormErrorHandler';
 
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useMessageStore } from '@/stores/messageStore';
 import { useOrganisationStore } from '@/stores/organisationStore';
 import { computed, onMounted, reactive, ref, toRaw, watch } from 'vue';
@@ -97,7 +97,6 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 
 // - Composable --------------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
     name: '',

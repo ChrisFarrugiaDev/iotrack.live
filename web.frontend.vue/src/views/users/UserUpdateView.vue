@@ -37,7 +37,7 @@
             <div class="vform__group mb-7">
                 <label class="vform__label" for="active">Active <span class="vform__required">*</span></label>
                 <VueSelect v-model="form.active" class="vform__group" :shouldAutofocusOption="false"
-                    :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]" :options="[
+                    :isDisabled="confirmOn" :style="selectErrorStyle(!!errors.status)" :options="[
                         { label: 'Yes', value: true },
                         { label: 'No', value: false }
                     ]" placeholder="" />
@@ -51,7 +51,7 @@
             <div class="vform__group mb-7" @click="roleChangedByUser = true">
                 <label class="vform__label" for="role">Role <span class="vform__required">*</span></label>
                 <VueSelect v-model="form.role_id" class="vform__group" :shouldAutofocusOption="false"
-                    :isDisabled="confirmOn" :style="[vueSelectStyles, selectErrorStyle(!!errors.role)]"
+                    :isDisabled="confirmOn" :style="selectErrorStyle(!!errors.role)"
                     :options="roleOptions" placeholder="" />
                 <p class="vform__error">{{ errors.role }}</p>
             </div>
@@ -61,7 +61,7 @@
                 <label class="vform__label" for="organisation_id">Organisation<span
                         class="vform__required">*</span></label>
                 <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.organisation_id)"
                     :options="getOrganisations" placeholder="" id="organisation_id" />
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>
@@ -110,7 +110,7 @@
 import VueSelect from "vue3-select-component";
 import TheFlashMessage from '@/components/commen/TheFlashMessage.vue';
 import { useFormErrorHandler } from '@/composables/useFormErrorHandler';
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useMessageStore } from '@/stores/messageStore';
 import { useUserStore } from '@/stores/userStore';
 import type { User } from '@/types/user.type';
@@ -132,7 +132,6 @@ const dashboardStore = useDashboardStore();
 
 // - Composable --------------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
     first_name: '',

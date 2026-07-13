@@ -16,7 +16,7 @@
             <div class="vform__group mb-7">
                 <label class="vform__label">External ID Type <span class="vform__required">*</span></label>
                 <VueSelect v-model="form.external_id_type" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.external_id_type)]" class="vform__group" 
+                    :style="selectErrorStyle(!!errors.external_id_type)" class="vform__group" 
                     :options="[
                         { label: 'Imei', value: 'imei' },
                     ]" placeholder="" />
@@ -32,7 +32,7 @@
                 <label class="vform__label" for="organisation_id">Organisation<span
                         class="vform__required">*</span></label>
                 <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.organisation_id)"
                     :options="getOrganisations" placeholder="" id="organisation_id" />
                 <p class="vform__error">{{ errors.organisation_id }}</p>
             </div>
@@ -42,7 +42,7 @@
                 <div class="vform__group mb-7">
                     <label class="vform__label">Vendor<span class="vform__required">*</span></label>
                     <VueSelect v-model="form.vendor" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                        :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]" class="vform__group"
+                        :style="selectErrorStyle(!!errors.vendor)" class="vform__group"
                         :options="vendorOptions" placeholder="" />
                     <p class="vform__error">{{ errors.vendor }}</p>
                 </div>
@@ -52,7 +52,7 @@
                     <VueSelect v-model="form.model"
                         :shouldAutofocusOption="false"
                         :isDisabled="confirmOn"
-                        :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]" class="vform__group"
+                        :style="selectErrorStyle(!!errors.model)" class="vform__group"
                         :options="modelOptions" placeholder="" />
                     <p class="vform__error">{{ errors.model }}</p>
                 </div>
@@ -69,7 +69,7 @@
                 <VueSelect v-model="form.protocol"
                     :shouldAutofocusOption="false" 
                     :isDisabled="confirmOn" class="vform__group"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.protocol)]" 
+                    :style="selectErrorStyle(!!errors.protocol)" 
                     :options="[
                         { label: '4G', value: '4G' },
                     ]" placeholder="" />
@@ -81,7 +81,7 @@
                 <VueSelect v-model="form.status" class="vform__group"
                     :shouldAutofocusOption="false" 
                     :isDisabled="confirmOn" 
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]"  :options="[
+                    :style="selectErrorStyle(!!errors.status)"  :options="[
                         { label: 'New', value: 'new' },
                         { label: 'Active', value: 'active' },
                         { label: 'Disabled', value: 'disabled' },
@@ -95,7 +95,7 @@
                 <input v-model.trim="form.iccid" class="vform__input" id="iccid" type="text"
                     placeholder="Enter SIM Card ICCID" 
                     :disabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.iccid)]">
+                    :style="selectErrorStyle(!!errors.iccid)">
                 <p class="vform__error">{{ errors.iccid }}</p>
             </div>
 
@@ -104,7 +104,7 @@
                 <input v-model.trim="form.msisdn" 
                     class="vform__input" id="msisdn" type="text"
                     placeholder="Enter SIM Card MSISDN" :disabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.msisdn)]">
+                    :style="selectErrorStyle(!!errors.msisdn)">
                 <p class="vform__error">{{ errors.msisdn }}</p>
             </div>
 
@@ -124,7 +124,7 @@
 <script setup lang="ts">
 import VueSelect from "vue3-select-component";
 import { onActivated, onBeforeMount, onMounted, reactive, ref, watch } from 'vue';
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { computed } from "vue";
 import { useOrganisationStore } from "@/stores/organisationStore";
 import { useDeviceStore } from "@/stores/deviceStore";
@@ -136,7 +136,6 @@ import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
 
 // - Composable --------------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
     external_id: '',

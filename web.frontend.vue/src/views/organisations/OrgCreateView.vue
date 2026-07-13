@@ -13,7 +13,7 @@
                 <label class="vform__label" for="parent_org_id">Parent Organisation<span
                         class="vform__required">*</span></label>
                 <VueSelect v-model="form.parent_org_id" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.parent_org_id)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.parent_org_id)"
                     :options="getOrganisations" placeholder="" id="parent_org_id" />
                 <p class="vform__error">{{ errors.parent_org_id }}</p>
             </div>
@@ -26,7 +26,7 @@
                 <VueSelect v-model="form.can_inherit_maps_key" class="vform__group"
                     :shouldAutofocusOption="false"
                     :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.can_inherit_maps_key)]"
+                    :style="selectErrorStyle(!!errors.can_inherit_maps_key)"
                     :options="[
                         { label: 'Yes', value: true },
                         { label: 'No', value: false },
@@ -52,7 +52,7 @@
                 <VueSelect v-model="form.can_inherit_ai_key" class="vform__group"
                     :shouldAutofocusOption="false"
                     :isDisabled="confirmOn"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.can_inherit_ai_key)]"
+                    :style="selectErrorStyle(!!errors.can_inherit_ai_key)"
                     :options="[
                         { label: 'Yes', value: true },
                         { label: 'No', value: false },
@@ -87,7 +87,7 @@
 import VueSelect from "vue3-select-component";
 import { useMessageStore } from '@/stores/messageStore';
 import { computed, reactive, ref, watch } from 'vue';
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useOrganisationStore } from "@/stores/organisationStore";
 import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
 import { useDashboardStore } from "@/stores/dashboardStore";
@@ -95,7 +95,6 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 
 // - Composable --------------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
     name: '',

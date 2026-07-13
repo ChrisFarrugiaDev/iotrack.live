@@ -8,7 +8,7 @@
                 class="vform__group"
                 :shouldAutofocusOption="false"
                 :isDisabled="confirmOn"
-                :style="vueSelectStyles"
+
                 :options="groupOptions"
                 placeholder=""
                 id="asset_group"
@@ -55,7 +55,6 @@
 <script setup lang="ts">
 import { useUserAssignableStore } from '@/stores/userAssignableStore';
 import { useGroupStore } from '@/stores/groupStore';
-import { useVueSelectStyles } from '@/composables/useVueSelectStyles';
 import { computed, ref, watch } from 'vue';
 
 import VueSelect from 'vue3-select-component';
@@ -98,7 +97,6 @@ const assetsOptions = ref<Record<string, any>[]>([]);
 
 // - Select by group -----------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 // '' = no group (default). The full tree stays visible either way.
 const groupPick = ref<string>('');
