@@ -18,10 +18,19 @@ expected runtime behavior.
 
 ## Recommended Work
 
+- [ ] **Gate the Reports sidebar item on `report.view` (security debt).**
+  - On branch `feat/activity-report-ui`, Reports now opens a flyout
+    (`TheReportsMenu.vue`) leading to the Activity Report — but `report.view`
+    is not seeded, there is no `routePermissions` entry, and the report is
+    built from **mocked telemetry**. It is reachable by every user.
+  - Seed the key, add `'reports.activity': 'report.view'` to the router map,
+    and gate the sidebar item. See `docs/features/ACTIVITY_REPORT_UI_ROADMAP.md` and design
+    doc §20.
+
 - [ ] Define future sidebar items before enabling workflows.
-  - Audit, Reports, and Alarms currently appear in `TheSidebar.vue` as
-    placeholder items with no click handler, no routes, and no permission
-    gating; they are visible to every user.
+  - Audit and Alarms still appear in `TheSidebar.vue` as placeholder items with
+    no click handler, no routes, and no permission gating; they are visible to
+    every user. (Reports is now wired — see the item above.)
   - Current state of permission keys:
     - `audit.view` already exists in `initdb-scripts/05-tables.sql`
       (category `admin`) but is unused by backend and frontend.
@@ -49,7 +58,7 @@ expected runtime behavior.
 
 - [x] Improve user form asset/device/org selectors.
   - Chip walls capped, whole-org selection, and group quick-pick; tracked in
-    `USER_FORM_UI_ROADMAP.md`.
+    `docs/features/USER_FORM_UI_ROADMAP.md`.
 
 - [x] Expand route guard coverage.
   - `router/index.ts` now maps every list/create/update child route to its

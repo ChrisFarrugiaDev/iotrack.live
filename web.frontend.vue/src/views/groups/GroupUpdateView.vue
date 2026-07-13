@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import TheFlashMessage from "@/components/commen/TheFlashMessage.vue";
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useGroupStore } from "@/stores/groupStore";
 import { useMessageStore } from "@/stores/messageStore";
 import type { Group } from "@/types/group.type";
@@ -70,7 +70,6 @@ import { useFormErrorHandler } from "@/composables/useFormErrorHandler";
 
 
 
-const vueSelectStyles = useVueSelectStyles();
 
 const errors = ref<Record<string, string>>({
 	name: '',

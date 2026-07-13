@@ -1,5 +1,5 @@
 <template>
-    <section v-if="authorizationStore.getUserPermissions.size" id="the-sidebar" class="sidebar v-ui" :data-theme="getSidebarTheme" :class="{ 'sidebar__open': getIsUserMenuOpen }">
+    <section v-if="authorizationStore.getUserPermissions.size" id="the-sidebar" class="sidebar v-ui" :data-theme="getSidebarTheme" :class="{ 'sidebar__open': getIsUserMenuOpen || getIsReportsMenuOpen }">
 
         <div class="sidebar__space sidebar__space--top"></div>
 
@@ -98,13 +98,19 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__item">
-            <svg class="sidebar__svg ">
-                <use xlink:href="@/ui/svg/sprite.svg#icon-reports"></use>
-            </svg>
-            <div class="sidebar__text">
-                <span>Reports</span>
+        <div class="sidebar__group">
+            <div id="reports-btn" class="sidebar__item" @click="toggleReportsMenu">
+                <svg class="sidebar__svg ">
+                    <use xlink:href="@/ui/svg/sprite.svg#icon-reports"></use>
+                </svg>
+                <div class="sidebar__text">
+                    <span>Reports</span>
+                </div>
             </div>
+
+            <section class="modal" v-if="getIsReportsMenuOpen">
+                <TheReportsMenu></TheReportsMenu>
+            </section>
         </div>
 
         <div class="sidebar__line"></div>
@@ -142,6 +148,7 @@ import { useDashboardStore } from '@/stores/dashboardStore';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import TheUserMenu from './TheUserMenu.vue';
+import TheReportsMenu from './TheReportsMenu.vue';
 import { computed, onMounted } from 'vue';
 import { useAuthorizationStore } from '@/stores/authorizationStore';
 
@@ -153,7 +160,7 @@ const router = useRouter();
 // - Store -------------------------------------------------------------
 
 const dashboardStore = useDashboardStore()
-const { getIsUserMenuOpen, getTheme } = storeToRefs(dashboardStore);
+const { getIsUserMenuOpen, getIsReportsMenuOpen, getTheme } = storeToRefs(dashboardStore);
 
 
 const getSidebarTheme = computed(() => {
@@ -169,17 +176,27 @@ function toggleUserMenu() {
     dashboardStore.toggleUserMenuState();
 }
 
+function toggleReportsMenu() {
+    dashboardStore.toggleReportsMenuState();
+}
+
 function goToView(view: string) {
     router.push({ name: view })
 }
 
-// Close the user menu when clicks outside the user menu and top bar image
-function closeUserMenuOnClickOutside() {
+// Close a flyout menu when clicking outside it and its sidebar button
+function closeMenusOnClickOutside() {
     document.querySelector('body')?.addEventListener('click', (e: MouseEvent) => {
         const target = e.target as HTMLElement;
+
         const userMenuOrBtn = target.closest('#the-user-menu') || target.closest('#menu-btn');
         if (!userMenuOrBtn) {
             dashboardStore.updateUserMenuState(false);
+        }
+
+        const reportsMenuOrBtn = target.closest('#the-reports-menu') || target.closest('#reports-btn');
+        if (!reportsMenuOrBtn) {
+            dashboardStore.updateReportsMenuState(false);
         }
     })
 }
@@ -187,7 +204,7 @@ function closeUserMenuOnClickOutside() {
 // - Hooks -------------------------------------------------------------
 
 onMounted(() => {
-    closeUserMenuOnClickOutside();
+    closeMenusOnClickOutside();
 });
 
 </script>

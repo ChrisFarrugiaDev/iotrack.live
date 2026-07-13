@@ -8,7 +8,7 @@
                 <label class="vform__label" for="vendor">Vendor<span class="vform__required">*</span></label>
                 <p class="vform__error">{{ errors.vendor }}</p>
                 <VueSelect v-model="form.vendor" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.vendor)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.vendor)"
                     :options="vendorOptions" placeholder="" id="vendor" />
             </div>
 
@@ -16,7 +16,7 @@
                 <label class="vform__label" for="model">Model<span class="vform__required">*</span></label>
                 <p class="vform__error">{{ errors.model }}</p>
                 <VueSelect v-model="form.model" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.model)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.model)"
                     :options="modelOptions" placeholder="" id="model" />
             </div>
         </div>
@@ -32,7 +32,7 @@
                 <p class="vform__error" v-else>{{ errors.organisation_id }}</p>
                 <VueSelect v-model="form.organisation_id" :shouldAutofocusOption="false"
                     :isDisabled="confirmOn || form.asset_id != null" class="vform__group"
-                    :style="[vueSelectStyles, selectErrorStyle(!!errors.organisation_id)]" :options="getOrganisations"
+                    :style="selectErrorStyle(!!errors.organisation_id)" :options="getOrganisations"
                     placeholder="" id="organisation_id" />
             </div>
 
@@ -40,7 +40,7 @@
                 <label class="vform__label" for="status">Status<span class="vform__required">*</span></label>
                 <p class="vform__error">{{ errors.status }}</p>
                 <VueSelect v-model="form.status" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.status)]" :options="[
+                    class="vform__group" :style="selectErrorStyle(!!errors.status)" :options="[
                         { label: 'Active', value: 'active' },
                         { label: 'Disabled', value: 'disabled' },
                         { label: 'Retired', value: 'retired' },
@@ -57,7 +57,7 @@
                 <label class="vform__label" for="protocol">Protocol<span class="vform__required">*</span></label>
                 <p class="vform__error">{{ errors.protocol }}</p>
                 <VueSelect v-model="form.protocol" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.protocol)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.protocol)"
                     :options="[{ label: '4G', value: '4G' }]" placeholder="" id="protocol" />
             </div>
 
@@ -89,7 +89,7 @@
                         class="vform__required">*</span></label>
                 <p class="vform__error">{{ errors.external_id_type }}</p>
                 <VueSelect v-model="form.external_id_type" :shouldAutofocusOption="false" :isDisabled="confirmOn"
-                    class="vform__group" :style="[vueSelectStyles, selectErrorStyle(!!errors.external_id_type)]"
+                    class="vform__group" :style="selectErrorStyle(!!errors.external_id_type)"
                     :options="[{ label: 'Imei', value: 'imei' }]" placeholder="" id="external_id_type" />
             </div>
             <div class="vform__group mt-7">
@@ -123,7 +123,7 @@ import VueSelect from "vue3-select-component";
 import { computed, onDeactivated, onMounted, reactive, ref, toRaw, watch } from 'vue';
 
 import type { Device } from "@/types/device.type";
-import { useVueSelectStyles, selectErrorStyle } from "@/composables/useVueSelectStyles";
+import { selectErrorStyle } from "@/composables/useVueSelectStyles";
 import { useOrganisationStore } from "@/stores/organisationStore";
 import { useDeviceStore } from "@/stores/deviceStore";
 import { storeToRefs } from "pinia";
@@ -133,7 +133,6 @@ import TheFlashMessage from "@/components/commen/TheFlashMessage.vue";
 import { useDashboardStore } from "@/stores/dashboardStore";
 
 
-const vueSelectStyles = useVueSelectStyles();
 
 // - Props -------------------------------------------------------------
 

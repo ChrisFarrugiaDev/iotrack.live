@@ -36,6 +36,9 @@ import GroupUpdateView from '@/views/groups/GroupUpdateView.vue'
 import GroupCreateView from '@/views/groups/GroupCreateView.vue'
 import GroupListView from '@/views/groups/GroupListView.vue'
 import GroupView from '@/views/groups/GroupView.vue'
+
+// Reports
+import ActivityReportView from '@/views/reports/ActivityReportView.vue'
 import { nextTick } from 'vue'
 
 
@@ -116,6 +119,16 @@ const router = createRouter({
 				{ path: 'new', name: 'users.create', component: UserCreateView },
 				{ path: ':id/edit', name: 'users.edit', component: UserUpdateView, props: true },
 			],
+		},
+
+		// Reports
+		// Placeholder UI on mocked data. No routePermissions entry yet — the
+		// report.view key is not seeded (see docs/features/ACTIVITY_REPORT_UI_ROADMAP.md).
+		{
+			path: '/reports/activity',
+			name: 'reports.activity',
+			component: ActivityReportView,
+			meta: { requiresAuth: true },
 		},
 
 		// Settings

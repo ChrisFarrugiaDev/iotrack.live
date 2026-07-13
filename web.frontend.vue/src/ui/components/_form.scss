@@ -105,3 +105,36 @@
         font-weight: 500;
     }
 }
+
+
+// - vue3-select-component ---------------------------------------------
+// These must live on .v-ui rather than inline on the select, because a
+// teleported menu (teleport=".dashboard") is rendered outside the select's
+// root and would inherit none of them — it would fall back to the library's
+// :root defaults. .dashboard carries .v-ui, so control and menu both see these.
+.v-ui {
+    --vs-min-height: 4rem;
+    --vs-padding: 1.9rem 0.5rem 0.5rem 0.5rem;
+    --vs-background-color: var(--color-bg-hi);
+    --vs-disabled-background-color: var(--color-bg-lo);
+    --vs-text-color: var(--color-text-1);
+    --vs-border: 1px solid var(--color-zinc-300);
+    --vs-border-radius: var(--radius-md, 0.375rem);
+    --vs-font-weight: 400;
+    --vs-font-size: .95rem;
+    --vs-font-family: var(--font-mono);
+    --vs-outline-width: 0;
+    --vs-outline-color: var(--color-blue-500);
+    --vs-menu-z-index: 2000;
+    --vs-option-font-size: .95rem;
+    --vs-option-background-color: var(--color-white);
+    --vs-option-text-color: var(--color-text-1);
+    --vs-option-hover-background-color: var(--color-blue-100);
+    --vs-option-hover-text-color: var(--color-text-1);
+    --vs-option-focused-background-color: var(--vs-option-hover-background-color);
+    --vs-option-focused-text-color: var(--color-text-1);
+    --vs-option-selected-background-color: var(--color-blue-400);
+    --vs-option-selected-text-color: var(--color-text-1);
+    --vs-option-disabled-background-color: var(--color-zinc-200);
+    --vs-indicator-icon-color: var(--color-text-1);
+}

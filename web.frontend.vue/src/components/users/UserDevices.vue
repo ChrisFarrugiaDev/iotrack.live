@@ -8,7 +8,7 @@
                 class="vform__group"
                 :shouldAutofocusOption="false"
                 :isDisabled="confirmOn"
-                :style="vueSelectStyles"
+
                 :options="groupOptions"
                 placeholder=""
                 id="device_group"
@@ -56,7 +56,6 @@
 import { useDeviceStore } from '@/stores/deviceStore';
 import { useUserAssignableStore } from '@/stores/userAssignableStore';
 import { useGroupStore } from '@/stores/groupStore';
-import { useVueSelectStyles } from '@/composables/useVueSelectStyles';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch, watchEffect } from 'vue';
 
@@ -102,7 +101,6 @@ const devicesOptions = ref<Record<string, any>[]>([]);
 
 // - Select by group -----------------------------------------------------
 
-const vueSelectStyles = useVueSelectStyles();
 
 // '' = no group (default). The full tree stays visible either way.
 const groupPick = ref<string>('');
