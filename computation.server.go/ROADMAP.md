@@ -48,13 +48,13 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 2 — JWT middleware
 
-- [ ] `internal/api/middlewares/jwt_auth_middleware.go` — port from
+- [x] `internal/api/middlewares/jwt_auth_middleware.go` — port from
       `file.server.go`, extended: validate HS256 Bearer via `JWT_SECRET`,
       put `userID`, `roleID`, `orgID` into the request context (typed
       context keys, not bare strings).
-- [ ] Wire it onto the `/compute/reports` sub-router only — `/compute/health`
+- [x] Wire it onto the `/compute/reports` sub-router only — `/compute/health`
       stays open.
-- [ ] `jwt_auth_middleware_test.go` — httptest table: no token, malformed
+- [x] `jwt_auth_middleware_test.go` — httptest table: no token, malformed
       header, bad signature, expired token → 401; valid token → next handler
       sees userID/roleID/orgID in context.
 - Verify: tests pass, plus a real token from a Node login → stub 200.

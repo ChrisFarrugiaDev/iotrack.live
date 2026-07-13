@@ -8,4 +8,7 @@ import (
 type App struct {
 	DB     *pgxpool.Pool
 	Models models.Models
+
+	// Read once at boot; main refuses to start without it.
+	JWTSecret []byte
 }

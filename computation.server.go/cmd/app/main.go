@@ -24,6 +24,14 @@ func main() {
 
 	loadEnv()
 
+	// Fail fast: with no secret the auth middleware could never verify a
+	// token honestly.
+	app.JWTSecret = []byte(os.Getenv("JWT_SECRET"))
+	if len(app.JWTSecret) == 0 {
+		logger.Error("JWT_SECRET is not set")
+		os.Exit(1)
+	}
+
 	// Setup DB pool
 	pool, err := db.OpenDB()
 	if err != nil {

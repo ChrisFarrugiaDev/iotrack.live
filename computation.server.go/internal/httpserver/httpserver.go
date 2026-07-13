@@ -16,7 +16,6 @@ import (
 type Server struct {
 	HTTPServer *http.Server
 	Port       string
-	App        *appcore.App
 	CloseCn    chan struct{}
 }
 
@@ -34,7 +33,6 @@ func NewHttpServer(app *appcore.App, port string, httpClosedCh chan struct{}) *S
 	return &Server{
 		HTTPServer: srv,
 		Port:       port,
-		App:        app,
 		CloseCn:    httpClosedCh,
 	}
 }
