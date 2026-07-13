@@ -58,7 +58,10 @@ INSERT INTO app.permissions (perm_id, key, description, group_name) VALUES
   (21,  'group.view',            'View groups',                   'group'  ),
   (22,  'group.create',          'Create new groups',             'group'  ),
   (23,  'group.update',          'Update existing groups',        'group'  ),
-  (24,  'group.delete',          'Delete groups',                 'group'  )
+  (24,  'group.delete',          'Delete groups',                 'group'  ),
+
+  -- Reports
+  (25,  'report.view',           'View activity reports',         'report' )
 
   ON CONFLICT (perm_id) DO NOTHING;
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -95,7 +98,8 @@ WHERE key IN (
   'audit.view',
   'asset.view','asset.create','asset.update','asset.delete','asset.assign-device',
   'device.view','device.create','device.update','device.delete','device.command',
-  'group.view','group.create','group.update','group.delete'
+  'group.view','group.create','group.update','group.delete',
+  'report.view'
 )
 
 UNION ALL
@@ -106,7 +110,8 @@ WHERE key IN (
   'org.view','org.switch',
   'asset.view','asset.create','asset.update','asset.assign-device',
   'device.view',
-  'group.view'
+  'group.view',
+  'report.view'
 )
 
 UNION ALL
@@ -116,7 +121,8 @@ SELECT 4, perm_id FROM app.permissions
 WHERE key IN (
   'org.view',
   'asset.view','device.view',
-  'group.view'
+  'group.view',
+  'report.view'
 )
 
 ON CONFLICT (role_id, perm_id) DO NOTHING;
