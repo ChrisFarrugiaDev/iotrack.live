@@ -12,7 +12,7 @@ import (
 const testSecret = "test-secret"
 
 // makeToken signs a token the way the Node backend does (HS256, UserJWT
-// claims). mutate lets each case break one thing.
+// claims). Overrides let each case break one thing.
 func makeToken(t *testing.T, secret string, mutate func(jwt.MapClaims)) string {
 	t.Helper()
 
@@ -36,6 +36,8 @@ func makeToken(t *testing.T, secret string, mutate func(jwt.MapClaims)) string {
 }
 
 func TestJWTAuth(t *testing.T) {
+	t.Setenv("JWT_SECRET", testSecret)
+
 	cases := []struct {
 		name       string
 		authHeader string
@@ -51,23 +53,28 @@ func TestJWTAuth(t *testing.T) {
 		{"missing org claim", "Bearer " + makeToken(t, testSecret, func(c jwt.MapClaims) {
 			delete(c, "org_id")
 		}), http.StatusUnauthorized},
-		{"valid, string ids", "Bearer " + makeToken(t, testSecret, nil), http.StatusOK},
-		// The Node backend serialises ids as strings, but JSON numbers must
-		// work too.
-		{"valid, numeric ids", "Bearer " + makeToken(t, testSecret, func(c jwt.MapClaims) {
-			c["id"], c["role_id"], c["org_id"] = 7, 2, 3
-		}), http.StatusOK},
+		{"valid", "Bearer " + makeToken(t, testSecret, nil), http.StatusOK},
 	}
 
-	middleware := JWTAuth([]byte(testSecret))
+	t.Run("empty JWT_SECRET fails closed", func(t *testing.T) {
+		t.Setenv("JWT_SECRET", "")
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Authorization", "Bearer "+makeToken(t, "", nil))
+		rec := httptest.NewRecorder()
+		JWTAuth(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})).ServeHTTP(rec, req)
+		if rec.Code != http.StatusInternalServerError {
+			t.Fatalf("status = %d, want 500", rec.Code)
+		}
+	})
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			var got Claims
-			var gotOK bool
+			var gotUser, gotRole, gotOrg int64
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				got, gotOK = AuthClaims(r.Context())
+				gotUser = UserID(r.Context())
+				gotRole = RoleID(r.Context())
+				gotOrg = OrgID(r.Context())
 				w.WriteHeader(http.StatusOK)
 			})
 
@@ -77,42 +84,40 @@ func TestJWTAuth(t *testing.T) {
 			}
 			rec := httptest.NewRecorder()
 
-			middleware(next).ServeHTTP(rec, req)
+			JWTAuth(next).ServeHTTP(rec, req)
 
 			if rec.Code != tc.wantStatus {
 				t.Fatalf("status = %d, want %d", rec.Code, tc.wantStatus)
 			}
 			if tc.wantStatus == http.StatusOK {
-				want := Claims{UserID: 7, RoleID: 2, OrgID: 3}
-				if !gotOK || got != want {
-					t.Fatalf("claims = %+v ok=%v, want %+v", got, gotOK, want)
+				if gotUser != 7 || gotRole != 2 || gotOrg != 3 {
+					t.Fatalf("context = user %d role %d org %d, want 7 2 3", gotUser, gotRole, gotOrg)
 				}
 			}
 		})
 	}
 }
 
-// An empty secret must never verify anything — the middleware fails closed
-// even if main's boot check is somehow bypassed.
-func TestJWTAuthEmptySecretFailsClosed(t *testing.T) {
+// The Node backend serialises ids as strings, but a JSON number must work too.
+func TestJWTAuthNumericClaims(t *testing.T) {
+	t.Setenv("JWT_SECRET", testSecret)
+
+	token := makeToken(t, testSecret, func(c jwt.MapClaims) {
+		c["id"], c["role_id"], c["org_id"] = 7, 2, 3
+	})
+
+	var gotOrg int64
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotOrg = OrgID(r.Context())
+	})
+
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("Authorization", "Bearer x")
+	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 
-	JWTAuth(nil)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-		t.Fatal("next handler must not run")
-	})).ServeHTTP(rec, req)
+	JWTAuth(next).ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", rec.Code)
-	}
-}
-
-// AuthClaims must report absence loudly, not hand back a zero org id.
-func TestAuthClaimsAbsent(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
-	if _, ok := AuthClaims(req.Context()); ok {
-		t.Fatal("ok = true on a context without claims")
+	if rec.Code != http.StatusOK || gotOrg != 3 {
+		t.Fatalf("status = %d org = %d, want 200 and 3", rec.Code, gotOrg)
 	}
 }

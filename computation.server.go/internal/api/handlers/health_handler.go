@@ -6,8 +6,9 @@ import (
 )
 
 // Health reports service liveness. It is deliberately unauthenticated.
-func Health(w http.ResponseWriter, _ *http.Request) {
+func Health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(map[string]string{
 		"status":  "ok",
