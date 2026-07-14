@@ -82,21 +82,21 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 5 — Models and repositories
 
-- [ ] `internal/models` — structs only: `Telemetry` (keep the struct, drop
+- [x] `internal/models` — structs only: `Telemetry` (keep the struct, drop
       `GetByID`), `Asset` (id, uuid, organisation_id, asset_type, name).
       Delete the global session plumbing in `models.go`.
-- [ ] Read `AccessProfileController` in `web.backend.node.ts` **first** and
+- [x] Read `AccessProfileController` in `web.backend.node.ts` **first** and
       write down the user→asset access semantics as comments — mirror, don't
       invent (SPEC auth chain).
-- [ ] `internal/repository/repository.go` — `Repository` aggregate +
+- [x] `internal/repository/repository.go` — `Repository` aggregate +
       `NewRepository(pool)`; hang it on `appcore.App`.
-- [ ] `asset_repository.go` — `GetByUUID(ctx, uuid)`.
-- [ ] `access_repository.go` — `UserHasAssetAccess(ctx, userID, assetID)`
+- [x] `asset_repository.go` — `GetByUUID(ctx, uuid)`.
+- [x] `access_repository.go` — `UserHasAssetAccess(ctx, userID, assetID)`
       per the Node semantics; groups never grant (§20).
-- [ ] `telemetry_repository.go` — `RangeByAsset(ctx, assetID, from, to)`
+- [x] `telemetry_repository.go` — `RangeByAsset(ctx, assetID, from, to)`
       ordered by `happened_at ASC` (§29, §45: by asset_id, never device_id),
       raw pgx.
-- [ ] Repository integration tests gated behind `RUN_DB_TESTS=1` (the
+- [x] Repository integration tests gated behind `RUN_DB_TESTS=1` (the
       parser's `RUN_REDIS_TESTS` pattern): known asset returns sorted rows,
       unknown asset returns none. Skipped without the flag so
       `go test ./...` stays green anywhere.

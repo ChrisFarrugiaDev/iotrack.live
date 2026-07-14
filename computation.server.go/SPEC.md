@@ -173,14 +173,27 @@ Order on every report route:
    same seeding the frontend sidebar gating needs (§20; frontend roadmap
    "security debt" item). One seed serves both.
 3. **Asset access check** (in the report service, before any telemetry
-   query, §20):
+   query, §20). Resolved by reading
+   `AccessProfileController.getAccessibleAssetsForUser` in
+   `web.backend.node.ts` rather than guessing from the permission model
+   alone — its real logic has two parts, and only the second is what
+   `AccessRepository.UserHasAssetAccess` needs to reproduce:
    - resolve `asset_uuid` → asset; 404 `ASSET_NOT_FOUND` if absent;
-   - asset's `organisation_id` must equal the JWT `org_id`;
-   - the user must have access to the asset (`app.user_asset_access` /
-     org-level access) — **mirror the Node access-profile semantics exactly**;
-     read `AccessProfileController` in `web.backend.node.ts` when implementing
-     rather than inventing rules here;
-   - groups never grant access (§20);
+   - **org match**: asset's `organisation_id` must equal the JWT `org_id`,
+     exactly — a field comparison, no query. This is deliberately stricter
+     than Node's own org-scope-with-descendants computation
+     (`Organisation.getOrgScope` + org-level overrides), which exists for
+     building a switchable list of accessible organisations, not for this
+     single already-known org. Reproducing that scope logic here would be
+     solving a problem the JWT's `org_id` claim already answers;
+   - **per-asset override**: only an explicit deny row in
+     `app.user_asset_access` removes access; no row, or an explicit allow
+     row, defaults to granted. This mirrors Node exactly — its own
+     `getAccessibleAssetsForUser` collects per-asset "allow" overrides but
+     never applies them to grant access outside the org scope (dead code in
+     the Node source, marked with its own "future" comment), so an allow
+     row does nothing beyond what passing the org-match check already grants;
+   - groups never grant access (§20) — never consulted;
    - reject with 403 `ASSET_ACCESS_DENIED` before touching telemetry.
 
 ## Report Flow

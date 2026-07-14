@@ -40,7 +40,13 @@ func main() {
 		os.Exit(1)
 	}
 	app.DB = pool
-	app.Repo = repository.NewRepository(pool)
+
+	repo, err := repository.NewRepository(pool)
+	if err != nil {
+		logger.Error("Error building repositories", zap.Error(err))
+		os.Exit(1)
+	}
+	app.Repo = repo
 
 	// -----------------------------------------------------------------
 
