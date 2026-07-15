@@ -112,13 +112,13 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 7 — Report service
 
-- [ ] `internal/services/app_service.go` — `Service` wrapping `App`
+- [x] `internal/services/app_service.go` — `Service` wrapping `App`
       (parser pattern).
-- [ ] `internal/services/report_service.go` — the Phase 1 sequence:
+- [x] `internal/services/report_service.go` — the Phase 1 sequence:
       asset lookup → org check (JWT `org_id`, §20) → access check →
       range-limit check by `asset_type` → telemetry fetch → build
       `{ subject, rawPointCount, points: [] }`.
-- [ ] Typed service errors the handler can map to §34 codes
+- [x] Typed service errors the handler can map to §34 codes
       (`ASSET_NOT_FOUND`, `ASSET_ACCESS_DENIED`, `REPORT_VALIDATION_ERROR`).
 - Verify: unit-callable without HTTP; wrong org / no access return the
   typed errors, never telemetry.
