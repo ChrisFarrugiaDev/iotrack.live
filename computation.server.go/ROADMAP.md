@@ -105,7 +105,7 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 6 — Config and appcore
 
-- [ ] `appcore.App` gains `Config`: range limits per tracker category
+- [x] `appcore.App` gains `Config`: range limits per tracker category
       (`REPORT_MAX_RANGE_DAYS_*`), `REPORT_MAX_CONCURRENT` (SPEC
       Configuration table), parsed once at boot.
 - Verify: boot logs the effective config; bad values fall back to defaults.

@@ -33,6 +33,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Report limits (SPEC Configuration table); bad values fall back to
+	// defaults inside LoadConfig, so booting with the effective values
+	// logged is the source of truth for what is actually enforced.
+	app.Config = appcore.LoadConfig()
+	logger.Info("Report config",
+		zap.Int("max_concurrent", app.Config.ReportMaxConcurrent),
+		zap.Int("max_range_days_vehicle", app.Config.MaxRangeDaysVehicle),
+		zap.Int("max_range_days_personal", app.Config.MaxRangeDaysPersonal),
+		zap.Int("max_range_days_asset", app.Config.MaxRangeDaysAsset),
+	)
+
 	// Setup DB pool
 	pool, err := db.OpenDB()
 	if err != nil {

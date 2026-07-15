@@ -6,8 +6,9 @@ import (
 )
 
 type App struct {
-	DB   *pgxpool.Pool
-	Repo *repository.Repository
+	DB     *pgxpool.Pool
+	Repo   *repository.Repository
+	Config Config
 
 	// Read once at boot; main refuses to start without it.
 	JWTSecret []byte
