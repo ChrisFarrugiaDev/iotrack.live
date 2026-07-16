@@ -14,7 +14,7 @@ Authoritative companions:
 - `docs/iotrack_activity_report_design.md` — all `§` references below.
 - `web.frontend.vue/src/types/activity-report.type.ts` — the wire contract,
   transcribed from §18/§19.3. The Go response must marshal to exactly this.
-- `web.frontend.vue/ACTIVITY_REPORT_UI_ROADMAP.md` — UI state, invariants, and
+- `web.frontend.vue/docs/features/ACTIVITY_REPORT_UI_ROADMAP.md` — UI state, invariants, and
   the fixture this service's engine tests must adopt.
 
 ## Service Role
@@ -83,13 +83,30 @@ Existing (prototype):
   telemetry row; becomes the boot sequence below.
 - `cmd/app/settings.go` — `loadEnv()`: `DOCKERIZED` short-circuit, else
   `.env.development` / `.env` by `GO_ENV`; forces `TZ=UTC`. Keep.
-- `internal/appcore/` — `App` struct (DB pool, models). Grows a `Config`.
+- `internal/appcore/` — `App` struct (DB pool, repositories). Grows a `Config`.
 - `internal/db/` — pgxpool setup with env overrides. Keep.
-- `internal/models/` — upper/db session + pgx pool duo, global accessors
-  (`models.Session()`, `models.Pool()`), `Telemetry` model. Keep the pattern.
+- `internal/models/` — becomes **structs only**: one package (as in the
+  parser), but no query methods and no global session. The prototype's
+  `Telemetry.GetByID` moves into the repository layer.
 - `internal/logger/` — zap + lumberjack (`LOG_MODE`: file/off/dev). Keep.
 
-To add (mirrors `file.server.go` and `chess.log/go_backend`):
+Data access follows the model/repository split from
+`golang_mongodb_learning_project/go-api-backend`, adapted to Postgres:
+`models` holds the data shapes, `repository` holds all queries. Every
+repository method takes a `context.Context` so a disconnected client cancels
+its query — the parser-style active-record methods can't do that, and this
+service's queries are long enough for it to matter.
+
+To add (mirrors `file.server.go`, `chess.log/go_backend`, and the mongo
+project's repository layer):
+
+- `internal/repository/` — one repository per entity
+  (`telemetry_repository.go`, `asset_repository.go`,
+  `access_repository.go`, …), each holding its pool/session explicitly;
+  aggregated by a `Repository` struct in `repository.go` built by
+  `NewRepository(...)`, hung on `appcore.App`. Whether a repo uses pgx or
+  upper/db is its private choice: the telemetry range scan wants raw pgx,
+  small lookups may keep upper.
 
 - `internal/httpserver/` — `NewHttpServer(app, port, closedCh)`, graceful
   shutdown.
@@ -101,12 +118,30 @@ To add (mirrors `file.server.go` and `chess.log/go_backend`):
   `/compute/audit`.
 - `internal/api/handlers/` — request decode, validation, response envelope.
   Thin; no business logic.
+- `internal/services/` — orchestration, following the parser's `services`
+  pattern (a `Service` wrapping `App`): one file per section.
+  `report_service.go` runs the report sequence — asset access checks,
+  telemetry fetch via repositories, the pure engine, audit/logging. Handlers
+  call services; services never touch HTTP.
 - `internal/report/` — the **pure engine**: `normalise.go`, `segment.go`,
   `summary.go`, `config.go`. No HTTP, no SQL, no logger — takes
   `[]TelemetryPoint` + `JourneyConfig`, returns segments + summary. This is
   the package the §36.2 fixtures test.
 - `internal/alarms/`, `internal/audit/` — empty until their first concrete
   need; reserved so sections never bleed into each other.
+
+Deliberately absent (decided, not forgotten):
+
+- `internal/cache` — no Redis until alarms bring a real consumer; the report
+  flow is Postgres-only.
+- `internal/apptypes` — exists in the parser to break import cycles; the
+  import graph here is a straight line (handlers → services → repository /
+  report) with no cycles. Extract shared types only when two packages need
+  them and neither may import the other.
+- `internal/util` — the parser's util was earned by byte/hex/CRC work shared
+  across packages. Every helper this service needs so far has exactly one
+  home (haversine → report, validation and envelope → handlers). Create it
+  when a helper gets its second consumer.
 
 ## Startup Flow
 
@@ -115,7 +150,7 @@ Entrypoint: `cmd/app/main.go` (modelled on `file.server.go/cmd/web/main.go`):
 1. Init logger first so boot problems are visible.
 2. `loadEnv()`.
 3. Init `appcore.App`: config (thresholds, limits — see Configuration).
-4. Open pgxpool (`db.OpenDB()`), init models.
+4. Open pgxpool (`db.OpenDB()`), build repositories (`NewRepository`).
 5. `signal.NotifyContext` for SIGINT/SIGTERM.
 6. Start HTTP server on `HTTP_PORT` in a goroutine.
 7. Block on ctx; on shutdown wait for the HTTP close channel (10s timeout),
@@ -137,14 +172,28 @@ Order on every report route:
    `initdb-scripts/05-tables.sql` with deliberate role defaults — this is the
    same seeding the frontend sidebar gating needs (§20; frontend roadmap
    "security debt" item). One seed serves both.
-3. **Asset access check** (in the handler, before any telemetry query, §20):
+3. **Asset access check** (in the report service, before any telemetry
+   query, §20). Resolved by reading
+   `AccessProfileController.getAccessibleAssetsForUser` in
+   `web.backend.node.ts` rather than guessing from the permission model
+   alone — its real logic has two parts, and only the second is what
+   `AccessRepository.UserHasAssetAccess` needs to reproduce:
    - resolve `asset_uuid` → asset; 404 `ASSET_NOT_FOUND` if absent;
-   - asset's `organisation_id` must equal the JWT `org_id`;
-   - the user must have access to the asset (`app.user_asset_access` /
-     org-level access) — **mirror the Node access-profile semantics exactly**;
-     read `AccessProfileController` in `web.backend.node.ts` when implementing
-     rather than inventing rules here;
-   - groups never grant access (§20);
+   - **org match**: asset's `organisation_id` must equal the JWT `org_id`,
+     exactly — a field comparison, no query. This is deliberately stricter
+     than Node's own org-scope-with-descendants computation
+     (`Organisation.getOrgScope` + org-level overrides), which exists for
+     building a switchable list of accessible organisations, not for this
+     single already-known org. Reproducing that scope logic here would be
+     solving a problem the JWT's `org_id` claim already answers;
+   - **per-asset override**: only an explicit deny row in
+     `app.user_asset_access` removes access; no row, or an explicit allow
+     row, defaults to granted. This mirrors Node exactly — its own
+     `getAccessibleAssetsForUser` collects per-asset "allow" overrides but
+     never applies them to grant access outside the org scope (dead code in
+     the Node source, marked with its own "future" comment), so an allow
+     row does nothing beyond what passing the org-match check already grants;
+   - groups never grant access (§20) — never consulted;
    - reject with 403 `ASSET_ACCESS_DENIED` before touching telemetry.
 
 ## Report Flow

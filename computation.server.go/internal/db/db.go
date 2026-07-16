@@ -40,13 +40,13 @@ func OpenDB() (*pgxpool.Pool, error) {
 	}
 
 	if v, err := time.ParseDuration(os.Getenv("DB_MAX_CONN_IDLE_TIME")); err == nil && v > 0 {
-		poolConfig.MinConns = int32(v)
+		poolConfig.MaxConnIdleTime = v
 	}
 
 	// Establish the connection pool.
 	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed")
+		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
 
 	// Ping the database to verify the connection is working.
