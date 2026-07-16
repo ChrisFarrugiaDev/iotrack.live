@@ -125,15 +125,15 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 8 — Handler and route
 
-- [ ] `internal/api/handlers/report_handler.go` — decode
+- [x] `internal/api/handlers/report_handler.go` — decode
       `{ asset_uuid, from, to }`, validate (required fields, ISO timestamps
       → UTC, `from < to`), call the service, wrap in the `{ data: ... }`
       envelope; §34 error shapes with the right HTTP statuses (400/404/403).
-- [ ] Bound concurrency with the `REPORT_MAX_CONCURRENT` semaphore —
+- [x] Bound concurrency with the `REPORT_MAX_CONCURRENT` semaphore —
       waiters queue, they don't fail.
-- [ ] `internal/api/routers/report_router.go` — `POST /compute/reports/activity`
+- [x] `internal/api/routers/report_router.go` — `POST /compute/reports/activity`
       behind JWT + permission middlewares.
-- [ ] `report_handler_test.go` — validation table: missing fields, bad
+- [x] `report_handler_test.go` — validation table: missing fields, bad
       dates, `from >= to`, over-limit range → 400 with the right §34 code in
       the body. Pins the error contract the frontend depends on.
 - Verify: tests pass, then the curl matrix below.

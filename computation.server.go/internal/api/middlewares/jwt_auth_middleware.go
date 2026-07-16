@@ -30,6 +30,15 @@ func RoleID(ctx context.Context) int64 { v, _ := ctx.Value(ctxRoleID).(int64); r
 // body (design doc §20).
 func OrgID(ctx context.Context) int64 { v, _ := ctx.Value(ctxOrgID).(int64); return v }
 
+// WithIdentity returns a context carrying the same identity JWTAuth would
+// set. The context keys are deliberately unexported, so this is the only way
+// other packages' tests can simulate an authenticated request.
+func WithIdentity(ctx context.Context, userID, roleID, orgID int64) context.Context {
+	ctx = context.WithValue(ctx, ctxUserID, userID)
+	ctx = context.WithValue(ctx, ctxRoleID, roleID)
+	return context.WithValue(ctx, ctxOrgID, orgID)
+}
+
 // JWTAuth validates the Bearer token on protected routes and puts userID,
 // roleID and orgID into the request context. Ported from file.server.go;
 // extended with role/org claims. Like the file server, token_version is not
@@ -79,11 +88,7 @@ func JWTAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ctxUserID, userID)
-		ctx = context.WithValue(ctx, ctxRoleID, roleID)
-		ctx = context.WithValue(ctx, ctxOrgID, orgID)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(WithIdentity(r.Context(), userID, roleID, orgID)))
 	})
 }
 

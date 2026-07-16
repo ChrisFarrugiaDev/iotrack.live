@@ -1,14 +1,11 @@
 package routers
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
 	"iotrack.live/computation.server.go/internal/api/handlers"
-	"iotrack.live/computation.server.go/internal/api/middlewares"
 	"iotrack.live/computation.server.go/internal/appcore"
 )
 
@@ -31,16 +28,8 @@ func Router(app *appcore.App) chi.Router {
 	mux.Route("/compute", func(r chi.Router) {
 		r.Get("/health", handlers.Health)
 
-		// Section sub-routers mount here: /reports, later /alarms, /audit.
-		r.Route("/reports", func(r chi.Router) {
-			r.Use(middlewares.JWTAuth)
-			r.Use(middlewares.RequirePermission(app.Repo.Access, "report.view"))
-
-			// Stub until Step 8 lands the real report handler.
-			r.Post("/activity", func(w http.ResponseWriter, _ *http.Request) {
-				http.Error(w, "not implemented", http.StatusNotImplemented)
-			})
-		})
+		// Section sub-routers mount here: later /alarms, /audit.
+		r.Mount("/reports", ReportRouter(app))
 	})
 
 	return mux
