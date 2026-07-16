@@ -80,33 +80,62 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := middlewares.UserID(r.Context())
+	orgID := middlewares.OrgID(r.Context())
+
+	start := time.Now()
 	result, err := h.svc.GenerateActivityReport(r.Context(), services.ActivityReportRequest{
 		AssetUUID: body.AssetUUID,
 		From:      from.UTC(),
 		To:        to.UTC(),
-		UserID:    middlewares.UserID(r.Context()),
-		OrgID:     middlewares.OrgID(r.Context()),
+		UserID:    userID,
+		OrgID:     orgID,
 	})
+
+	var outcome string
 
 	switch {
 	case err == nil:
+		outcome = "ok"
 		writeData(w, http.StatusOK, result)
 
 	case errors.Is(err, services.ErrAssetNotFound):
+		outcome = "asset_not_found"
 		writeError(w, http.StatusNotFound, "Asset not found.", "ASSET_NOT_FOUND")
 
 	case errors.Is(err, services.ErrAssetAccessDenied):
+		outcome = "access_denied"
 		writeError(w, http.StatusForbidden, "You do not have access to the selected asset.", "ASSET_ACCESS_DENIED")
 
 	case errors.Is(err, services.ErrRangeTooLong):
+		outcome = "range_too_long"
 		writeError(w, http.StatusBadRequest, "Invalid report filters.", "REPORT_VALIDATION_ERROR")
 
 	case errors.Is(err, context.Canceled):
 		// Client is gone; nothing useful to write.
+		outcome = "canceled"
 
 	default:
+		outcome = "server_error"
 		logger.Error("activity report failed", zap.Error(err))
 		writeError(w, http.StatusInternalServerError,
 			"An unexpected error occurred. Please try again later.", "SERVER_ERROR")
 	}
+
+	// One line per serviced request (§37 Phase 1 subset). Identifiers and
+	// counts only — never telemetry payloads.
+	pointCount := 0
+	if result != nil {
+		pointCount = result.RawPointCount
+	}
+	logger.Info("activity report",
+		zap.String("outcome", outcome),
+		zap.Int64("user_id", userID),
+		zap.Int64("org_id", orgID),
+		zap.String("asset_uuid", body.AssetUUID),
+		zap.Time("from", from.UTC()),
+		zap.Time("to", to.UTC()),
+		zap.Int("raw_point_count", pointCount),
+		zap.Duration("duration", time.Since(start)),
+	)
 }

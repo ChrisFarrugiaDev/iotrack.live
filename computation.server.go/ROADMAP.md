@@ -140,7 +140,7 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 9 — Request logging
 
-- [ ] Log per report request (§37 subset for Phase 1): user ID, org ID,
+- [x] Log per report request (§37 subset for Phase 1): user ID, org ID,
       asset ID, range, raw point count, duration, outcome. Never full
       payloads.
 - Verify: one clean log line per request in dev mode.
