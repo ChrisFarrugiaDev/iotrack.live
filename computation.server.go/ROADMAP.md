@@ -6,13 +6,18 @@ expected runtime behavior; steps below reference it rather than repeat it.
 
 ## Current State
 
-- Skeleton only: every package directory exists (`.gitkeep` placeholders),
-  `README.md` documents the layout, `SPEC.md` pins the decisions.
-- `cmd/app/main.go` is still the prototype one-shot query (fetches one
-  telemetry row and prints it). No HTTP server, no auth, no report code.
-- `internal/db`, `internal/logger`, `cmd/app/settings.go` are real and stay.
-- `internal/models` still carries the old active-record pattern (global
-  session, `Telemetry.GetByID`) that Phase 1 replaces.
+- **Phase 1 is complete.** `POST /compute/reports/activity` serves the
+  §38 Phase 1 deliverable behind the full auth/access chain: JWT →
+  `report.view` permission → org match → per-user asset override → range
+  limit → telemetry fetch, with §34 error shapes, a REPORT_MAX_CONCURRENT
+  semaphore, and one §37 log line per request.
+- Layering as specced: thin handlers → services → repositories (upper/db
+  for the asset lookup, raw pgx elsewhere) → structs-only models.
+- Tests: httptest tables for middlewares and handler; RUN_DB_TESTS=1
+  integration suites for repositories and the report service; the Step 10
+  acceptance matrix passed against the dev database.
+- Next: Phase 2 (normalisation) — detail its steps here when it starts,
+  with the running service and real payloads at hand.
 
 ## Phase 1 — API Skeleton and Access (§38 Phase 1)
 
@@ -149,17 +154,17 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 All via curl against the dev stack (token from a Node login):
 
-- [ ] No/invalid token → 401.
-- [ ] Valid token, role without `report.view` → 403.
-- [ ] Asset UUID that doesn't exist → 404 `ASSET_NOT_FOUND`.
-- [ ] Asset from another organisation → 403 `ASSET_ACCESS_DENIED`.
-- [ ] `from >= to`, bad dates, missing fields → 400 `REPORT_VALIDATION_ERROR`.
-- [ ] Range over the category limit → 400.
-- [ ] Valid request → 200, `rawPointCount` matches a manual
+- [x] No/invalid token → 401.
+- [x] Valid token, role without `report.view` → 403.
+- [x] Asset UUID that doesn't exist → 404 `ASSET_NOT_FOUND`.
+- [x] Asset from another organisation → 403 `ASSET_ACCESS_DENIED`.
+- [x] `from >= to`, bad dates, missing fields → 400 `REPORT_VALIDATION_ERROR`.
+- [x] Range over the category limit → 400.
+- [x] Valid request → 200, `rawPointCount` matches a manual
       `SELECT count(*)`, points sorted ascending (spot-check).
-- [ ] Range with no telemetry → 200 success with zero count (§34 — not an
+- [x] Range with no telemetry → 200 success with zero count (§34 — not an
       error).
-- [ ] `GOCACHE=/tmp/gocache go test ./...` and `go build ./...` clean.
+- [x] `GOCACHE=/tmp/gocache go test ./...` and `go build ./...` clean.
 
 ## Later Phases
 
