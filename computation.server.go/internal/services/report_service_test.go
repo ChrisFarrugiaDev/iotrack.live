@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"testing"
@@ -151,5 +152,72 @@ func TestGenerateActivityReport_HappyPath(t *testing.T) {
 	}
 	if result.RawPointCount != want {
 		t.Fatalf("rawPointCount = %d, database says %d", result.RawPointCount, want)
+	}
+}
+
+// Phase 2 acceptance (§38): the served points are normalised — camelCase
+// contract keys only, no raw DB column names downstream of the normaliser.
+// Anchors its window to an asset's actual latest telemetry so the check can
+// never silently pass on an empty range.
+func TestGenerateActivityReport_NormalisedShape(t *testing.T) {
+	s := testService(t)
+
+	var uuid string
+	var orgID int64
+	var latest time.Time
+	err := s.App.Repo.Pool.QueryRow(context.Background(), `
+		SELECT a.uuid::text, a.organisation_id, max(t.happened_at)
+		  FROM app.telemetry t JOIN app.assets a ON a.id = t.asset_id
+		 GROUP BY a.uuid, a.organisation_id
+		 ORDER BY max(t.happened_at) DESC LIMIT 1`,
+	).Scan(&uuid, &orgID, &latest)
+	if err != nil {
+		t.Skip("no asset-scoped telemetry in the dev database")
+	}
+
+	result, err := s.GenerateActivityReport(context.Background(), ActivityReportRequest{
+		AssetUUID: uuid,
+		From:      latest.Add(-time.Hour),
+		To:        latest.Add(time.Minute),
+		UserID:    999_999_999,
+		OrgID:     orgID,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Points) == 0 {
+		t.Fatal("window anchored to latest telemetry returned no points")
+	}
+	if result.Stats.Accepted != len(result.Points) {
+		t.Fatalf("stats.Accepted = %d but %d points", result.Stats.Accepted, len(result.Points))
+	}
+
+	encoded, err := json.Marshal(result.Points[0])
+	if err != nil {
+		t.Fatalf("marshalling a point: %v", err)
+	}
+	var keys map[string]any
+	if err := json.Unmarshal(encoded, &keys); err != nil {
+		t.Fatalf("re-reading a point: %v", err)
+	}
+	for _, contract := range []string{"id", "timestamp", "latitude", "longitude", "gpsValid"} {
+		if _, ok := keys[contract]; !ok {
+			t.Fatalf("normalised point missing %q: %s", contract, encoded)
+		}
+	}
+	for _, raw := range []string{"happened_at", "device_id", "organisation_id", "telemetry"} {
+		if _, ok := keys[raw]; ok {
+			t.Fatalf("raw DB column %q leaked into the normalised point: %s", raw, encoded)
+		}
+	}
+	if _, isString := keys["id"].(string); !isString {
+		t.Fatalf("point id must be a JSON string (§18): %s", encoded)
+	}
+	if tag, present := keys["parameters"].(map[string]any); present {
+		if v, ok := tag["ibutton"]; ok {
+			if _, isString := v.(string); !isString {
+				t.Fatalf("parameters.ibutton must be a JSON string: %#v", v)
+			}
+		}
 	}
 }
