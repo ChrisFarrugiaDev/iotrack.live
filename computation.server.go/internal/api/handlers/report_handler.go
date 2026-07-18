@@ -122,11 +122,13 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 			"An unexpected error occurred. Please try again later.", "SERVER_ERROR")
 	}
 
-	// One line per serviced request (§37 Phase 1 subset). Identifiers and
-	// counts only — never telemetry payloads.
-	pointCount := 0
+	// One line per serviced request (§37). Identifiers and counts only —
+	// never telemetry payloads.
+	rawCount, acceptedCount, invalidGPSCount := 0, 0, 0
 	if result != nil {
-		pointCount = result.RawPointCount
+		rawCount = result.RawPointCount
+		acceptedCount = result.Stats.Accepted
+		invalidGPSCount = result.Stats.InvalidGPS
 	}
 	logger.Info("activity report",
 		zap.String("outcome", outcome),
@@ -135,7 +137,9 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 		zap.String("asset_uuid", body.AssetUUID),
 		zap.Time("from", from.UTC()),
 		zap.Time("to", to.UTC()),
-		zap.Int("raw_point_count", pointCount),
+		zap.Int("raw_point_count", rawCount),
+		zap.Int("accepted_point_count", acceptedCount),
+		zap.Int("invalid_gps_count", invalidGPSCount),
 		zap.Duration("duration", time.Since(start)),
 	)
 }

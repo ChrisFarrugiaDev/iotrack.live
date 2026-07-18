@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"iotrack.live/computation.server.go/internal/models"
+	"iotrack.live/computation.server.go/internal/report"
 	"iotrack.live/computation.server.go/internal/repository"
 )
 
@@ -31,13 +31,15 @@ type ActivityReportRequest struct {
 	OrgID  int64
 }
 
-// ActivityReportResult is the §38 Phase 1 deliverable. Points are the raw
-// telemetry rows for now; Phase 2 replaces them with normalised points and
-// Phase 3 with segments.
+// ActivityReportResult carries the §38 Phase 2 deliverable: normalised
+// TelemetryPoints, no raw DB rows. Phase 3 replaces points with segments.
+// Stats feed the §37 log line only — they are not part of the response.
 type ActivityReportResult struct {
-	Subject       ReportSubject      `json:"subject"`
-	RawPointCount int                `json:"rawPointCount"`
-	Points        []models.Telemetry `json:"points"`
+	Subject       ReportSubject           `json:"subject"`
+	RawPointCount int                     `json:"rawPointCount"`
+	Points        []report.TelemetryPoint `json:"points"`
+
+	Stats report.NormalizeStats `json:"-"`
 }
 
 type ReportSubject struct {
@@ -90,13 +92,15 @@ func (s *Service) GenerateActivityReport(ctx context.Context, req ActivityReport
 	}
 
 	// 5. Fetch. No telemetry is a success with zero points, not an error (§34).
-	points, err := s.App.Repo.Telemetry.RangeByAsset(ctx, asset.ID, req.From, req.To)
+	rows, err := s.App.Repo.Telemetry.RangeByAsset(ctx, asset.ID, req.From, req.To)
 	if err != nil {
 		return nil, err
 	}
-	if points == nil {
-		points = []models.Telemetry{} // JSON [] rather than null
-	}
+
+	// 6. Normalise (§10): nothing past this line depends on raw DB column
+	// names or vendor payload keys. Normalize always returns a non-nil
+	// slice, so an empty range marshals to [] rather than null.
+	points, stats := report.Normalize(rows)
 
 	return &ActivityReportResult{
 		Subject: ReportSubject{
@@ -106,7 +110,8 @@ func (s *Service) GenerateActivityReport(ctx context.Context, req ActivityReport
 			From:      req.From,
 			To:        req.To,
 		},
-		RawPointCount: len(points),
+		RawPointCount: stats.Raw,
 		Points:        points,
+		Stats:         stats,
 	}, nil
 }

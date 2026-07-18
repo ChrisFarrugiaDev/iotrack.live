@@ -290,12 +290,12 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 
 ### Step 5 — wire into the service
 
-- [ ] `report_service.go`: after the fetch, `report.Normalize(rows)`;
+- [x] `report_service.go`: after the fetch, `report.Normalize(rows)`;
       `ActivityReportResult.Points` becomes `[]report.TelemetryPoint`;
       `RawPointCount` unchanged in meaning.
-- [ ] Handler log line gains `accepted_point_count` and `invalid_gps_count`
+- [x] Handler log line gains `accepted_point_count` and `invalid_gps_count`
       (§37 raw/accepted/rejected).
-- [ ] Service integration test (RUN_DB_TESTS=1) asserts the normalised
+- [x] Service integration test (RUN_DB_TESTS=1) asserts the normalised
       shape on real data: points carry camelCase JSON, `ignitionOn` is
       true/false/null (never 0/1), any ibutton in `parameters` is a JSON
       string.
