@@ -249,7 +249,7 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 
 ### Step 3 — the normaliser
 
-- [ ] `internal/report/normalise.go` — `Normalize([]models.Telemetry)
+- [x] `internal/report/normalise.go` — `Normalize([]models.Telemetry)
       ([]TelemetryPoint, NormalizeStats)`:
       - `Timestamp` from `happened_at` (already UTC); payload epoch ignored;
       - `latitude`/`longitude`/`altitude`/`speed` → floats; `angle` →
@@ -264,10 +264,10 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
         JSON number corrupts in every browser);
       - `Parameters` carries the named elements; values otherwise unaltered;
       - invalid coordinates → `GPSValid=false`, point kept.
-- [ ] `NormalizeStats{Raw, Accepted, InvalidGPS int}` — the §37 counters;
+- [x] `NormalizeStats{Raw, Accepted, InvalidGPS int}` — the §37 counters;
       "accepted" = raw for now (nothing is dropped), the split exists so the
       engine's later filtering has somewhere to report.
-- [ ] `internal/report/activity.go` — `ResolveActivity(TelemetryPoint)
+- [x] `internal/report/activity.go` — `ResolveActivity(TelemetryPoint)
       (active *bool, source ActivitySource)` in §11's priority order
       (pto → engine_running → ignition → device activity → unknown).
       Per-point and pure, so it lands here rather than Phase 3.
