@@ -6,8 +6,16 @@ expected runtime behavior; steps below reference it rather than repeat it.
 
 ## Current State
 
-- **Phase 1 is complete.** `POST /compute/reports/activity` serves the
-  §38 Phase 1 deliverable behind the full auth/access chain: JWT →
+- **Phases 1 and 2 are complete.** The endpoint serves NORMALISED points:
+  §10 TelemetryPoint with camelCase §18 contract keys, pointers marshalling
+  to null (never false), ibutton/rfid strings end to end, invalid
+  coordinates marked gpsValid=false but kept, unknown IO ids passing
+  through under numeric keys, and the §37 log carrying
+  raw/accepted/invalid-GPS counters. Acceptance spot-checked live against
+  raw DB rows (0/1 numbers became booleans, timestamp equals happened_at,
+  7 invalid fixes identified in a real range and still served).
+- **Phase 1** delivered `POST /compute/reports/activity` behind the full
+  auth/access chain: JWT →
   `report.view` permission → org match → per-user asset override → range
   limit → telemetry fetch, with §34 error shapes, a REPORT_MAX_CONCURRENT
   semaphore, and one §37 log line per request.
@@ -16,8 +24,10 @@ expected runtime behavior; steps below reference it rather than repeat it.
 - Tests: httptest tables for middlewares and handler; RUN_DB_TESTS=1
   integration suites for repositories and the report service; the Step 10
   acceptance matrix passed against the dev database.
-- Next: Phase 2 (normalisation) — detailed below, grounded in a survey of
-  the real payloads in the dev database.
+- Next: Phase 3 (the pure segmentation engine) — detail its steps below
+  when it starts, promoting the frontend fixture
+  (web.frontend.vue/src/mock/activity-report.mock.ts) into Go test
+  fixtures for the §36.2 scenarios.
 
 ## Phase 1 — API Skeleton and Access (§38 Phase 1)
 
@@ -303,12 +313,12 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 
 ### Step 6 — Phase 2 acceptance
 
-- [ ] devserver smoke: a served response shows normalised camelCase points;
+- [x] devserver smoke: a served response shows normalised camelCase points;
       spot-check one row against its raw payload in the DB (same fix, 0/1
       became booleans, ibutton quoted).
-- [ ] §38 criteria walked: no raw column names downstream of the
+- [x] §38 criteria walked: no raw column names downstream of the
       normaliser; invalid points identified; null distinct from false.
-- [ ] `go build ./...`, `go vet ./...`, full test suite clean.
+- [x] `go build ./...`, `go vet ./...`, full test suite clean.
 - Verify: matrix recorded here, boxes ticked, Current State updated.
 
 ## Later Phases
