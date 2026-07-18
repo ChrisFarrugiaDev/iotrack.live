@@ -235,7 +235,7 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 
 ### Step 2 — IO element naming
 
-- [ ] `internal/report/ioelements.go` — the id→name subset this service
+- [x] `internal/report/ioelements.go` — the id→name subset this service
       reads, copied verbatim from
       `teltonika.parser.go/internal/teltonika/IoElementsMap.go` naming
       (1 digital_input_1, 21 gsm_signal, 16 total_odometer, 66
@@ -243,7 +243,7 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
       80 data_mode, 181 gnss_pdop, 182 gnss_hdop, 200 sleep_mode, 207 rfid,
       239 ignition, 240 movement, 241 active_gsm_operator). Two services
       disagreeing on a name is a §-level contract bug.
-- [ ] Unknown ids pass through under their numeric key — never dropped,
+- [x] Unknown ids pass through under their numeric key — never dropped,
       never renamed by guesswork.
 - Verify: unit test — known id maps, unknown id survives.
 
