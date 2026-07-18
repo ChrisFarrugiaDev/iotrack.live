@@ -262,6 +262,50 @@ mapping follows `teltonika.parser.go/internal/teltonika/IoElementsMap.go`
 (78 `ibutton`, 207 `rfid`, 239 `ignition`, 240 `movement`, …). Point
 `parameters` are keyed by those names.
 
+**TelemetryPoint — pinned (Phase 2 Step 0).** The one §10 shape everything
+downstream of the normaliser consumes; also the point shape the response
+serves, so its JSON must satisfy the §18 `ReportPoint` contract:
+
+```go
+// internal/report — pure package: models in, points out.
+type TelemetryPoint struct {
+	ID        string    `json:"id"`        // row id as a STRING (§18; BIGSERIAL can pass 2^53)
+	Timestamp time.Time `json:"timestamp"` // = happened_at (already UTC); payload epoch string ignored
+
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+
+	SpeedKph *float64 `json:"speedKph"` // nil = vendor didn't report it, never 0
+	Heading  *float64 `json:"heading"`  // device angle; engine prefers course over ground (§41)
+	Altitude *float64 `json:"altitude"`
+
+	IgnitionOn       *bool `json:"ignitionOn"`       // element 239: 0/1 number → false/true; absent → nil
+	ActivityOn       *bool `json:"activityOn"`       // provisional: digital_input_1; per-asset config later
+	MovementDetected *bool `json:"movementDetected"` // element 240; additive vs §18, harmless
+	GPSValid         bool  `json:"gpsValid"`         // additive vs §18
+
+	Parameters map[string]any `json:"parameters,omitempty"` // parser-named keys; unknown ids keep numeric key
+}
+```
+
+Rules the struct encodes (violating any is a bug):
+
+- **Null-ables are pointers.** `nil` marshals to JSON `null` — unknown is
+  never collapsed to `false` or `0` (§41.4). The dev-DB survey proved the
+  nil paths are real: older rows lack element 239 entirely.
+- **`id` is a JSON string**, matching §18 and immune to JS 2^53 truncation.
+- **`timestamp` comes from `happened_at`**, the authoritative UTC column;
+  the payload's epoch-string copy is ignored.
+- **Invalid coordinates** (outside ±90/±180, or the exact 0,0 fix) set
+  `gpsValid=false` and the point is KEPT — §38 says identified; dropping is
+  the engine's §13 decision.
+- **`parameters.ibutton` / `parameters.rfid` stay strings** end to end
+  (contract rule 1 below); the payload's number `0` means "no tag" and maps
+  to absent, not to a driver id.
+- **Response change at Phase 2**: `points` becomes `[]TelemetryPoint`
+  (Phase 1 served raw DB rows); `rawPointCount` keeps meaning rows fetched,
+  and the §37 log gains accepted / invalid-GPS counts.
+
 **Segment** (§11–§17): the pure engine in `internal/report`. State machine
 per §16, thresholds from `JourneyConfig` (§40) — per-category profiles
 (vehicle / personal), never hard-coded. GPS noise filtering per §13; short
