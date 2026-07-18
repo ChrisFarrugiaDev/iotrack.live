@@ -275,16 +275,16 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 
 ### Step 4 — unit tests on real payloads
 
-- [ ] Fixtures from reality, not invention: 2–3 payloads sampled from the
+- [x] Fixtures from reality, not invention: 2–3 payloads sampled from the
       dev DB via `dbquery.sh` plus the known awkward one (the 18-digit
       ibutton string sample) as Go table-test cases.
-- [ ] The table pins every acceptance rule: absent `239` → `IgnitionOn ==
+- [x] The table pins every acceptance rule: absent `239` → `IgnitionOn ==
       nil` (not false); `0`/`1` → false/true; ibutton number-0 → absent;
       ibutton string → still a string after marshal (quoted in JSON);
       invalid/0,0 coords → `GPSValid=false` but point present; unknown
       element id preserved under numeric key; `Timestamp` equals
       `happened_at`, not the payload epoch.
-- [ ] `ResolveActivity` table: each §11 priority level, including the
+- [x] `ResolveActivity` table: each §11 priority level, including the
       all-nil → `unknown` fallthrough.
 - Verify: `go test ./internal/report` — no DB, no flags, runs anywhere.
 
