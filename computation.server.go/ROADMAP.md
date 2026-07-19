@@ -32,10 +32,13 @@ expected runtime behavior; steps below reference it rather than repeat it.
   §36.2 G nil-activity stops close to stationary, contiguous backdated
   transitions) — and window.go, the §43 v1 boundary pass (clip to
   [from, to], boundary flags on edge segments, clipped durations,
-  out-of-window segments dropped and ids renumbered). Full suite green.
-  **Next: Step 5** (summary.go — §23, derived from segments only, with
-  the reconciliation invariant as a test), then fixtures, wiring,
-  acceptance.
+  out-of-window segments dropped and ids renumbered). **Step 5 done**:
+  summary.go — §23 Summary derived from segments only (buckets, distance,
+  point bookkeeping, firstPointAt/lastPointAt null-when-empty), with the
+  reconciliation invariant tested through the real engine. Full suite
+  green. **Next: Step 6** (the §36.2 fixtures — port the frontend mock's
+  buildPoints generator, scenario C exact timeline, hand-built A/B/D/E/G),
+  then wiring, acceptance.
 
 ## Phase 1 — API Skeleton and Access (§38 Phase 1)
 
@@ -448,12 +451,18 @@ as routes, and the summary matches the segments.
 
 ### Step 5 — summary (§23)
 
-- [ ] `internal/report/summary.go` — derived from segments only, never from
+- [x] `internal/report/summary.go` — derived from segments only, never from
       raw points: journeyCount, moving/activeStatic/stationary/gap seconds,
-      totalDistanceMeters, pointCount.
-- [ ] The reconciliation invariant as a test: segment durations sum to the
+      totalDistanceMeters, pointCount. (Plus firstPointAt/lastPointAt from
+      the segments' own points — null when empty, per the SPEC pin.)
+- [x] The reconciliation invariant as a test: segment durations sum to the
       span they cover (the frontend mock's deriveSummary enforces the same).
-- Verify: `go test ./internal/report`.
+      (`summary_test.go`: ordered non-overlapping segments, duration ==
+      EndAt−StartAt everywhere, the four buckets partition total segment
+      time; plus a full drive→work→gap→drive→parked timeline through the
+      real engine with exact bucket numbers, and the empty summary
+      marshalling firstPointAt/lastPointAt as null.)
+- Verify: `go test ./internal/report`. DONE — full suite green.
 
 ### Step 6 — fixtures (§36.2)
 
