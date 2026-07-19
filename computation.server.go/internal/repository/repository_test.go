@@ -9,13 +9,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// testRepos builds the real Repository aggregate against the dev database —
+// testRepos builds the real Repository aggregate against the live database
+// (PRODUCTION — these tests are read-only by design; keep them that way) —
 // exercising the same construction path production uses, including the
 // upper/db session. Gated behind RUN_DB_TESTS=1 (same pattern as
 // teltonika.parser.go's RUN_REDIS_TESTS) so `go test ./...` stays green on a
 // machine with no database reachable — only an explicit opt-in touches the
 // network. See the compute-dev-check skill for how to point DB_URL at the
-// dev box.
+// production box.
 func testRepos(t *testing.T) *Repository {
 	t.Helper()
 
@@ -64,14 +65,14 @@ func TestAssetRepository_GetByUUID_Real(t *testing.T) {
 	// A negative test alone would miss upper/db mis-scanning a real row (the
 	// uuid column in particular: Postgres's native uuid type has bitten
 	// naive string scanning before). Read whatever asset is first in the
-	// dev database and confirm the fields round-trip correctly.
+	// live database and confirm the fields round-trip correctly.
 	var wantUUID, wantName string
 	var wantOrgID int64
 	err := repos.Pool.QueryRow(context.Background(),
 		`SELECT uuid::text, organisation_id, name FROM app.assets LIMIT 1`,
 	).Scan(&wantUUID, &wantOrgID, &wantName)
 	if err != nil {
-		t.Skip("no assets in the dev database to test against")
+		t.Skip("no assets in the live database to test against")
 	}
 
 	got, err := repos.Asset.GetByUUID(context.Background(), wantUUID)
@@ -103,14 +104,14 @@ func TestTelemetryRepository_RangeByAsset_SortedAscending(t *testing.T) {
 	repos := testRepos(t)
 
 	// Pick whichever real asset happens to have telemetry, rather than
-	// hardcoding an id that may not exist (or may age out) in the dev
+	// hardcoding an id that may not exist (or may age out) in the live
 	// database.
 	var assetID int64
 	err := repos.Pool.QueryRow(context.Background(),
 		`SELECT asset_id FROM app.telemetry WHERE asset_id IS NOT NULL LIMIT 1`,
 	).Scan(&assetID)
 	if err != nil {
-		t.Skip("no telemetry with an asset_id in the dev database to test against")
+		t.Skip("no telemetry with an asset_id in the live database to test against")
 	}
 
 	points, err := repos.Telemetry.RangeByAsset(context.Background(), assetID, time.Unix(0, 0), time.Now())

@@ -14,10 +14,11 @@ import (
 	"iotrack.live/computation.server.go/internal/repository"
 )
 
-// testService builds a real Service against the dev database — the whole
+// testService builds a real Service against the live database (PRODUCTION —
+// these tests are read-only by design; keep them that way) — the whole
 // point of Step 7's verify is that the service is callable without HTTP.
 // Gated behind RUN_DB_TESTS=1 like the repository tests; see the
-// compute-dev-check skill for pointing DB_URL at the dev box.
+// compute-dev-check skill for pointing DB_URL at the production box.
 func testService(t *testing.T) *Service {
 	t.Helper()
 
@@ -48,7 +49,7 @@ func testService(t *testing.T) *Service {
 	return NewService(app)
 }
 
-// realAsset returns the uuid and organisation id of some asset in the dev
+// realAsset returns the uuid and organisation id of some asset in the live
 // database, so tests never hardcode ids that may age out.
 func realAsset(t *testing.T, s *Service) (uuid string, orgID int64) {
 	t.Helper()
@@ -57,7 +58,7 @@ func realAsset(t *testing.T, s *Service) (uuid string, orgID int64) {
 		`SELECT uuid::text, organisation_id FROM app.assets LIMIT 1`,
 	).Scan(&uuid, &orgID)
 	if err != nil {
-		t.Skip("no assets in the dev database to test against")
+		t.Skip("no assets in the live database to test against")
 	}
 	return uuid, orgID
 }
@@ -172,7 +173,7 @@ func TestGenerateActivityReport_NormalisedShape(t *testing.T) {
 		 ORDER BY max(t.happened_at) DESC LIMIT 1`,
 	).Scan(&uuid, &orgID, &latest)
 	if err != nil {
-		t.Skip("no asset-scoped telemetry in the dev database")
+		t.Skip("no asset-scoped telemetry in the live database")
 	}
 
 	result, err := s.GenerateActivityReport(context.Background(), ActivityReportRequest{

@@ -23,11 +23,16 @@ expected runtime behavior; steps below reference it rather than repeat it.
   for the asset lookup, raw pgx elsewhere) → structs-only models.
 - Tests: httptest tables for middlewares and handler; RUN_DB_TESTS=1
   integration suites for repositories and the report service; the Step 10
-  acceptance matrix passed against the dev database.
-- Next: Phase 3 (the pure segmentation engine) — detail its steps below
-  when it starts, promoting the frontend fixture
-  (web.frontend.vue/src/mock/activity-report.mock.ts) into Go test
-  fixtures for the §36.2 scenarios.
+  acceptance matrix passed against the live database.
+- **Phase 3 in progress** — Steps 0–3 done and verified: the SPEC-pinned
+  segment contract, JourneyConfig (§40 profiles in code), movement
+  primitives (§12/§13, scenario D drift test), the sealed §18 segment
+  union with exact-key marshal tests, and engine.go — the §17 state
+  machine with documented deviations (buffers absorbed not dropped,
+  §36.2 G nil-activity stops close to stationary, contiguous backdated
+  transitions). Full suite green. **Next: Step 4** (window clipping +
+  §43 boundary flags — where BuildSegments' unused from/to earn their
+  place), then summary, fixtures, wiring, acceptance.
 
 ## Phase 1 — API Skeleton and Access (§38 Phase 1)
 
@@ -80,7 +85,8 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
       `initdb-scripts/05-tables.sql` with deliberate `role_permissions`
       defaults (§20). This is the same seed the frontend sidebar gating
       needs — one seed serves both (frontend ROADMAP "security debt" item).
-- [x] Apply the same INSERTs manually to the running dev database —
+- [x] Apply the same INSERTs manually to the running live database (an
+      approved idempotent write — that DB is PRODUCTION) —
       initdb scripts only run on a fresh volume.
 - Verify: `SELECT * FROM app.role_permissions_view WHERE key='report.view';`
   shows the intended roles.
@@ -116,7 +122,7 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
       unknown asset returns none. Skipped without the flag so
       `go test ./...` stays green anywhere.
 - Verify: `RUN_DB_TESTS=1 GOCACHE=/tmp/gocache go test ./internal/repository`
-  against the dev DB.
+  against the live DB (PRODUCTION — tests are read-only by design).
 
 ### Step 6 — Config and appcore
 
@@ -162,7 +168,7 @@ runnable; remove a directory's `.gitkeep` when its first real file lands.
 
 ### Step 10 — Acceptance (§38 Phase 1 criteria)
 
-All via curl against the dev stack (token from a Node login):
+All via curl against the live stack (token from a Node login):
 
 - [x] No/invalid token → 401.
 - [x] Valid token, role without `report.view` → 403.
@@ -184,7 +190,7 @@ DB rows. Acceptance (§38): nothing downstream of the normaliser depends on
 raw DB column names; invalid points are identified (marked, not dropped —
 dropping is the engine's §13 decision); null values stay distinct from false.
 
-### Ground truth — dev DB survey (2026-07-16, 3000 recent rows)
+### Ground truth — live-DB survey (2026-07-16, 3000 recent rows; NOTE: that DB is PRODUCTION)
 
 Facts the steps below are built on; re-verify with `compute-dev-check`'s
 `dbquery.sh` if the parser changes:
@@ -286,7 +292,7 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 ### Step 4 — unit tests on real payloads
 
 - [x] Fixtures from reality, not invention: 2–3 payloads sampled from the
-      dev DB via `dbquery.sh` plus the known awkward one (the 18-digit
+      live DB via `dbquery.sh` (read-only) plus the known awkward one (the 18-digit
       ibutton string sample) as Go table-test cases.
 - [x] The table pins every acceptance rule: absent `239` → `IgnitionOn ==
       nil` (not false); `0`/`1` → false/true; ibutton number-0 → absent;
@@ -309,7 +315,8 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
       shape on real data: points carry camelCase JSON, `ignitionOn` is
       true/false/null (never 0/1), any ibutton in `parameters` is a JSON
       string.
-- Verify: full suite; `RUN_DB_TESTS=1` suites against the dev DB.
+- Verify: full suite; `RUN_DB_TESTS=1` suites against the live DB
+  (read-only).
 
 ### Step 6 — Phase 2 acceptance
 
@@ -321,12 +328,189 @@ Facts the steps below are built on; re-verify with `compute-dev-check`'s
 - [x] `go build ./...`, `go vet ./...`, full test suite clean.
 - Verify: matrix recorded here, boxes ticked, Current State updated.
 
+## Phase 3 — Pure Segmentation Engine (§38 Phase 3, §12–§17, §22–§23, §43)
+
+Deliverable: the engine turns `[]TelemetryPoint` into `segments + summary`,
+and the response becomes the full §18/§19.3 `ActivityReportResponse`
+(`report.mode`, `subject`, `summary`, `segments`) the frontend's swap seam
+expects. Acceptance (§38): the fixture scenarios pass, traffic-light stops
+stay inside journeys, active-static work is detected, gaps are never bridged
+as routes, and the summary matches the segments.
+
+### Ground truth — cadence survey (2026-07-18, the org-6 drive days)
+
+- Median interval between points is **70s**, p90 **100s** — the default
+  `maximumPointGapSeconds: 300` sits comfortably above normal cadence, and
+  the two surveyed days contain **4 real gaps > 300s**: data_gap segments
+  will appear in ordinary real reports, not just fixtures.
+- Parked points (ignition 0) report **clean speed 0** on this tracker —
+  scenario D's noise arrives through position jitter, not speed. A naive
+  all-parked-points spread measure came back 112km — contaminated by
+  multiple parking locations and 0,0 fixes; honest per-episode drift needs
+  per-episode measurement, deferred to the fixtures step.
+- `pto` / `engine_running` still absent from real data — active_static will
+  only be exercisable through fixtures (scenario C) until a tracker config
+  maps a work input. Scenario G (missing activity signal) is the REAL
+  common case in production data.
+
+### Step 0 — Shape decisions (docs only, before code)
+
+- [x] Pin the segment types in `SPEC.md` the way TelemetryPoint was pinned:
+      a Go interface-based union (each concrete type marshals its own §18
+      fields with the `type` discriminator) — `JourneySegment`
+      (distanceMeters, averageSpeedKph, maximumSpeedKph, start/endLocation,
+      endReason, pointCount, points), `ActiveStaticSegment` (location,
+      activitySource), `StationarySegment` (location), `DataGapSegment`
+      (previous/nextLocation, NO points, NO route — §8.4), plus
+      `ReportLocation`, `SegmentBoundary` (§43) and the §19.3 summary
+      struct. Re-read the frontend type file field-for-field while writing;
+      it is the authority, not memory.
+- [x] Pin the §44 pre-pass: points arrive sorted (SQL) but the engine
+      re-verifies order, drops exact duplicates, and SKIPS gpsValid=false
+      points for all segmentation math (§17 pseudocode does the same).
+      Consequence to record: invalid points appear in no segment — they
+      exist only in the §37 counters once Phase 3 replaces the flat points
+      array with segments.
+- [x] Pin the §43 v1 boundary rule: compute within the window only;
+      first/last segments touching the window edges get their boundary
+      flags; the look-behind/look-ahead fetch widening is explicitly
+      deferred (record as a Later item).
+- [x] Pin mode handling: Phase 3 serves `mode: "journey"` for every tracker
+      category; timeline mode for sparse assets (§4.2, scenario F) is its
+      own later phase. `report.mode` says what was chosen (§4.3 auto stays
+      internal).
+- [x] `JourneyConfig` (§40) lives in `internal/report/config.go` as code
+      (vehicle + personal profiles); per the Phase 1 decision, values get
+      promoted to env vars only when real tuning demands it.
+- Verify: SPEC reads coherently against §14–§18 and the frontend types.
+
+### Step 1 — geometry and movement primitives
+
+- [x] `haversineMeters(a, b TelemetryPoint) float64` (§22) — lives in
+      report; the util-package trigger (a second consumer) has not fired.
+- [x] `resolveMovement` (§12): moving when `speedKph >= movingSpeedKph` OR
+      `distance >= minimumMovementMeters` OR `movementDetected == true`.
+- [x] Movement confirmation (§13): `movementConfirmationPoints` consecutive
+      moving points OR `movementConfirmationMeters` buffered — a journey
+      must never start from one noisy point.
+- [x] Unit tests: haversine against known coordinates, the confirmation
+      rules, and a drift table (random jitter within 10m never confirms —
+      scenario D's core).
+- Verify: `go test ./internal/report`.
+
+### Step 2 — segment types and metrics
+
+- [x] `internal/report/segment.go` — the union from Step 0 with stable ids
+      (`segment-1`, …), `durationSeconds`, and JSON marshal tests proving
+      each type emits exactly its §18 fields (a DataGapSegment must never
+      grow a points array).
+- [x] Journey metrics: `distanceMeters` = haversine sum over its accepted
+      points (§22), `averageSpeedKph` from distance/duration,
+      `maximumSpeedKph` from point speeds.
+- Verify: marshal tests against the frontend union, field for field.
+
+### Step 3 — the state machine
+
+- [x] `internal/report/engine.go` — `BuildSegments(points, config, from,
+      to)`: the §17 pseudocode ported faithfully — pending movement and
+      stationary buffers (§15), backdated boundaries (the journey ends at
+      the true stop time, not threshold-seconds later), the gap
+      short-circuit closing the current segment and restarting
+      interpretation (§14.7), short stops staying buffered inside journeys
+      (§14.2), and every §14.1–14.6 transition.
+- [x] The §G decision the pseudocode dodges: with activity UNKNOWN (nil),
+      a confirmed stop still becomes stationary after `journeyEndSeconds` —
+      never an invented active_static; record the deviation from the
+      pseudocode (which would buffer forever) in a comment citing §36.2 G.
+- [x] `endReason` on every journey close (`became_active_static`,
+      `became_stationary`, `data_gap`, `report_end`).
+- [x] End-of-points: close the open segment at the last point; the window
+      edge handling belongs to Step 4.
+- Verify: compiles; the fixtures in Step 5 are the real check.
+
+### Step 4 — window boundaries (§43 v1)
+
+- [ ] Clip segments to `[from, to]`; set `startsBeforeReportRange` /
+      `endsAfterReportRange` on the edge segments per the Step 0 rule.
+- [ ] Durations reflect the clipped extent, so the summary reconciles to
+      the covered window.
+- Verify: unit test with a journey spanning the window start (the frontend
+  fixture's `…` case).
+
+### Step 5 — summary (§23)
+
+- [ ] `internal/report/summary.go` — derived from segments only, never from
+      raw points: journeyCount, moving/activeStatic/stationary/gap seconds,
+      totalDistanceMeters, pointCount.
+- [ ] The reconciliation invariant as a test: segment durations sum to the
+      span they cover (the frontend mock's deriveSummary enforces the same).
+- Verify: `go test ./internal/report`.
+
+### Step 6 — fixtures (§36.2)
+
+- [ ] Port the frontend mock's waypoint generator (`buildPoints` in
+      `web.frontend.vue/src/mock/activity-report.mock.ts`, ~40 lines) into
+      a Go testdata builder — self-contained tests, no node dependency; the
+      mock stays the visual reference and this port is documented as its
+      Go twin.
+- [ ] Scenario C (the cherry-picker day) reproduced with the mock's exact
+      timeline: expect journey → active_static (2h27m, source from the
+      work input) → journey → stationary → journey → data_gap (30m) →
+      journey → stationary, with the §43 partial flags at both window
+      edges.
+- [ ] Hand-built tables for A (simple journey), B (45s traffic light stays
+      one journey), D (10m jitter stays stationary), E (30m gap not
+      bridged), G (no activity signal: journeys still form, stops become
+      stationary, active_static never invented).
+- [ ] Scenario F (sparse tracker) is timeline mode — explicitly out of
+      scope, listed under Later.
+- Verify: `go test ./internal/report` — every scenario's expected segment
+  sequence, types, and durations.
+
+### Step 7 — service wiring and the full response
+
+- [ ] `report_service.go`: after Normalize, run the engine and build the
+      full `ActivityReportResponse` per the frontend contract file —
+      `report` (mode, from, to), `subject`, `summary`, `segments`. The flat
+      `points`/`rawPointCount` fields give way to the contract shape;
+      re-check every field name against the frontend types, not memory.
+- [ ] Handler log gains `segment_count` (§37).
+- [ ] RUN_DB_TESTS integration test on the real drive window (the org-6
+      asset, Jul 6–8): at least one journey found, gaps where the cadence
+      survey says they are, summary consistent with segments.
+- Verify: full suite + integration suites.
+
+### Step 8 — Phase 3 acceptance
+
+- [ ] The §38 criteria walked live: fixtures green, the traffic-light stop
+      inside one journey, active_static from scenario C, the real 6249s
+      gap served as data_gap with no route, summary matching segments on a
+      real report.
+- [ ] devserver smoke: a real drive day served as segments; spot-check one
+      journey's distance/duration for plausibility against the map.
+- [ ] Build, vet, full suite; roadmap Current State updated; frontend
+      swap-seam note refreshed (Phase 4 can now wire the UI).
+- Verify: matrix recorded here, boxes ticked.
+
 ## Later Phases
 
-Tracked in `SPEC.md` (Implementation Roadmap): Phase 3 pure segmentation
-engine + the promoted frontend fixture (§36.2 scenarios), Phase 4 wiring the
-frontend (swap the store seam, Apache `/compute/` prefix, root Makefile
-`computation-build` target, `report.view` gating in the sidebar).
+Environment debt (raised 2026-07-19, when `57.129.22.122:5436` was
+recognised as PRODUCTION, not a dev DB):
+
+- [ ] Create a **read-only PostgreSQL role** for tooling and integration
+      tests (`dbquery.sh`, `RUN_DB_TESTS`), so nothing routine can write to
+      production even by accident.
+- [ ] Build a **dev sandbox database** from production: schema via
+      `initdb-scripts` in local Docker, plus an optional telemetry subset
+      dump for realistic engine testing; point the dev tooling at it and
+      retire the host-swap-to-production habit.
+
+Tracked in `SPEC.md` (Implementation Roadmap): Phase 4 wiring the frontend
+(swap the store seam, Apache `/compute/` prefix, root Makefile
+`computation-build` target, `report.view` gating in the sidebar), timeline
+mode for sparse assets (§4.2, scenario F), the §43 look-behind/look-ahead
+fetch widening, reverse geocoding (§28), groups (§19.2 — intersection,
+never union), export, alarms, audit events (§35).
 
 ## Completed
 

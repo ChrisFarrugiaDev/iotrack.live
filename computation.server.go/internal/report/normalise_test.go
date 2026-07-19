@@ -9,7 +9,7 @@ import (
 	"iotrack.live/computation.server.go/internal/models"
 )
 
-// The fixtures are real payloads sampled from the dev database (Phase 2
+// The fixtures are real payloads sampled from the live database (Phase 2
 // Step 4), not invented ones — each was chosen for the shape it proves:
 //
 //   payloadTagged   full modern row with a REAL 18-digit ibutton string;

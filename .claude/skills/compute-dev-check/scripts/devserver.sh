@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Run computation.server.go against the remote dev database.
+# Run computation.server.go locally against the PRODUCTION database
+# (57.129.22.122:5436 — there is no separate dev DB yet; reads only).
 #
 #   devserver.sh start    build the binary, boot it, wait for /compute/health
 #   devserver.sh stop     SIGTERM via pidfile, wait for graceful shutdown
@@ -9,7 +10,7 @@
 # Builds a real binary instead of `go run` so stop kills the server itself,
 # not a go-run parent whose child survives. Overrides:
 #   HTTP_PORT       listen port            (default 4404, avoids prod's 4004)
-#   REMOTE_DB_HOST  dev database host      (default 57.129.22.122)
+#   REMOTE_DB_HOST  database host (PRODUCTION, default 57.129.22.122)
 set -euo pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -44,8 +45,8 @@ start)
     fi
     mkdir -p "$RUN_DIR"
 
-    # .env points at 127.0.0.1 because in production the DB is on the same
-    # box; swap the host so the local process reaches the remote dev DB.
+    # .env points at 127.0.0.1 because production runs on that box; swap
+    # the host so the local process reaches it. That DB is PRODUCTION.
     DB_URL=$(env_value "$SVC/.env" DB_URL | sed "s|127.0.0.1|$REMOTE_DB_HOST|")
     JWT_SECRET=$(env_value "$SVC/.env.development" JWT_SECRET)
     [ -n "$DB_URL" ] || { echo "DB_URL not found in $SVC/.env" >&2; exit 1; }

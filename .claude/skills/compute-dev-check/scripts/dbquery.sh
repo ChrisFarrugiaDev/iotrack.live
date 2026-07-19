@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Run one SQL statement against the remote dev database (no local psql).
+# Run one SQL statement against the PRODUCTION database (no local psql).
+# Reads are fine; treat any non-SELECT as a production change.
 #
 #   dbquery.sh "SELECT count(*) FROM app.telemetry WHERE asset_id = 12"
 #   dbquery.sh "INSERT INTO ... ON CONFLICT DO NOTHING"
 #
 # DB_URL comes from computation.server.go/.env with the host swapped to the
-# dev box, same as devserver.sh. Override host with REMOTE_DB_HOST.
+# production box, same as devserver.sh. Override host with REMOTE_DB_HOST.
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)

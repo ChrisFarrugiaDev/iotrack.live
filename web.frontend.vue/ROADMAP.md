@@ -23,9 +23,11 @@ expected runtime behavior.
     (`TheReportsMenu.vue`) leading to the Activity Report — but `report.view`
     is not seeded, there is no `routePermissions` entry, and the report is
     built from **mocked telemetry**. It is reachable by every user.
-  - Seed the key, add `'reports.activity': 'report.view'` to the router map,
-    and gate the sidebar item. See `docs/features/ACTIVITY_REPORT_UI_ROADMAP.md` and design
-    doc §20.
+  - `report.view` is now SEEDED (initdb + dev DB, all four roles) and the
+    Go backend enforces it on `/compute/reports/*`. Still open on the
+    frontend: add `'reports.activity': 'report.view'` to the router map and
+    gate the sidebar item. See `docs/features/ACTIVITY_REPORT_UI_ROADMAP.md`
+    and design doc §20.
 
 - [ ] Define future sidebar items before enabling workflows.
   - Audit and Alarms still appear in `TheSidebar.vue` as placeholder items with

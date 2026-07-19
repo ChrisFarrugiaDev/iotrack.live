@@ -77,17 +77,16 @@ mock block; nothing else in the UI knows data is fake.
 
 ## Project Structure
 
-Existing (prototype):
+Existing:
 
-- `cmd/app/main.go` — entrypoint. Currently a throwaway that fetches one
-  telemetry row; becomes the boot sequence below.
+- `cmd/app/main.go` — entrypoint; implements the boot sequence below.
 - `cmd/app/settings.go` — `loadEnv()`: `DOCKERIZED` short-circuit, else
   `.env.development` / `.env` by `GO_ENV`; forces `TZ=UTC`. Keep.
 - `internal/appcore/` — `App` struct (DB pool, repositories). Grows a `Config`.
 - `internal/db/` — pgxpool setup with env overrides. Keep.
-- `internal/models/` — becomes **structs only**: one package (as in the
-  parser), but no query methods and no global session. The prototype's
-  `Telemetry.GetByID` moves into the repository layer.
+- `internal/models/` — **structs only**: one package (as in the parser),
+  no query methods, no global session; queries live in the repository
+  layer.
 - `internal/logger/` — zap + lumberjack (`LOG_MODE`: file/off/dev). Keep.
 
 Data access follows the model/repository split from
@@ -97,8 +96,8 @@ repository method takes a `context.Context` so a disconnected client cancels
 its query — the parser-style active-record methods can't do that, and this
 service's queries are long enough for it to matter.
 
-To add (mirrors `file.server.go`, `chess.log/go_backend`, and the mongo
-project's repository layer):
+The rest of the layout (mirrors `file.server.go`, `chess.log/go_backend`,
+and the mongo project's repository layer) — all built:
 
 - `internal/repository/` — one repository per entity
   (`telemetry_repository.go`, `asset_repository.go`,
@@ -312,6 +311,114 @@ per §16, thresholds from `JourneyConfig` (§40) — per-category profiles
 stops inside a journey must not split it (§14.2); gap when points are more
 than `maximumPointGapSeconds` apart (§14.7).
 
+**Segments and response — pinned (Phase 3 Step 0).** Field names below were
+read from `web.frontend.vue/src/types/activity-report.type.ts`, the
+authority; re-check against it, not against memory.
+
+The segment union is interface-based — each concrete type marshals exactly
+its §18 fields, so a shape violation is a compile-time impossibility rather
+than a runtime bug (a `DataGapSegment` cannot grow a points array):
+
+```go
+// internal/report/segment.go
+type ActivitySegment interface{ segment() } // sealed marker
+
+type SegmentBase struct { // embedded by every concrete type
+	ID              string           `json:"id"`      // "segment-1", …
+	Type            string           `json:"type"`    // the union discriminator
+	StartAt         time.Time        `json:"startAt"`
+	EndAt           time.Time        `json:"endAt"`
+	DurationSeconds int              `json:"durationSeconds"`
+	Boundary        *SegmentBoundary `json:"boundary,omitempty"` // §43
+}
+
+type JourneySegment struct { // type: "journey"
+	SegmentBase
+	DistanceMeters  float64          `json:"distanceMeters"`
+	AverageSpeedKph *float64         `json:"averageSpeedKph"`
+	MaximumSpeedKph *float64         `json:"maximumSpeedKph"`
+	StartLocation   ReportLocation   `json:"startLocation"`
+	EndLocation     ReportLocation   `json:"endLocation"`
+	PointCount      int              `json:"pointCount"`
+	Points          []TelemetryPoint `json:"points"`
+	EndReason       string           `json:"endReason"` // became_active_static | became_stationary | data_gap | report_end
+}
+
+type ActiveStaticSegment struct { // type: "active_static"
+	SegmentBase
+	Location       ReportLocation   `json:"location"`
+	PointCount     int              `json:"pointCount"`
+	Points         []TelemetryPoint `json:"points"`
+	ActivitySource ActivitySource   `json:"activitySource"`
+}
+
+type StationarySegment struct { // type: "stationary"
+	SegmentBase
+	Location   ReportLocation   `json:"location"`
+	PointCount int              `json:"pointCount"`
+	Points     []TelemetryPoint `json:"points"`
+}
+
+type DataGapSegment struct { // type: "data_gap" — NO points, NO route (§8.4)
+	SegmentBase
+	PreviousLocation *ReportLocation `json:"previousLocation"` // nullable per contract
+	NextLocation     *ReportLocation `json:"nextLocation"`
+}
+
+type ReportLocation struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	// address omitted until reverse geocoding (§28) exists.
+}
+
+type SegmentBoundary struct {
+	StartsBeforeReportRange bool `json:"startsBeforeReportRange"`
+	EndsAfterReportRange    bool `json:"endsAfterReportRange"`
+}
+
+type Summary struct { // §19.3 — derived from segments only, never from points (§23)
+	FirstPointAt          *time.Time `json:"firstPointAt"` // null when the range is empty
+	LastPointAt           *time.Time `json:"lastPointAt"`
+	PointCount            int        `json:"pointCount"`
+	JourneyCount          int        `json:"journeyCount"`
+	TotalDistanceMeters   float64    `json:"totalDistanceMeters"`
+	MovingSeconds         int        `json:"movingSeconds"`
+	ActiveStaticSeconds   int        `json:"activeStaticSeconds"`
+	StationarySeconds     int        `json:"stationarySeconds"`
+	CommunicationGapSeconds int      `json:"communicationGapSeconds"`
+}
+```
+
+The Phase 3 response replaces the interim Phase 1/2 shape wholesale (no
+consumer is wired yet — the frontend still runs on its mock), becoming the
+full `ActivityReportResponse`:
+
+- `report`: `from`, `to`, `generatedAt`, `organisationId` (the JWT org),
+  `mode`, `timezone`. **Timezone is "UTC" for now** — the org-timezone
+  source is an open product decision (frontend roadmap, §42 Q14); revisit
+  when it lands.
+- `subject`: `assetId` (number — asset ids are fleet-scale, not the 2^53
+  hazard telemetry row ids are), `assetUuid`, `assetName`, `trackerType`
+  (from `asset_type`; nil or unknown → `"vehicle"`, consistent with the
+  range-limit default). `deviceId`/`deviceExternalId` are optional in the
+  contract and omitted until a device join earns its place.
+- `summary`, `segments` as above.
+- `mode` is `"journey"` for every tracker category in Phase 3; timeline
+  mode (§4.2, scenario F) is its own later phase. §4.3's `auto` stays
+  internal.
+
+Engine input rules pinned with it:
+
+- **§44 pre-pass**: points arrive SQL-sorted but the engine re-verifies
+  order, drops exact duplicates, and **skips `gpsValid=false` points in all
+  segmentation math** (§17 does the same). Consequence: invalid points
+  belong to no segment — once segments replace the flat points array, they
+  exist only in the §37 counters.
+- **§43 v1 boundaries**: compute within the window only; the first/last
+  segments touching the window edges carry the boundary flags; durations
+  reflect the clipped extent so the summary reconciles. The
+  look-behind/look-ahead fetch widening is deferred (Later).
+
 **Summarise** (§23): derived from the segments, never computed separately.
 
 ### Contract rules (violations are bugs, not style)
@@ -437,11 +544,10 @@ envelope with an empty summary when the range holds no rows.
 
 ## Current Improvement Targets
 
-- `cmd/app/main.go` is still the prototype one-shot query; replace with the
-  boot sequence above (Phase 1).
-- `internal/db/db.go` has a copy-paste bug: the `DB_MAX_CONN_IDLE_TIME`
-  branch assigns `poolConfig.MinConns` instead of `MaxConnIdleTime`. Fix when
-  first touching the file.
-- `AGENTS.md` here still describes the service as undefined prototype work;
-  update it (and the root service map) when Phase 1 starts, per its own
-  instruction to not assume responsibilities until defined.
+- Phase 3 remainder (ROADMAP steps 4–8): window boundaries (§43 v1),
+  summary (§23), the §36.2 fixtures, service wiring to the full
+  ActivityReportResponse, acceptance.
+- `BuildSegments`' `from`/`to` parameters are unused until Step 4 wires
+  window clipping — expected, not an oversight.
+- Later (recorded in ROADMAP "Later Phases"): frontend wiring, timeline
+  mode, §43 fetch widening, geocoding, groups, alarms, audit.

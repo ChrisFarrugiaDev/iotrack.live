@@ -82,7 +82,9 @@ The four rules this work was started under. Three held; one was overridden.
 
 - [x] Route `/reports/activity` → `reports.activity` →
   `src/views/reports/ActivityReportView.vue`.
-  - **Still no `routePermissions` entry** — `report.view` does not exist.
+  - **Still no `routePermissions` entry** — `report.view` now EXISTS (seeded
+    by the compute backend work, all four roles) but the router map and
+    sidebar gating are still unwired.
 - [x] Page shell using `Vview`, §6 layout: filters → summary → map → slider →
   table.
 - [x] **Added (not in the original plan):** the **Reports sidebar item now opens
@@ -197,22 +199,27 @@ owner's request:
 
 - [ ] **Gate `report.view`.** The Reports sidebar item is visible to **every
       user** and opens a report built from **fabricated telemetry**.
-      1. Seed the key in `initdb-scripts/05-tables.sql` with deliberate role
-         defaults.
+      1. ~~Seed the key~~ — DONE (initdb + dev DB, all four roles, via the
+         compute backend's Phase 1).
       2. Add `'reports.activity': 'report.view'` to the `routePermissions` map in
          `src/router/index.ts`.
       3. Gate the sidebar item with `authorizationStore.can('report.view')`.
-      4. Backend: `requirePermissions(["report.view"])` on the route.
+      4. ~~Backend enforcement~~ — DONE: `computation.server.go` requires it
+         on every `/compute/reports/*` route.
       See design doc §20 and `ROADMAP.md`.
 
 ## Next
 
-- [ ] **Backend Phase 1** (§38): route, Zod validation, auth, org/asset access
-      checks, telemetry query by `asset_id` (**never** by the asset's current
-      `device_id` — §45). No segmentation engine yet.
-- [ ] **Swap the seam** in `activityReportStore.fetchActivityReport()`.
-- [ ] **Promote the fixture** into the backend's segmentation unit tests — it was
-      built to cover the §36.2 scenarios for exactly this purpose.
+- [x] **Backend Phase 1** (§38) — DONE, in Go not Node:
+      `computation.server.go` serves `POST /compute/reports/activity` (port
+      4004) behind JWT + `report.view` + org/asset access, querying by
+      `asset_id` (§45). Phase 2 (normalisation) is done too; Phase 3 (the
+      segmentation engine) is in progress. See that service's ROADMAP.md.
+- [ ] **Swap the seam** in `activityReportStore.fetchActivityReport()` —
+      waits for backend Phase 4 (the URL is the compute service's, not the
+      Node API's: `/compute/reports/activity`).
+- [ ] **Promote the fixture** into the backend's segmentation tests — planned
+      as backend Phase 3 Step 6 (the mock's generator gets a Go twin).
 
 ## Smaller open items
 
