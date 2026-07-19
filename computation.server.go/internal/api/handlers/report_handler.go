@@ -124,11 +124,12 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 
 	// One line per serviced request (§37). Identifiers and counts only —
 	// never telemetry payloads.
-	rawCount, acceptedCount, invalidGPSCount := 0, 0, 0
+	rawCount, acceptedCount, invalidGPSCount, segmentCount := 0, 0, 0, 0
 	if result != nil {
-		rawCount = result.RawPointCount
+		rawCount = result.Stats.Raw
 		acceptedCount = result.Stats.Accepted
 		invalidGPSCount = result.Stats.InvalidGPS
+		segmentCount = len(result.Segments)
 	}
 	logger.Info("activity report",
 		zap.String("outcome", outcome),
@@ -140,6 +141,7 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 		zap.Int("raw_point_count", rawCount),
 		zap.Int("accepted_point_count", acceptedCount),
 		zap.Int("invalid_gps_count", invalidGPSCount),
+		zap.Int("segment_count", segmentCount),
 		zap.Duration("duration", time.Since(start)),
 	)
 }

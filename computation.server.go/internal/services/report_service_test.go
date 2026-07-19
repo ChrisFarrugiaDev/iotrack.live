@@ -11,13 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"iotrack.live/computation.server.go/internal/appcore"
+	"iotrack.live/computation.server.go/internal/report"
 	"iotrack.live/computation.server.go/internal/repository"
 )
 
-// testService builds a real Service against the dev database — the whole
+// testService builds a real Service against the live database (PRODUCTION —
+// these tests are read-only by design; keep them that way) — the whole
 // point of Step 7's verify is that the service is callable without HTTP.
 // Gated behind RUN_DB_TESTS=1 like the repository tests; see the
-// compute-dev-check skill for pointing DB_URL at the dev box.
+// compute-dev-check skill for pointing DB_URL at the production box.
 func testService(t *testing.T) *Service {
 	t.Helper()
 
@@ -48,7 +50,7 @@ func testService(t *testing.T) *Service {
 	return NewService(app)
 }
 
-// realAsset returns the uuid and organisation id of some asset in the dev
+// realAsset returns the uuid and organisation id of some asset in the live
 // database, so tests never hardcode ids that may age out.
 func realAsset(t *testing.T, s *Service) (uuid string, orgID int64) {
 	t.Helper()
@@ -57,7 +59,7 @@ func realAsset(t *testing.T, s *Service) (uuid string, orgID int64) {
 		`SELECT uuid::text, organisation_id FROM app.assets LIMIT 1`,
 	).Scan(&uuid, &orgID)
 	if err != nil {
-		t.Skip("no assets in the dev database to test against")
+		t.Skip("no assets in the live database to test against")
 	}
 	return uuid, orgID
 }
@@ -131,11 +133,14 @@ func TestGenerateActivityReport_HappyPath(t *testing.T) {
 	if result.Subject.AssetUUID != uuid {
 		t.Fatalf("subject uuid = %s, want %s", result.Subject.AssetUUID, uuid)
 	}
-	if result.RawPointCount != len(result.Points) {
-		t.Fatalf("rawPointCount = %d but %d points", result.RawPointCount, len(result.Points))
+	if result.Report.Mode != "journey" || result.Report.Timezone != "UTC" {
+		t.Fatalf("report meta = %+v, want mode journey, timezone UTC", result.Report)
 	}
-	if result.Points == nil {
-		t.Fatal("points must be an empty slice, never nil — it marshals to [] not null")
+	if result.Report.OrganisationID != orgID {
+		t.Fatalf("report organisationId = %d, want %d", result.Report.OrganisationID, orgID)
+	}
+	if result.Segments == nil {
+		t.Fatal("segments must be an empty slice, never nil — it marshals to [] not null")
 	}
 
 	// The count must agree with the database itself.
@@ -150,8 +155,8 @@ func TestGenerateActivityReport_HappyPath(t *testing.T) {
 		asset.id, from, to).Scan(&want); err != nil {
 		t.Fatalf("counting telemetry: %v", err)
 	}
-	if result.RawPointCount != want {
-		t.Fatalf("rawPointCount = %d, database says %d", result.RawPointCount, want)
+	if result.Stats.Raw != want {
+		t.Fatalf("stats.Raw = %d, database says %d", result.Stats.Raw, want)
 	}
 }
 
@@ -172,7 +177,7 @@ func TestGenerateActivityReport_NormalisedShape(t *testing.T) {
 		 ORDER BY max(t.happened_at) DESC LIMIT 1`,
 	).Scan(&uuid, &orgID, &latest)
 	if err != nil {
-		t.Skip("no asset-scoped telemetry in the dev database")
+		t.Skip("no asset-scoped telemetry in the live database")
 	}
 
 	result, err := s.GenerateActivityReport(context.Background(), ActivityReportRequest{
@@ -185,14 +190,18 @@ func TestGenerateActivityReport_NormalisedShape(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(result.Points) == 0 {
+	if result.Stats.Accepted == 0 {
 		t.Fatal("window anchored to latest telemetry returned no points")
 	}
-	if result.Stats.Accepted != len(result.Points) {
-		t.Fatalf("stats.Accepted = %d but %d points", result.Stats.Accepted, len(result.Points))
+
+	// Points now live inside segments (§18) — pull one from the first
+	// point-bearing segment for the shape check.
+	point, ok := firstSegmentPoint(result.Segments)
+	if !ok {
+		t.Fatalf("no point-bearing segment in a %d-segment report over live data", len(result.Segments))
 	}
 
-	encoded, err := json.Marshal(result.Points[0])
+	encoded, err := json.Marshal(point)
 	if err != nil {
 		t.Fatalf("marshalling a point: %v", err)
 	}
@@ -219,5 +228,105 @@ func TestGenerateActivityReport_NormalisedShape(t *testing.T) {
 				t.Fatalf("parameters.ibutton must be a JSON string: %#v", v)
 			}
 		}
+	}
+}
+
+// firstSegmentPoint returns the first point of the first point-bearing
+// segment — data gaps have none by contract (§8.4).
+func firstSegmentPoint(segments []report.ActivitySegment) (report.TelemetryPoint, bool) {
+	for _, segment := range segments {
+		switch s := segment.(type) {
+		case report.JourneySegment:
+			if len(s.Points) > 0 {
+				return s.Points[0], true
+			}
+		case report.ActiveStaticSegment:
+			if len(s.Points) > 0 {
+				return s.Points[0], true
+			}
+		case report.StationarySegment:
+			if len(s.Points) > 0 {
+				return s.Points[0], true
+			}
+		}
+	}
+	return report.TelemetryPoint{}, false
+}
+
+// Phase 3 Step 7 (§38): a real drive window served as segments. Anchored to
+// the roadmap's cadence-survey days (the org-6 drive days, Jul 6–8 2026):
+// at least one journey, at least one data gap (the survey counted 4 real
+// gaps > 300s), and a summary that reconciles with the segments it was
+// derived from.
+func TestGenerateActivityReport_RealDriveWindow(t *testing.T) {
+	s := testService(t)
+
+	from := time.Date(2026, 7, 6, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 7, 8, 0, 0, 0, 0, time.UTC)
+
+	// The busiest asset in the window, so the test never hardcodes an id.
+	var uuid string
+	var orgID int64
+	err := s.App.Repo.Pool.QueryRow(context.Background(), `
+		SELECT a.uuid::text, a.organisation_id
+		  FROM app.telemetry t JOIN app.assets a ON a.id = t.asset_id
+		 WHERE t.happened_at BETWEEN $1 AND $2
+		 GROUP BY a.uuid, a.organisation_id
+		 ORDER BY count(*) DESC LIMIT 1`, from, to,
+	).Scan(&uuid, &orgID)
+	if err != nil {
+		t.Skip("no asset-scoped telemetry in the drive window")
+	}
+
+	result, err := s.GenerateActivityReport(context.Background(), ActivityReportRequest{
+		AssetUUID: uuid,
+		From:      from,
+		To:        to,
+		UserID:    999_999_999,
+		OrgID:     orgID,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var journeys, gaps int
+	var distance float64
+	var movingSecs, activeSecs, stationarySecs, gapSecs, points int
+	for _, segment := range result.Segments {
+		switch seg := segment.(type) {
+		case report.JourneySegment:
+			journeys++
+			distance += seg.DistanceMeters
+			movingSecs += seg.DurationSeconds
+			points += len(seg.Points)
+		case report.ActiveStaticSegment:
+			activeSecs += seg.DurationSeconds
+			points += len(seg.Points)
+		case report.StationarySegment:
+			stationarySecs += seg.DurationSeconds
+			points += len(seg.Points)
+		case report.DataGapSegment:
+			gaps++
+			gapSecs += seg.DurationSeconds
+		}
+	}
+
+	if journeys == 0 {
+		t.Fatal("expected at least one journey on a surveyed drive day")
+	}
+	if gaps == 0 {
+		t.Fatal("expected data gaps — the cadence survey counted 4 real gaps > 300s")
+	}
+
+	sum := result.Summary
+	if sum.JourneyCount != journeys ||
+		sum.TotalDistanceMeters != distance ||
+		sum.MovingSeconds != movingSecs ||
+		sum.ActiveStaticSeconds != activeSecs ||
+		sum.StationarySeconds != stationarySecs ||
+		sum.CommunicationGapSeconds != gapSecs ||
+		sum.PointCount != points {
+		t.Fatalf("summary %+v does not reconcile with segments (journeys=%d distance=%.1f moving=%d active=%d stationary=%d gap=%d points=%d)",
+			sum, journeys, distance, movingSecs, activeSecs, stationarySecs, gapSecs, points)
 	}
 }

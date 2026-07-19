@@ -43,8 +43,10 @@ a router, then load only the service-local context needed for the task.
   and live browser updates.
 - `file.server.go` owns image/file upload, storage, serving, list, update, and
   delete behavior.
-- `computation.server.go` is prototype work until its first computation
-  responsibility is defined.
+- `computation.server.go` is the compute plane: it serves the Activity
+  Report (`POST /compute/reports/activity`, port 4004) directly to the
+  frontend behind its own JWT/permission/asset-access chain, with alarms
+  and audit reserved for later. See its `SPEC.md` and `ROADMAP.md`.
 - `initdb-scripts` owns database schema and seed setup.
 
 ## Contract Safety

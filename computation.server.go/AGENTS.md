@@ -4,38 +4,55 @@ Use this file as the primary context when working inside this service.
 
 ## Before Editing
 
-- Treat this service as prototype work.
-- Do not assume a production responsibility until the user defines the first
-  concrete computation need.
-- Keep changes small and exploratory unless a clear service responsibility has
-  been agreed.
+- Read `SPEC.md` first — it pins the contracts (auth chain, TelemetryPoint,
+  the segment union, response envelope) and the architecture decisions with
+  their reasons. Violating a pinned shape is a bug, not a style choice.
+- Read `ROADMAP.md` for exactly where the work stands: phases are broken
+  into small steps with checkboxes and per-step verify commands; the
+  "Current State" section says what is done and what is next.
+- Consult the `go-data-access` skill before touching anything that queries
+  PostgreSQL, and the `compute-dev-check` skill before running or
+  smoke-testing the service (it bundles token minting, server lifecycle,
+  and dev-DB SQL — do not hand-roll those).
 
 ## Service Context
 
-This service is intended for future computations, analytics, or reports, but it
-does not yet have a stable production role.
+This is the platform's compute plane. It serves the Activity Report
+(`POST /compute/reports/activity`) behind its own JWT + permission + asset
+access chain, directly to the frontend (the `file.server.go` pattern).
+Alarms and audit are reserved sections with no code yet — do not build
+ahead of a definition.
 
-Possible future inputs:
+Status: Phases 1 (API skeleton and access), 2 (normalisation) and 3 (the
+pure segmentation engine, §14–§17, serving the full ActivityReportResponse)
+complete; next is Phase 4, wiring the frontend — see `ROADMAP.md` Current
+State.
 
-- PostgreSQL / TimescaleDB queries.
-- Redis state.
-- RabbitMQ streams.
-- Scheduled batch jobs.
+## Layering (violations are architecture bugs)
 
-Possible future outputs:
+```
+handler   → decode, validate, respond. No business logic, no SQL.
+service   → orchestration (access checks → repositories → engine). No HTTP types.
+repository→ ALL SQL. ctx on every method. upper/db or pgx per repo.
+models    → data structs only: no query methods, no globals.
+report    → the PURE engine: no HTTP, no SQL, no logger. models in, segments out.
+```
 
-- Database rows.
-- Redis cache entries.
-- Backend API responses.
-- Generated reports.
+The `internal/report` purity rule is what lets the §36.2 fixtures test the
+engine directly. Its only internal import is `internal/models`.
 
-## Project Structure
+## Environment Facts
 
-- `cmd/app/main.go` starts the current prototype.
-- `cmd/app/settings.go` loads environment settings.
-- `internal/appcore/` contains current app flow.
-- `internal/db/` owns database connection setup.
-- `internal/models/` contains prototype models.
+- **The PostgreSQL at `57.129.22.122:5436` is the PRODUCTION database** —
+  there is no separate dev DB yet (a sandbox built from it is a recorded
+  backlog item). `.env` files say `127.0.0.1` because production runs on
+  that box; `compute-dev-check`'s scripts do the host swap. Reads are fine
+  (mind heavy hypertable scans); writes only deliberate, idempotent, and
+  owner-approved. Integration tests must stay read-only.
+- `JWT_SECRET` is shared with `web.backend.node.ts` and `file.server.go`;
+  tokens minted by `mktoken.py` verify against a `devserver.sh` server.
+- `report.view` is seeded (initdb + the live production DB, an approved
+  idempotent write); all four roles hold it.
 
 ## Coding Guidelines
 
@@ -58,13 +75,13 @@ Possible future outputs:
 
 ## Verification
 
-Run from this service:
-
 ```sh
-GOCACHE=/tmp/gocache go test ./...
+GOCACHE=/tmp/gocache go test ./...        # always green, no DB needed
+RUN_DB_TESTS=1 DB_URL=... GOCACHE=/tmp/gocache go test ./internal/repository ./internal/services
+.claude/skills/compute-dev-check/scripts/devserver.sh start   # live smoke (repo root)
 ```
 
-Do not add this service to production assumptions without updating root docs.
+Per-step verify commands live next to each roadmap step.
 
 ## Commit Style
 - Do not add `Co-Authored-By` or AI co-author trailers to commits.

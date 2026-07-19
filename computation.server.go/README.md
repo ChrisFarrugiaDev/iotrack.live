@@ -10,7 +10,11 @@ report pipeline, configuration, phased roadmap) and `AGENTS.md` for working
 rules. Design references (`§`) point at
 `docs/iotrack_activity_report_design.md` in the repo root.
 
-Status: skeleton — Phase 1 (API skeleton and access) not started yet.
+Status: Phases 1 (API skeleton and access), 2 (normalisation) and 3 (the
+pure segmentation engine) complete — the endpoint serves the full §18/§19.3
+ActivityReportResponse (report meta, subject, summary, segments) behind the
+full auth chain, verified live against real drive days. Next is Phase 4,
+wiring the frontend. See ROADMAP.md Current State.
 
 ## Directory Structure
 
