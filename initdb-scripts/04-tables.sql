@@ -199,11 +199,16 @@ ALTER TABLE app.telemetry SET (timescaledb.compress = true);
 ALTER TABLE app.telemetry SET (timescaledb.compress_orderby = 'happened_at');
 ALTER TABLE app.telemetry SET (timescaledb.compress_segmentby = 'device_id');
 
--- Add a compression policy (example: compress rows older than 1 month)
-SELECT add_compression_policy('app.telemetry', INTERVAL '1 month');
+-- Compression policy: compress chunks older than 7 days. Reports over the
+-- last week (the common case) stay on uncompressed chunks; older per-asset
+-- range scans remain efficient thanks to segmentby device_id above.
+SELECT add_compression_policy('app.telemetry', INTERVAL '7 days');
 
--- Add a retention policy (example: drop rows older than 12 months)
-SELECT add_retention_policy('app.telemetry', INTERVAL '12 months');
+-- Retention policy: drop chunks older than 3 months — enough history for a
+-- showcase deployment (~1.6 GB/month raw at the 2026-07 fleet rate, ~10x
+-- smaller compressed). Note: also drops rows arriving with bogus old
+-- device-clock timestamps.
+SELECT add_retention_policy('app.telemetry', INTERVAL '3 months');
 
 -- Remove a retention policy (if needed)
 -- SELECT remove_retention_policy('teltonika.telemetry');
