@@ -27,8 +27,8 @@ import (
 //     EndAt is the opening segment's StartAt (backdating per §15), and a
 //     data gap spans exactly [previous point, next point].
 //   - A window too short to confirm any state yields no segments, as in
-//     §17. Window-edge clipping and boundary flags are layered on
-//     afterwards (§43, Step 4).
+//     §17. The §43 v1 boundary pass (clipToWindow) then clips the result
+//     to [from, to] and flags the edge segments.
 func BuildSegments(points []TelemetryPoint, cfg JourneyConfig, from, to time.Time) []ActivitySegment {
 	pts := prepare(points)
 
@@ -39,7 +39,7 @@ func BuildSegments(points []TelemetryPoint, cfg JourneyConfig, from, to time.Tim
 	}
 	e.finish()
 
-	return e.segments
+	return clipToWindow(e.segments, from, to)
 }
 
 // prepare is the §44 pre-pass: sort, drop same-timestamp duplicates, drop

@@ -24,15 +24,18 @@ expected runtime behavior; steps below reference it rather than repeat it.
 - Tests: httptest tables for middlewares and handler; RUN_DB_TESTS=1
   integration suites for repositories and the report service; the Step 10
   acceptance matrix passed against the live database.
-- **Phase 3 in progress** — Steps 0–3 done and verified: the SPEC-pinned
+- **Phase 3 in progress** — Steps 0–4 done and verified: the SPEC-pinned
   segment contract, JourneyConfig (§40 profiles in code), movement
   primitives (§12/§13, scenario D drift test), the sealed §18 segment
-  union with exact-key marshal tests, and engine.go — the §17 state
+  union with exact-key marshal tests, engine.go — the §17 state
   machine with documented deviations (buffers absorbed not dropped,
   §36.2 G nil-activity stops close to stationary, contiguous backdated
-  transitions). Full suite green. **Next: Step 4** (window clipping +
-  §43 boundary flags — where BuildSegments' unused from/to earn their
-  place), then summary, fixtures, wiring, acceptance.
+  transitions) — and window.go, the §43 v1 boundary pass (clip to
+  [from, to], boundary flags on edge segments, clipped durations,
+  out-of-window segments dropped and ids renumbered). Full suite green.
+  **Next: Step 5** (summary.go — §23, derived from segments only, with
+  the reconciliation invariant as a test), then fixtures, wiring,
+  acceptance.
 
 ## Phase 1 — API Skeleton and Access (§38 Phase 1)
 
@@ -430,12 +433,18 @@ as routes, and the summary matches the segments.
 
 ### Step 4 — window boundaries (§43 v1)
 
-- [ ] Clip segments to `[from, to]`; set `startsBeforeReportRange` /
+- [x] Clip segments to `[from, to]`; set `startsBeforeReportRange` /
       `endsAfterReportRange` on the edge segments per the Step 0 rule.
-- [ ] Durations reflect the clipped extent, so the summary reconciles to
+      (`window.go`: a post-pass after the state machine — segments wholly
+      outside the window are dropped and survivors renumbered; a clipped
+      segment trims its points to the window and recomputes what derives
+      from them; a clipped gap keeps previousLocation/nextLocation.)
+- [x] Durations reflect the clipped extent, so the summary reconciles to
       the covered window.
 - Verify: unit test with a journey spanning the window start (the frontend
-  fixture's `…` case).
+  fixture's `…` case). DONE — `window_test.go`: spanning-start,
+  spanning-end, fully-inside untouched, wholly-outside dropped with the
+  following gap clipped at the window edge.
 
 ### Step 5 — summary (§23)
 
