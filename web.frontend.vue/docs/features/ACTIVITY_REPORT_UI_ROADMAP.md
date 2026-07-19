@@ -222,7 +222,10 @@ owner's request:
       then point the store at `/compute/reports/activity`. Two knowns for
       the swap: the payload arrives wrapped as `{ success, data }`, and
       `report.timezone` is `"UTC"` until the org-timezone decision (§42
-      Q14) lands.
+      Q14) lands. **The step-by-step plan for all of this is
+      `computation.server.go/ROADMAP.md` Phase 4** (Steps 0–5: decisions,
+      packaging, deploy, seam, gating, acceptance) — that file is the
+      tracker; this one records the UI-side state.
 - [x] **Promote the fixture** into the backend's segmentation tests — DONE,
       backend Phase 3 Step 6: `internal/report/scenario_test.go` is the
       mock generator's Go twin, replaying scenario C's 8 segments exactly
