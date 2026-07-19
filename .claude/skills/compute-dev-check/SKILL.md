@@ -76,8 +76,8 @@ curl -s -w " -> %{http_code}\n" -X POST -H "Authorization: Bearer $TOKEN" -H "Co
 scripts/devserver.sh stop
 ```
 
-Expected statuses per phase are in `computation.server.go/ROADMAP.md`
-(Step 10's acceptance matrix is the full list).
+Expected statuses per phase are in `computation.server.go/docs/roadmap/`
+(the archived Phase 1 Step 10 acceptance matrix is the full list).
 
 ## Notes
 

@@ -544,10 +544,10 @@ envelope with an empty summary when the range holds no rows.
 
 ## Current Improvement Targets
 
-- Phase 3 remainder (ROADMAP steps 4–8): window boundaries (§43 v1),
-  summary (§23), the §36.2 fixtures, service wiring to the full
-  ActivityReportResponse, acceptance.
-- `BuildSegments`' `from`/`to` parameters are unused until Step 4 wires
-  window clipping — expected, not an oversight.
-- Later (recorded in ROADMAP "Later Phases"): frontend wiring, timeline
-  mode, §43 fetch widening, geocoding, groups, alarms, audit.
+- Phase 3 is complete (2026-07-19) — the endpoint serves the full
+  ActivityReportResponse, accepted live (matrix in docs/roadmap/03_phase_3_segmentation_engine.md).
+- Next: Phase 4, wiring the frontend (store seam swap, Apache `/compute/`
+  prefix, Makefile target, `report.view` router map + sidebar gating).
+- Later (recorded in ROADMAP "Later Phases"): timeline mode, §43 fetch
+  widening, geocoding, groups, alarms, audit, the threshold-tuning items,
+  and the environment debt (read-only DB role, dev sandbox).

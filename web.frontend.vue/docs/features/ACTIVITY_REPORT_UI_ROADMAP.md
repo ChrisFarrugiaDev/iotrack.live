@@ -210,16 +210,23 @@ owner's request:
 
 ## Next
 
-- [x] **Backend Phase 1** (§38) — DONE, in Go not Node:
+- [x] **Backend Phases 1–3** (§38) — DONE, in Go not Node:
       `computation.server.go` serves `POST /compute/reports/activity` (port
-      4004) behind JWT + `report.view` + org/asset access, querying by
-      `asset_id` (§45). Phase 2 (normalisation) is done too; Phase 3 (the
-      segmentation engine) is in progress. See that service's ROADMAP.md.
+      4004) behind JWT + `report.view` + org/asset access, and as of Phase 3
+      (2026-07-19) the response is the **full ActivityReportResponse** this
+      UI's types file defines — report meta, subject, summary, segments —
+      verified live against real drive days. See that service's ROADMAP.md.
 - [ ] **Swap the seam** in `activityReportStore.fetchActivityReport()` —
-      waits for backend Phase 4 (the URL is the compute service's, not the
-      Node API's: `/compute/reports/activity`).
-- [ ] **Promote the fixture** into the backend's segmentation tests — planned
-      as backend Phase 3 Step 6 (the mock's generator gets a Go twin).
+      the response shape is ready and contract-matched; what remains is
+      backend Phase 4 infrastructure (Apache `/compute/` prefix, deploy),
+      then point the store at `/compute/reports/activity`. Two knowns for
+      the swap: the payload arrives wrapped as `{ success, data }`, and
+      `report.timezone` is `"UTC"` until the org-timezone decision (§42
+      Q14) lands.
+- [x] **Promote the fixture** into the backend's segmentation tests — DONE,
+      backend Phase 3 Step 6: `internal/report/scenario_test.go` is the
+      mock generator's Go twin, replaying scenario C's 8 segments exactly
+      (this mock stays the visual reference).
 
 ## Smaller open items
 

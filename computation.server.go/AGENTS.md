@@ -23,9 +23,10 @@ access chain, directly to the frontend (the `file.server.go` pattern).
 Alarms and audit are reserved sections with no code yet — do not build
 ahead of a definition.
 
-Status: Phases 1 (API skeleton and access) and 2 (normalisation) complete;
-Phase 3 (the pure segmentation engine, §14–§17) in progress — see
-`ROADMAP.md` Current State.
+Status: Phases 1 (API skeleton and access), 2 (normalisation) and 3 (the
+pure segmentation engine, §14–§17, serving the full ActivityReportResponse)
+complete; next is Phase 4, wiring the frontend — see `ROADMAP.md` Current
+State.
 
 ## Layering (violations are architecture bugs)
 
