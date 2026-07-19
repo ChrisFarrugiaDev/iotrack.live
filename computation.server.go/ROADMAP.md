@@ -35,10 +35,21 @@ expected runtime behavior; steps below reference it rather than repeat it.
   out-of-window segments dropped and ids renumbered). **Step 5 done**:
   summary.go — §23 Summary derived from segments only (buckets, distance,
   point bookkeeping, firstPointAt/lastPointAt null-when-empty), with the
-  reconciliation invariant tested through the real engine. Full suite
-  green. **Next: Step 6** (the §36.2 fixtures — port the frontend mock's
-  buildPoints generator, scenario C exact timeline, hand-built A/B/D/E/G),
-  then wiring, acceptance.
+  reconciliation invariant tested through the real engine. **Step 6
+  done**: scenario_test.go — the mock's waypoint generator ported (the
+  cadence-driven `track` builder), scenario C's 8-segment day asserted
+  exactly (times, durations, flags, reasons, pto source, gap endpoints),
+  and hand-built A/B/D/E/G; two threshold-tuning items recorded under
+  Later Phases. Full suite green. **Step 7 done**: the service runs the
+  engine after Normalize and returns the full §18/§19.3
+  ActivityReportResponse (`report` meta with mode/timezone pinned to
+  journey/UTC, camelCase `subject` with trackerType, `summary`,
+  `segments`); the flat points/rawPointCount shape is gone; the handler
+  logs `segment_count`; the RealDriveWindow integration test (Jul 6–8,
+  busiest asset) found journeys and gaps and reconciled the summary
+  against the segments — all suites green against the live DB.
+  **Next: Step 8** (Phase 3 acceptance — devserver smoke, §38 criteria
+  walked live, roadmap/SPEC swap-seam note refreshed).
 
 ## Phase 1 — API Skeleton and Access (§38 Phase 1)
 
@@ -466,37 +477,52 @@ as routes, and the summary matches the segments.
 
 ### Step 6 — fixtures (§36.2)
 
-- [ ] Port the frontend mock's waypoint generator (`buildPoints` in
+- [x] Port the frontend mock's waypoint generator (`buildPoints` in
       `web.frontend.vue/src/mock/activity-report.mock.ts`, ~40 lines) into
       a Go testdata builder — self-contained tests, no node dependency; the
       mock stays the visual reference and this port is documented as its
-      Go twin.
-- [ ] Scenario C (the cherry-picker day) reproduced with the mock's exact
-      timeline: expect journey → active_static (2h27m, source from the
-      work input) → journey → stationary → journey → data_gap (30m) →
-      journey → stationary, with the §43 partial flags at both window
-      edges.
-- [ ] Hand-built tables for A (simple journey), B (45s traffic light stays
+      Go twin. (`scenario_test.go`: `pointOnPath` + the `track` builder —
+      cadence-driven instead of count-driven so intervals stay under
+      MaximumPointGapSeconds, with an optional position-frozen stop.)
+- [x] Scenario C (the cherry-picker day) reproduced with the mock's exact
+      timeline: journey → active_static (2h27m, source pto) → journey →
+      stationary → journey → data_gap (30m) → journey → stationary, with
+      the §43 partial flags at both window edges, exact start/end/duration
+      on all 8 segments, end reasons, gap endpoints, and summary
+      reconciliation. Two documented departures from the mock: the
+      post-gap journey starts one cadence late (the §17 seed point), and
+      the traffic light is 90s not 160s (see the tuning note under Later
+      Phases — an ignition-on stop ≥ StaticConfirmationSeconds becomes
+      active_static).
+- [x] Hand-built tables for A (simple journey), B (45s traffic light stays
       one journey), D (10m jitter stays stationary), E (30m gap not
       bridged), G (no activity signal: journeys still form, stops become
       stationary, active_static never invented).
-- [ ] Scenario F (sparse tracker) is timeline mode — explicitly out of
+- [x] Scenario F (sparse tracker) is timeline mode — explicitly out of
       scope, listed under Later.
 - Verify: `go test ./internal/report` — every scenario's expected segment
-  sequence, types, and durations.
+  sequence, types, and durations. DONE — all six scenario tests green.
 
 ### Step 7 — service wiring and the full response
 
-- [ ] `report_service.go`: after Normalize, run the engine and build the
+- [x] `report_service.go`: after Normalize, run the engine and build the
       full `ActivityReportResponse` per the frontend contract file —
       `report` (mode, from, to), `subject`, `summary`, `segments`. The flat
       `points`/`rawPointCount` fields give way to the contract shape;
       re-check every field name against the frontend types, not memory.
-- [ ] Handler log gains `segment_count` (§37).
-- [ ] RUN_DB_TESTS integration test on the real drive window (the org-6
+      (Done: `ReportMeta` + camelCase `ReportSubject` with `trackerType`
+      falling back to vehicle; `generatedAt`/`timezone` per the SPEC pin;
+      the frontend types file re-read field-for-field before writing.)
+- [x] Handler log gains `segment_count` (§37); raw count now sourced from
+      `Stats.Raw` since `RawPointCount` left the response.
+- [x] RUN_DB_TESTS integration test on the real drive window (the org-6
       asset, Jul 6–8): at least one journey found, gaps where the cadence
       survey says they are, summary consistent with segments.
-- Verify: full suite + integration suites.
+      (`TestGenerateActivityReport_RealDriveWindow` — picks the busiest
+      asset in the window, asserts journeys ≥ 1, gaps ≥ 1, and every
+      summary field recomputed from the segments.)
+- Verify: full suite + integration suites. DONE — both green against the
+  live DB (read-only) on 2026-07-19.
 
 ### Step 8 — Phase 3 acceptance
 
@@ -522,6 +548,22 @@ recognised as PRODUCTION, not a dev DB):
       `initdb-scripts` in local Docker, plus an optional telemetry subset
       dump for realistic engine testing; point the dev tooling at it and
       retire the host-swap-to-production habit.
+
+Threshold tuning (found while building the §36.2 fixtures, 2026-07-19 —
+revisit with real telemetry, §40 says the defaults are starting values):
+
+- [ ] An ignition-on stop ≥ `StaticConfirmationSeconds` (120s) becomes
+      **active_static** via the §11 ignition fallback — a long red light
+      or traffic queue reads as "working". Options when real data decides:
+      a longer confirmation for ignition-sourced activity, or requiring a
+      stronger §11 source (pto/engine_running/work input) for
+      active_static.
+- [ ] A single GPS spike ≥ `MinimumMovementMeters` (25m) yields TWO
+      "moving" points (out and back), which meets
+      `MovementConfirmationPoints` (2) and confirms a phantom journey.
+      The 10m-jitter case is covered (scenario D test); a lone larger
+      spike is not. Options: confirm on points AND meters, or a minimum
+      journey distance.
 
 Tracked in `SPEC.md` (Implementation Roadmap): Phase 4 wiring the frontend
 (swap the store seam, Apache `/compute/` prefix, root Makefile

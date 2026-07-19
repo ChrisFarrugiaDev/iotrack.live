@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"iotrack.live/computation.server.go/internal/api/middlewares"
+	"iotrack.live/computation.server.go/internal/report"
 	"iotrack.live/computation.server.go/internal/services"
 )
 
@@ -120,7 +121,10 @@ func TestActivityReportErrorMapping(t *testing.T) {
 }
 
 func TestActivityReportSuccess(t *testing.T) {
-	gen := &fakeGenerator{result: &services.ActivityReportResult{RawPointCount: 42}}
+	gen := &fakeGenerator{result: &services.ActivityReportResult{
+		Report:   services.ReportMeta{Mode: "journey", Timezone: "UTC"},
+		Segments: []report.ActivitySegment{},
+	}}
 	rec := post(t, NewReportHandler(gen, 1), validBody)
 
 	if rec.Code != http.StatusOK {
@@ -130,14 +134,20 @@ func TestActivityReportSuccess(t *testing.T) {
 	var body struct {
 		Success bool `json:"success"`
 		Data    struct {
-			RawPointCount int `json:"rawPointCount"`
+			Report struct {
+				Mode string `json:"mode"`
+			} `json:"report"`
+			Segments []json.RawMessage `json:"segments"`
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decoding body: %v", err)
 	}
-	if !body.Success || body.Data.RawPointCount != 42 {
-		t.Fatalf("body = %+v, want success with rawPointCount 42", body)
+	if !body.Success || body.Data.Report.Mode != "journey" {
+		t.Fatalf("body = %+v, want success with report.mode journey", body)
+	}
+	if body.Data.Segments == nil {
+		t.Fatal("segments must marshal to [], never null")
 	}
 
 	// Identity must come from the JWT context, never the request body (§20),

@@ -31,23 +31,51 @@ type ActivityReportRequest struct {
 	OrgID  int64
 }
 
-// ActivityReportResult carries the §38 Phase 2 deliverable: normalised
-// TelemetryPoints, no raw DB rows. Phase 3 replaces points with segments.
+// ActivityReportResult is the full §18/§19.3 ActivityReportResponse — it
+// marshals field-for-field to the frontend contract file
+// (web.frontend.vue/src/types/activity-report.type.ts), the authority.
 // Stats feed the §37 log line only — they are not part of the response.
 type ActivityReportResult struct {
-	Subject       ReportSubject           `json:"subject"`
-	RawPointCount int                     `json:"rawPointCount"`
-	Points        []report.TelemetryPoint `json:"points"`
+	Report   ReportMeta               `json:"report"`
+	Subject  ReportSubject            `json:"subject"`
+	Summary  report.Summary           `json:"summary"`
+	Segments []report.ActivitySegment `json:"segments"`
 
 	Stats report.NormalizeStats `json:"-"`
 }
 
+// ReportMeta describes the report itself. Timezone is "UTC" for now — the
+// org-timezone source is an open product decision (SPEC, pinned response);
+// mode is "journey" for every tracker category until timeline mode exists.
+type ReportMeta struct {
+	From           time.Time `json:"from"`
+	To             time.Time `json:"to"`
+	GeneratedAt    time.Time `json:"generatedAt"`
+	OrganisationID int64     `json:"organisationId"`
+	Mode           string    `json:"mode"`
+	Timezone       string    `json:"timezone"`
+}
+
+// ReportSubject identifies the asset. deviceId/deviceExternalId are optional
+// in the contract and omitted until a device join earns its place (§45).
 type ReportSubject struct {
-	AssetUUID string    `json:"asset_uuid"`
-	AssetName string    `json:"asset_name"`
-	AssetType *string   `json:"asset_type"`
-	From      time.Time `json:"from"`
-	To        time.Time `json:"to"`
+	AssetID     int64  `json:"assetId"`
+	AssetUUID   string `json:"assetUuid"`
+	AssetName   string `json:"assetName"`
+	TrackerType string `json:"trackerType"`
+}
+
+// trackerTypeOf maps app.assets.asset_type onto the contract's TrackerType.
+// Nil or unknown values fall back to "vehicle", consistent with the
+// range-limit and JourneyConfig defaults.
+func trackerTypeOf(assetType *string) string {
+	if assetType != nil {
+		switch *assetType {
+		case "vehicle", "personal", "asset":
+			return *assetType
+		}
+	}
+	return "vehicle"
 }
 
 // GenerateActivityReport runs the Phase 1 sequence (§38): asset lookup →
@@ -98,20 +126,30 @@ func (s *Service) GenerateActivityReport(ctx context.Context, req ActivityReport
 	}
 
 	// 6. Normalise (§10): nothing past this line depends on raw DB column
-	// names or vendor payload keys. Normalize always returns a non-nil
-	// slice, so an empty range marshals to [] rather than null.
+	// names or vendor payload keys.
 	points, stats := report.Normalize(rows)
 
+	// 7. Segment (§14–§17) and summarise (§23). BuildSegments always returns
+	// a non-nil slice, so an empty range marshals to [] rather than null.
+	segments := report.BuildSegments(points, report.ConfigFor(asset.AssetType), req.From, req.To)
+
 	return &ActivityReportResult{
-		Subject: ReportSubject{
-			AssetUUID: asset.UUID,
-			AssetName: asset.Name,
-			AssetType: asset.AssetType,
-			From:      req.From,
-			To:        req.To,
+		Report: ReportMeta{
+			From:           req.From,
+			To:             req.To,
+			GeneratedAt:    time.Now().UTC(),
+			OrganisationID: req.OrgID,
+			Mode:           "journey",
+			Timezone:       "UTC",
 		},
-		RawPointCount: stats.Raw,
-		Points:        points,
-		Stats:         stats,
+		Subject: ReportSubject{
+			AssetID:     asset.ID,
+			AssetUUID:   asset.UUID,
+			AssetName:   asset.Name,
+			TrackerType: trackerTypeOf(asset.AssetType),
+		},
+		Summary:  report.Summarise(segments),
+		Segments: segments,
+		Stats:    stats,
 	}, nil
 }
