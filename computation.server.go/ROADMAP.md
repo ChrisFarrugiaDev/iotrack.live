@@ -78,53 +78,62 @@ Ground truth (read 2026-07-19 from the actual files — re-verify if stale):
 
 ### Step 0 — Decisions (docs only, before code)
 
-- [ ] Pin the seam URL: same-origin `${getAppUrl}/compute/reports/activity`
+- [x] Pin the seam URL: same-origin `${getAppUrl}/compute/reports/activity`
       (matches how every other store calls services; no `VITE_COMPUTE_PORT`
-      needed — record why, and correct SPEC's Platform Placement note about
-      it).
-- [ ] Pin the envelope handling: the store unwraps `{ success, data }` and
-      maps §34 error codes (`ASSET_NOT_FOUND`, `ASSET_ACCESS_DENIED`,
-      `REPORT_VALIDATION_ERROR`, `REPORT_RANGE_TOO_LONG`) to the page's
-      error state — decide the UX for each (message vs redirect).
-- [ ] Decide the timeline-mock fate: backend serves journey mode for every
-      tracker category, so the timeline branch in the store either goes
-      away with the swap (report renders whatever `report.mode` says —
-      preferred, keeps one seam) or stays mock-only behind a dev flag.
-      The mock FILE stays either way — it is the §36.2 visual reference.
-- [ ] Decide request timing: the compute call can take ~1–2s on a heavy
-      window — confirm the page's existing loading state covers it.
-- Verify: decisions recorded here + SPEC updated; no code yet.
+      needed). DECIDED 2026-07-19. Correct SPEC's Platform Placement note
+      when Step 3 lands.
+- [x] Envelope handling: the store unwraps `{ success, data }`; §34 error
+      codes (`ASSET_NOT_FOUND`, `ASSET_ACCESS_DENIED`,
+      `REPORT_VALIDATION_ERROR`, `REPORT_RANGE_TOO_LONG`) render as an
+      **inline message in the report area** — the page stays put, the
+      user's asset/date selection survives for a retry. DECIDED
+      2026-07-19.
+- [x] Timeline-mock fate: **Option B — keep the timeline branch mock-only
+      behind a dev flag** at the swap; journey requests go real. Chosen
+      because timeline mode is promoted to **Phase 5** (below) with real
+      device data incoming — the dev branch has a scheduled death: Phase 5
+      Step "remove the dev flag" deletes it. The mock FILE stays either
+      way — it is the §36.2 visual reference. DECIDED 2026-07-19.
+- Verify: decisions recorded here; no code yet. DONE 2026-07-19 — all
+  three decisions pinned. (The loading-state check moved to Step 3: it
+  needs the real page against the real backend.)
 
 ### Step 1 — Backend packaging (Dockerfile, compose, Makefile)
 
-- [ ] `computation.server.go/Dockerfile` — modelled on `file.server.go`'s
-      (CGO_ENABLED=0 static build of `./cmd/app`; no uploads volume).
-- [ ] `docker-compose.yml` service block `computation-server-go`, modelled
-      on `file-server-go`: port `4004`, `DOCKERIZED=true`,
-      `GO_ENV=production`, `LOG_MODE` + log bind-mount, `DB_URL` at
-      `postgres:5432`, `JWT_SECRET`, pool sizing, and the report env
-      (`REPORT_MAX_CONCURRENT`, `REPORT_MAX_RANGE_DAYS_*`) — values from
-      SPEC's Configuration table.
-- [ ] Root `Makefile` gains `computation-build` (mirrors
+- [x] `computation.server.go/Dockerfile` — modelled on
+      `teltonika.parser.go`'s (alpine base, CGO_ENABLED=0 static binary
+      copy, no uploads volume; no C-library runtime deps needed, unlike
+      `file.server.go`'s bimg).
+- [x] `docker-compose.yml` service block `computation-server-go`, modelled
+      on `file-server-go`: port `4004` (`COMPUTATION_HTTP_PORT`),
+      `DOCKERIZED=true`, `GO_ENV=production`, `LOG_MODE=file` + log
+      bind-mount, `DB_URL` at `postgres:5432`, `JWT_SECRET`, pool sizing,
+      and the report env (`REPORT_MAX_CONCURRENT`,
+      `REPORT_MAX_RANGE_DAYS_*`) — values from SPEC's Configuration table,
+      new vars added to root `.env`. Only depends on `postgres` (no
+      redis/rabbitmq — this service doesn't use them).
+- [x] Root `Makefile` gains `computation-build` (mirrors
       `file-server-build`: `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
       -o computation-server ./cmd/app`).
 - Verify: `make computation-build` produces a binary; `docker compose
   config` validates; local `docker build computation.server.go` succeeds.
+  All three confirmed 2026-07-20.
 
 ### Step 2 — Deploy and public routing (on the box)
 
-- [ ] Apache `web.frontend.vue/iotrack.live.conf`: the `/compute/`
+- [x] Apache `web.frontend.vue/iotrack.live.conf`: the `/compute/`
       ProxyPass pair (SPEC Platform Placement has the exact lines), placed
-      with the other prefixes; reload Apache on the box.
-- [ ] `make sync`, then on the box: compose build + up for the new
+      with the other prefixes (above the `/` catch-all); reload Apache on
+      the box.
+- [x] `make sync`, then on the box: compose build + up for the new
       service; confirm it boots against the CO-LOCATED production DB
       (compose-internal `postgres:5432`, not the host-swap URL).
-- [ ] Smoke through the public origin: `curl
+- [x] Smoke through the public origin: `curl
       https://iotrack.live/compute/health` → 200; an authed report request
       with a real browser token → 200 segments (compute-dev-check's token
       minting works only for dev — use a token from a real login here).
 - Verify: health + one real report served through Apache, §37 log line on
-  the box.
+  the box. Confirmed 2026-07-20.
 
 ### Step 3 — Swap the store seam
 
@@ -135,8 +144,13 @@ Ground truth (read 2026-07-19 from the actual files — re-verify if stale):
       whole point).
 - [ ] §34 error codes mapped per Step 0; network/500 fall back to the
       generic error state.
-- [ ] Remove the `mockActivityReport` import per the Step 0 decision;
+- [ ] Apply the Step 0 timeline decision (Option B): journey requests go
+      real; the timeline branch stays mock-only behind a dev flag (its
+      removal is a Phase 5 step). The `mockActivityReport` import goes;
       `mock/activity-report.mock.ts` itself stays.
+- [ ] Loading state: confirm the page's existing loading treatment covers
+      a real 1–2s request on a heavy window (moved from Step 0 — needed
+      the real page); fix or flag if it doesn't.
 - Verify: `npm run build` (type-check is the contract test — the response
   types are already transcribed from §18/§19.3); report page renders real
   data in dev against the deployed service.
@@ -164,6 +178,32 @@ Ground truth (read 2026-07-19 from the actual files — re-verify if stale):
 - [ ] `/deploy-frontend` for the UI; docs updated: this file's Current
       State, the frontend ROADMAP + UI roadmap, SPEC status.
 - Verify: acceptance walk recorded here, boxes ticked.
+
+## Phase 5 — Timeline Mode (§4.2, scenario F) — planned, data first
+
+Promoted from Later on 2026-07-19 (was deferred for lack of ground truth:
+every production asset is a dense vehicle tracker). Chris is generating
+real sparse data with a spare device. Do not start the detailed step
+roadmap until that data exists — survey first, as with every phase.
+
+Data prerequisites (collecting now, ~5–7 days):
+
+- [ ] The device assigned to an asset (telemetry must carry `asset_id`,
+      §45) with a non-vehicle `asset_type` (`personal` or `asset`) — that
+      type is likely half of the §4.3 "auto" mode-selection answer.
+- [ ] Genuinely sparse cadence: a handful of fixes per day (deep sleep +
+      periodic wake, or manual power-ons a few times a day) — NOT the
+      vehicle stream.
+- [ ] Variety: repeated pings from one spot (observation clustering),
+      several genuine location changes, and some indoor fixes (real
+      `gpsValid=false` cases).
+
+Rough shape when the data is in (a Phase-2-sized job, not a Phase 3):
+survey the collected data → pin `TimelineObservation` + the §4.3 auto
+rule in SPEC (no durations/speeds/routes — §3.3/§48) → the observation
+clusterer in `internal/report` with fixture tests → mode switch in the
+service → **remove the Step 0 Option-B dev flag from the frontend store**
+→ acceptance against the device's real days.
 
 ## Later Phases
 
@@ -194,12 +234,10 @@ revisit with real telemetry, §40 says the defaults are starting values):
       spike is not. Options: confirm on points AND meters, or a minimum
       journey distance.
 
-Tracked in `SPEC.md` (Implementation Roadmap): Phase 4 wiring the frontend
-(swap the store seam, Apache `/compute/` prefix, root Makefile
-`computation-build` target, `report.view` gating in the sidebar), timeline
-mode for sparse assets (§4.2, scenario F), the §43 look-behind/look-ahead
-fetch widening, reverse geocoding (§28), groups (§19.2 — intersection,
-never union), export, alarms, audit events (§35).
+Tracked in `SPEC.md` (Implementation Roadmap): the §43
+look-behind/look-ahead fetch widening, reverse geocoding (§28), groups
+(§19.2 — intersection, never union), export, alarms, audit events (§35).
+(Phase 4 wiring and timeline mode have their own sections above.)
 
 ## Completed
 
