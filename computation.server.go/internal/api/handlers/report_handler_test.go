@@ -71,6 +71,9 @@ func TestActivityReportValidation(t *testing.T) {
 		{"unparseable date", `{"asset_uuid":"x","from":"12/07/2026","to":"2026-07-12T23:59:59Z"}`},
 		{"from equals to", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T00:00:00Z"}`},
 		{"from after to", `{"asset_uuid":"x","from":"2026-07-13T00:00:00Z","to":"2026-07-12T00:00:00Z"}`},
+		{"stationary window below min", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T23:59:59Z","stationary_window_seconds":179}`},
+		{"stationary window above max", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T23:59:59Z","stationary_window_seconds":901}`},
+		{"stationary window not a number", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T23:59:59Z","stationary_window_seconds":"soon"}`},
 	}
 
 	for _, tc := range cases {
@@ -118,6 +121,51 @@ func TestActivityReportErrorMapping(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestActivityReportStationaryWindow pins the Phase 5 Step 3 contract: the
+// boundaries are accepted (not off-by-one rejected), and the parsed value —
+// or its absence — reaches the service untouched.
+func TestActivityReportStationaryWindow(t *testing.T) {
+	successResult := &services.ActivityReportResult{
+		Report:   services.ReportMeta{Mode: "journey", Timezone: "UTC"},
+		Segments: []report.ActivitySegment{},
+	}
+
+	cases := []struct {
+		name string
+		body string
+		want *int
+	}{
+		{"omitted defaults to nil (profile default)", validBody, nil},
+		{"minimum boundary (180) accepted", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T23:59:59Z","stationary_window_seconds":180}`, intPtr(180)},
+		{"maximum boundary (900) accepted", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T23:59:59Z","stationary_window_seconds":900}`, intPtr(900)},
+		{"a mid-range value round-trips", `{"asset_uuid":"x","from":"2026-07-12T00:00:00Z","to":"2026-07-12T23:59:59Z","stationary_window_seconds":300}`, intPtr(300)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			gen := &fakeGenerator{result: successResult}
+			rec := post(t, NewReportHandler(gen, 1), tc.body)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want 200", rec.Code)
+			}
+			got := gen.lastReq.StationaryWindowSeconds
+			if (got == nil) != (tc.want == nil) || (got != nil && *got != *tc.want) {
+				t.Fatalf("service got StationaryWindowSeconds = %v, want %v", derefOrNil(got), derefOrNil(tc.want))
+			}
+		})
+	}
+}
+
+func intPtr(v int) *int { return &v }
+
+func derefOrNil(p *int) any {
+	if p == nil {
+		return nil
+	}
+	return *p
 }
 
 func TestActivityReportSuccess(t *testing.T) {

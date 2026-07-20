@@ -302,32 +302,43 @@ text:
 
 ### Step 2 — Engine: jump plausibility gate
 
-- [ ] `internal/report`: implied-speed helper (haversine distance ÷
-      elapsed seconds, converted to km/h) — likely alongside the existing
-      `movement.go` helpers.
-- [ ] Wire the gate into the state machine ahead of / alongside the §14.7
-      elapsed-time check: either check produces a `data_gap` for that
-      transition; neither depends on the other.
-- [ ] Confirm generation of a confirmed `stationary`/`active_static`
-      segment is unaffected when the *next* point trips the gate — the
-      already-closed segment is not touched (per the "keep separate"
-      decision).
-- [ ] New scenario fixtures (extending §36.2 style): (a) a stop confirmed
-      normally, then an impossible jump — two segments, not one; (b) an
-      impossible jump mid-journey — the journey splits around a `data_gap`
-      the same way an elapsed-time gap would.
-- Verify: `GOCACHE=/tmp/gocache go test ./internal/report`, new fixtures
-  passing.
+- [x] `internal/report/movement.go`: `impliedSpeedKph(distanceMeters,
+      elapsed)` helper alongside `haversineMeters`/`isMoving`.
+- [x] Wired into `engine.step()` (§14.8) alongside the existing §14.7
+      elapsed-time check — `gapByElapsedTime || gapByImplausibleJump`,
+      same close-then-append-gap branch, neither depends on the other.
+      `MaximumPlausibleSpeedKph <= 0` disables the check (kept for the
+      field's original "unset = off" intent, even though both profiles
+      are set today).
+- [x] The "keep separate" decision needed no special-case code — closing
+      an already-confirmed `stationary`/`active_static` segment on a
+      following gap is just the existing `closeCurrent` behavior every
+      transition already uses; confirmed by the new fixture asserting the
+      closed segment's `EndAt` is untouched by the jump after it.
+- [x] New `jump_gate_test.go`, `TestImplausibleJumpBecomesDataGap`: (a) a
+      confirmed stop followed by a jump → 2 segments (stationary,
+      data_gap), stop's `EndAt` unchanged; (b) a mid-journey jump → 3
+      segments (journey, data_gap, journey), gap spans exactly the two
+      points either side of the jump.
+- Verify: `GOCACHE=/tmp/gocache go test ./internal/report` and full
+  `go test ./...` clean 2026-07-20.
 
 ### Step 3 — API: accept the confirmation-window override
 
-- [ ] `internal/api/handlers/report_handler.go`: `activityReportBody`
-      gains the optional field from Step 0; validate the 180–900 range,
-      `REPORT_VALIDATION_ERROR` (400) outside it; omitted → profile
-      default.
-- [ ] `report_handler_test.go`: validation table extended (below min,
-      above max, non-integer, omitted-uses-default).
-- Verify: `GOCACHE=/tmp/gocache go test ./internal/api/handlers`.
+- [x] `internal/api/handlers/report_handler.go`: `activityReportBody`
+      gains `stationary_window_seconds` (`*int`, omitempty); validated
+      180–900 (`minStationaryWindowSeconds`/`maxStationaryWindowSeconds`
+      constants), `REPORT_VALIDATION_ERROR` (400) outside it; threaded
+      straight through to `services.ActivityReportRequest`. Omitted →
+      nil → the resolved profile's default (Step 1's service-layer
+      behavior).
+- [x] `report_handler_test.go`: validation table extended (below min
+      179, above max 901, non-integer JSON value). New
+      `TestActivityReportStationaryWindow`: both boundaries (180, 900)
+      accepted, a mid-range value and the omitted case both round-trip
+      correctly to `fakeGenerator.lastReq`.
+- Verify: `GOCACHE=/tmp/gocache go test ./internal/api/handlers` and full
+  `go build ./...` / `go test ./...` clean 2026-07-20.
 
 ### Step 4 — Frontend: the confirmation-window dropdown
 

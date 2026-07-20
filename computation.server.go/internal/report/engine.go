@@ -97,9 +97,23 @@ func (e *engine) step(point TelemetryPoint) {
 	elapsed := point.Timestamp.Sub(e.previous.Timestamp)
 	distance := haversineMeters(*e.previous, point)
 
-	// §14.7: a gap closes everything and restarts interpretation. The gap
-	// spans exactly [previous, point]; no route through it is known.
-	if elapsed > time.Duration(e.cfg.MaximumPointGapSeconds)*time.Second {
+	gapByElapsedTime := elapsed > time.Duration(e.cfg.MaximumPointGapSeconds)*time.Second
+
+	// §14.8: a second, independent gap trigger — a physically implausible
+	// jump. Two points can be well under MaximumPointGapSeconds apart and
+	// still be impossible (a GPS glitch, not real movement). Disabled when
+	// MaximumPlausibleSpeedKph is unset/zero. Neither trigger depends on
+	// the other.
+	gapByImplausibleJump := e.cfg.MaximumPlausibleSpeedKph > 0 &&
+		impliedSpeedKph(distance, elapsed) > e.cfg.MaximumPlausibleSpeedKph
+
+	// §14.7/§14.8: a gap closes everything and restarts interpretation. The
+	// gap spans exactly [previous, point]; no route through it is known.
+	// If the segment being closed is an already-confirmed stationary/
+	// active_static stop, closeCurrent finalises it as-is — the "keep
+	// separate" decision needs no special handling here, it's just the
+	// normal close-then-append-gap sequence every transition already uses.
+	if gapByElapsedTime || gapByImplausibleJump {
 		e.closeCurrent(e.previous.Timestamp, "data_gap")
 		e.appendGap(*e.previous, point)
 		e.pendingMovement = nil
