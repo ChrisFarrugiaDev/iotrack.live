@@ -7,8 +7,10 @@ import type {
     ReportPoint,
     TimelineObservation,
 } from '@/types/activity-report.type';
-import { mockActivityReport, mockTimelineReport } from '@/mock/activity-report.mock';
+import { mockTimelineReport } from '@/mock/activity-report.mock';
 import { useAssetStore } from './assetStore';
+import { useAppStore } from './appStore';
+import axios from '@/axios';
 
 export const useActivityReportStore = defineStore('activityReportStore', () => {
 
@@ -123,38 +125,35 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
     /**
      * Fetch an activity report.
      *
-     * PLACEHOLDER: returns a fixture. This is the only place that knows the
-     * data is mocked — no component should.
-     *
-     * TODO: replace the mock block below with:
-     *   const url = `${useAppStore().getAppUrl}/api/reports/activity`;
-     *   const res = await axios.post(url, payload);
-     *   report.value = res.data.data;
+     * Timeline mode has no backend yet (Phase 5, real sparse-tracker data
+     * incoming) — the mock stays reachable in dev builds only, keyed off the
+     * asset's type the same way the fixture always was. Journey requests go
+     * to the real service. This dev branch has a scheduled death: it goes
+     * away in Phase 5 once the backend serves timeline mode for real.
      */
     async function fetchActivityReport(payload: ActivityReportRequest) {
         loading.value = true;
         error.value = null;
 
         try {
-            // --- mock ---
-            // The real backend chooses the mode from the tracker (§4.3); here we
-            // approximate that from the asset's type so both modes are reachable.
-            await new Promise(resolve => setTimeout(resolve, 400));
-
             const asset = Object.values(useAssetStore().getAssets ?? {})
                 .find(a => a.uuid === payload.asset_uuid);
 
-            report.value = asset?.asset_type === 'asset'
-                ? mockTimelineReport
-                : mockActivityReport;
-            // --- end mock ---
+            if (import.meta.env.DEV && asset?.asset_type === 'asset') {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                report.value = mockTimelineReport;
+            } else {
+                const url = `${useAppStore().getAppUrl}/compute/reports/activity`;
+                const res = await axios.post(url, payload);
+                report.value = res.data.data;
+            }
 
             selectedSegmentId.value = null;
             return report.value;
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('! activityReportStore fetchActivityReport !\n', err);
-            error.value = 'Failed to generate the report.';
+            error.value = err?.response?.data?.message ?? 'Failed to generate the report.';
             throw err;
 
         } finally {

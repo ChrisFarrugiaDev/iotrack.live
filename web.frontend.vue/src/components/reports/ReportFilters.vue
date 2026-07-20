@@ -28,37 +28,25 @@
             <!-- From -->
             <div class="vform__group mb-7">
                 <label class="vform__label" for="report_from">From <span class="vform__required">*</span></label>
-                <VDatePicker v-model="from" mode="dateTime" is24hr :max-date="to">
-                    <template #default="{ inputValue, togglePopover }">
-                        <input
-                            id="report_from"
-                            class="vform__input"
-                            :class="{ 'vform__input--error': !!errors.range }"
-                            :value="inputValue"
-                            :disabled="loading"
-                            readonly
-                            @click="togglePopover"
-                        />
-                    </template>
-                </VDatePicker>
+                <ReportDateField
+                    id="report_from"
+                    v-model="from"
+                    :max-date="to"
+                    :disabled="loading"
+                    :error="!!errors.range"
+                />
             </div>
 
             <!-- To -->
             <div class="vform__group mb-7">
                 <label class="vform__label" for="report_to">To <span class="vform__required">*</span></label>
-                <VDatePicker v-model="to" mode="dateTime" is24hr :min-date="from">
-                    <template #default="{ inputValue, togglePopover }">
-                        <input
-                            id="report_to"
-                            class="vform__input"
-                            :class="{ 'vform__input--error': !!errors.range }"
-                            :value="inputValue"
-                            :disabled="loading"
-                            readonly
-                            @click="togglePopover"
-                        />
-                    </template>
-                </VDatePicker>
+                <ReportDateField
+                    id="report_to"
+                    v-model="to"
+                    :min-date="from"
+                    :disabled="loading"
+                    :error="!!errors.range"
+                />
             </div>
 
         </div>
@@ -79,6 +67,7 @@ import { computed, reactive, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import VueSelect from 'vue3-select-component';
 
+import ReportDateField from './ReportDateField.vue';
 import { selectErrorStyle } from '@/composables/useVueSelectStyles';
 import { useAssetStore } from '@/stores/assetStore';
 import { useActivityReportStore } from '@/stores/activityReportStore';

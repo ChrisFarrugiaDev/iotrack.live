@@ -90,8 +90,8 @@ Ground truth (read 2026-07-19 from the actual files — re-verify if stale):
       2026-07-19.
 - [x] Timeline-mock fate: **Option B — keep the timeline branch mock-only
       behind a dev flag** at the swap; journey requests go real. Chosen
-      because timeline mode is promoted to **Phase 5** (below) with real
-      device data incoming — the dev branch has a scheduled death: Phase 5
+      because timeline mode is promoted to **Phase 6** (below) with real
+      device data incoming — the dev branch has a scheduled death: Phase 6
       Step "remove the dev flag" deletes it. The mock FILE stays either
       way — it is the §36.2 visual reference. DECIDED 2026-07-19.
 - Verify: decisions recorded here; no code yet. DONE 2026-07-19 — all
@@ -137,35 +137,43 @@ Ground truth (read 2026-07-19 from the actual files — re-verify if stale):
 
 ### Step 3 — Swap the store seam
 
-- [ ] `activityReportStore.fetchActivityReport()`: replace the mock block
+- [x] `activityReportStore.fetchActivityReport()`: replace the mock block
       with `axios.post(`${useAppStore().getAppUrl}/compute/reports/activity`,
       payload)`, unwrap `{ success, data }`, keep the store's public shape
       unchanged (no component may notice the swap — that was the seam's
       whole point).
-- [ ] §34 error codes mapped per Step 0; network/500 fall back to the
-      generic error state.
-- [ ] Apply the Step 0 timeline decision (Option B): journey requests go
-      real; the timeline branch stays mock-only behind a dev flag (its
-      removal is a Phase 5 step). The `mockActivityReport` import goes;
+- [x] §34 error codes mapped per Step 0: the backend's `message` field is
+      already the human-readable text for each code, so the store surfaces
+      `err.response.data.message` directly (matches the existing
+      `err.response.data.message` convention elsewhere in the app, e.g.
+      `OrgListView.vue`) rather than duplicating a code→text map on the
+      frontend; network/no-response errors fall back to the generic
+      "Failed to generate the report." string.
+- [x] Apply the Step 0 timeline decision (Option B): journey requests go
+      real; the timeline branch stays mock-only behind `import.meta.env.DEV`
+      (its removal is a Phase 6 step). The `mockActivityReport` import goes;
       `mock/activity-report.mock.ts` itself stays.
 - [ ] Loading state: confirm the page's existing loading treatment covers
       a real 1–2s request on a heavy window (moved from Step 0 — needed
-      the real page); fix or flag if it doesn't.
+      the real page); fix or flag if it doesn't. NOT YET VERIFIED — needs a
+      live browser check against the deployed service, not just
+      `npm run build`.
 - Verify: `npm run build` (type-check is the contract test — the response
   types are already transcribed from §18/§19.3); report page renders real
   data in dev against the deployed service.
 
 ### Step 4 — Gate the UI on report.view
 
-- [ ] Router: `'reports.activity': 'report.view'` in `routePermissions`;
+- [x] Router: `'reports.activity': 'report.view'` in `routePermissions`;
       drop the placeholder comment on the route.
-- [ ] Sidebar: `v-if="authorizationStore.can('report.view')"` on the
+- [x] Sidebar: `v-if="authorizationStore.can('report.view')"` on the
       Reports button (same pattern as org/user/group/device/asset items).
-- [ ] Close the "security debt" item in the frontend ROADMAP and the UI
+- [x] Close the "security debt" item in the frontend ROADMAP and the UI
       roadmap's remaining checklist entries.
-- Verify: `npm run build`; a role holding `report.view` sees Reports, a
-  role stripped of it (revoke on a test user via the Node UI, or a role-77
-  style token) gets no sidebar item and a router redirect.
+- Verify: `npm run build` clean 2026-07-20. Manual role-based check (a
+  role holding `report.view` sees Reports, a role stripped of it gets no
+  sidebar item and a router redirect) NOT YET DONE — needs a live browser
+  check, folded into Step 5 acceptance.
 
 ### Step 5 — Phase 4 acceptance
 
@@ -179,7 +187,145 @@ Ground truth (read 2026-07-19 from the actual files — re-verify if stale):
       State, the frontend ROADMAP + UI roadmap, SPEC status.
 - Verify: acceptance walk recorded here, boxes ticked.
 
-## Phase 5 — Timeline Mode (§4.2, scenario F) — planned, data first
+## Phase 5 — Configurable Stationary Window & Jump Plausibility Gate
+
+Planned 2026-07-20, from live-report review: real drive days (ACA-448,
+AFO-544) showed short (6–25 min) idle periods between journeys reading as
+`data_gap` instead of `stationary`, because `data_gap` is decided purely by
+elapsed time between two received points (§14.7), before any
+moving/stationary classification runs. Design discussion landed on two
+independent changes — a user-adjustable confirmation window, and a new
+plausibility check that turns a physically-impossible GPS jump into a
+`data_gap` on its own, decoupled from the elapsed-time rule. Crosses
+service boundaries like Phase 4: engine + config + API in
+`computation.server.go`, a new filter control in `web.frontend.vue`.
+
+Not changing: how `active_static` is told apart from plain `stationary` in
+the first place (ignition/PTO/engine_running/digital-input signal, §11,
+`internal/report/activity.go`) — only the confirmation *timing* and the
+new jump gate below are new. GPS/speed decides moving vs. stopped first
+(`isMoving`, §14); only once stopped does the activity signal decide which
+kind of stop it is.
+
+Decisions locked in discussion (2026-07-20), Step 0 turns them into SPEC
+text:
+
+- **Unify the confirmation window.** `StaticConfirmationSeconds` (currently
+  120s) and `JourneyEndSeconds` (currently 180s) collapse into one shared
+  duration — both `stationary` and `active_static` confirm on the same
+  timer. Default **180s (3 min)**, user-adjustable **180s–900s (3–15 min)**
+  via a dropdown in the report filter UI, next to "To" (roughly half its
+  width). Per-report, not a saved org/asset setting — a request parameter.
+- **New jump plausibility gate.** Compute implied speed between two
+  consecutive points (haversine distance ÷ elapsed time). Above a fixed
+  backend constant — **250 km/h** (comfortably above anything a road
+  vehicle in Malta can do; not user-facing, not tunable via the API) — the
+  transition is a `data_gap`, independent of §14.7's elapsed-time check.
+  Applies **everywhere**: mid-journey (splits the journey, same as an
+  elapsed-time gap would) and right after a confirmed stop.
+- **Do NOT merge a preceding confirmed stop into the gap.** A `stationary`
+  or `active_static` segment took multiple points and the full
+  confirmation window to earn its label — a single bad point afterward
+  doesn't retroactively invalidate that evidence. The confirmed stop stays
+  its own segment; the jump becomes its own `data_gap` segment right after
+  it. Same treatment whether the jump follows a stop or a journey — no
+  look-behind, no retroactive merge, the state machine stays forward-only.
+
+### Step 0 — Decisions and SPEC update (docs only, before code)
+
+- [ ] Pin the exact request parameter name and units for the confirmation
+      window (e.g. `stationary_window_seconds`) and its validation range
+      (180–900) — §34 `REPORT_VALIDATION_ERROR` on anything outside it.
+- [ ] Pin the new engine config field name replacing
+      `StaticConfirmationSeconds`/`JourneyEndSeconds` (e.g.
+      `StationaryConfirmationSeconds`) and confirm the personal-profile
+      default (currently 600s for both — decide whether personal also
+      becomes adjustable or stays fixed).
+- [ ] Pin the jump-gate constant name (e.g. `MaxImpliedSpeedKph`) and lock
+      the value at 250 km/h per-profile (vehicle only for now — confirm
+      whether personal/asset trackers need a different or no gate, since
+      a personal tracker's sparse cadence could span real long-distance
+      hops between pings, e.g. a flight or ferry).
+- [ ] Write the new rule into SPEC.md: extend §14.7 (data gap) with the
+      plausibility gate as a second, independent trigger; document the
+      "confirmed stop stays separate from a following gap" invariant
+      alongside the existing §8.4 gap-rendering rule.
+- Verify: decisions recorded here and in SPEC.md; no code yet.
+
+### Step 1 — Engine: unify the confirmation window
+
+- [ ] `internal/report/config.go`: replace
+      `StaticConfirmationSeconds`/`JourneyEndSeconds` with the single
+      field decided in Step 0; update `VehicleConfig()`/`PersonalConfig()`
+      defaults; thread an optional per-request override through
+      `services.ActivityReportRequest` → engine config construction.
+- [ ] `internal/report/engine.go`: `stepStationary` (§14) reads the one
+      field for both the `active_static` and `stationary` branches instead
+      of two separate constants.
+- [ ] Existing scenario/unit tests (§36.2 fixtures) updated for the merged
+      field; add a case confirming the window is respected at both the 3
+      min default and a non-default override.
+- Verify: `GOCACHE=/tmp/gocache go test ./internal/report`.
+
+### Step 2 — Engine: jump plausibility gate
+
+- [ ] `internal/report`: implied-speed helper (haversine distance ÷
+      elapsed seconds, converted to km/h) — likely alongside the existing
+      `movement.go` helpers.
+- [ ] Wire the gate into the state machine ahead of / alongside the §14.7
+      elapsed-time check: either check produces a `data_gap` for that
+      transition; neither depends on the other.
+- [ ] Confirm generation of a confirmed `stationary`/`active_static`
+      segment is unaffected when the *next* point trips the gate — the
+      already-closed segment is not touched (per the "keep separate"
+      decision).
+- [ ] New scenario fixtures (extending §36.2 style): (a) a stop confirmed
+      normally, then an impossible jump — two segments, not one; (b) an
+      impossible jump mid-journey — the journey splits around a `data_gap`
+      the same way an elapsed-time gap would.
+- Verify: `GOCACHE=/tmp/gocache go test ./internal/report`, new fixtures
+  passing.
+
+### Step 3 — API: accept the confirmation-window override
+
+- [ ] `internal/api/handlers/report_handler.go`: `activityReportBody`
+      gains the optional field from Step 0; validate the 180–900 range,
+      `REPORT_VALIDATION_ERROR` (400) outside it; omitted → profile
+      default.
+- [ ] `report_handler_test.go`: validation table extended (below min,
+      above max, non-integer, omitted-uses-default).
+- Verify: `GOCACHE=/tmp/gocache go test ./internal/api/handlers`.
+
+### Step 4 — Frontend: the confirmation-window dropdown
+
+- [ ] `src/types/activity-report.type.ts`: `ActivityReportRequest` gains
+      the new optional field.
+- [ ] `ReportFilters.vue`: new dropdown next to "To" (~half width per Step
+      0), options across the 3–15 min range, default 3 min; wired into the
+      `generate()` payload alongside asset/from/to.
+- [ ] `activityReportStore.ts`: no store-shape change expected — the field
+      just rides along in the existing `fetchActivityReport(payload)` call.
+- Verify: `npm run build`; dropdown renders and defaults correctly in the
+  browser (reuse the `ReportDateField.vue` teleport pattern if the
+  dropdown needs one — check first whether a plain `<select>` in the
+  `vform__row` clips the same way the date popovers did).
+
+### Step 5 — Phase 5 acceptance
+
+- [ ] Re-run a report against a real drive day that previously showed
+      short data_gap bands between journeys (e.g. ACA-448/AFO-544) with
+      the default 3 min window; confirm short idle periods that are
+      genuinely stationary (no implausible jump) now read as `stationary`
+      not `data_gap`.
+- [ ] Confirm a real or fixture-simulated GPS jump still reads as
+      `data_gap`, and that it does NOT merge into a preceding confirmed
+      stop segment.
+- [ ] Adjust the dropdown to 15 min in the browser and confirm the report
+      changes accordingly.
+- [ ] Docs updated: this file's Current State, SPEC.md status.
+- Verify: acceptance walk recorded here, boxes ticked.
+
+## Phase 6 — Timeline Mode (§4.2, scenario F) — planned, data first
 
 Promoted from Later on 2026-07-19 (was deferred for lack of ground truth:
 every production asset is a dense vehicle tracker). Chris is generating

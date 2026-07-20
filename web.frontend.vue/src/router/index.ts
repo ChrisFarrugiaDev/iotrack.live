@@ -122,8 +122,6 @@ const router = createRouter({
 		},
 
 		// Reports
-		// Placeholder UI on mocked data. No routePermissions entry yet — the
-		// report.view key is not seeded (see docs/features/ACTIVITY_REPORT_UI_ROADMAP.md).
 		{
 			path: '/reports/activity',
 			name: 'reports.activity',
@@ -159,6 +157,8 @@ const routePermissions: Record<string, string> = {
 	'groups.list': 'group.view',
 	'groups.create': 'group.create',
 	'groups.edit': 'group.update',
+
+	'reports.activity': 'report.view',
 };
 
 router.beforeEach(async (

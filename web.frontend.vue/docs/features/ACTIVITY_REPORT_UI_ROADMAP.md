@@ -195,15 +195,16 @@ owner's request:
 
 ---
 
-## ⚠️ Security debt — before this ships
+## ⚠️ Security debt — CLOSED 2026-07-20
 
-- [ ] **Gate `report.view`.** The Reports sidebar item is visible to **every
-      user** and opens a report built from **fabricated telemetry**.
+- [x] **Gate `report.view`.** DONE (Phase 4 Step 4):
       1. ~~Seed the key~~ — DONE (initdb + dev DB, all four roles, via the
          compute backend's Phase 1).
-      2. Add `'reports.activity': 'report.view'` to the `routePermissions` map in
-         `src/router/index.ts`.
-      3. Gate the sidebar item with `authorizationStore.can('report.view')`.
+      2. ~~Add `'reports.activity': 'report.view'` to the `routePermissions`
+         map~~ — DONE, `src/router/index.ts`.
+      3. ~~Gate the sidebar item~~ — DONE,
+         `v-if="authorizationStore.can('report.view')"` on the Reports group
+         in `TheSidebar.vue`.
       4. ~~Backend enforcement~~ — DONE: `computation.server.go` requires it
          on every `/compute/reports/*` route.
       See design doc §20 and `ROADMAP.md`.
@@ -216,16 +217,17 @@ owner's request:
       (2026-07-19) the response is the **full ActivityReportResponse** this
       UI's types file defines — report meta, subject, summary, segments —
       verified live against real drive days. See that service's ROADMAP.md.
-- [ ] **Swap the seam** in `activityReportStore.fetchActivityReport()` —
-      the response shape is ready and contract-matched; what remains is
-      backend Phase 4 infrastructure (Apache `/compute/` prefix, deploy),
-      then point the store at `/compute/reports/activity`. Two knowns for
-      the swap: the payload arrives wrapped as `{ success, data }`, and
-      `report.timezone` is `"UTC"` until the org-timezone decision (§42
-      Q14) lands. **The step-by-step plan for all of this is
-      `computation.server.go/ROADMAP.md` Phase 4** (Steps 0–5: decisions,
-      packaging, deploy, seam, gating, acceptance) — that file is the
-      tracker; this one records the UI-side state.
+- [x] **Swap the seam** in `activityReportStore.fetchActivityReport()` —
+      DONE 2026-07-20 (Phase 4 Step 3): journey requests now `axios.post`
+      to `${getAppUrl}/compute/reports/activity` and unwrap
+      `{ success, data }`; errors surface `err.response.data.message`
+      inline in the report area (§34 codes already carry a human message
+      from the backend). The timeline mock stays reachable behind
+      `import.meta.env.DEV` per the Step 0 Option-B decision — its removal
+      is a Phase 5 step. `npm run build` clean. Still open: Step 4
+      (router/sidebar gating) and Step 5 (live browser acceptance) — see
+      `computation.server.go/ROADMAP.md` Phase 4, the tracker for this
+      work.
 - [x] **Promote the fixture** into the backend's segmentation tests — DONE,
       backend Phase 3 Step 6: `internal/report/scenario_test.go` is the
       mock generator's Go twin, replaying scenario C's 8 segments exactly

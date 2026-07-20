@@ -98,7 +98,7 @@
 
         <div class="sidebar__line"></div>
 
-        <div class="sidebar__group">
+        <div v-if="authorizationStore.can('report.view')" class="sidebar__group">
             <div id="reports-btn" class="sidebar__item" @click="toggleReportsMenu">
                 <svg class="sidebar__svg ">
                     <use xlink:href="@/ui/svg/sprite.svg#icon-reports"></use>
