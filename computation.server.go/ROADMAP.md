@@ -233,39 +233,72 @@ text:
 
 ### Step 0 — Decisions and SPEC update (docs only, before code)
 
-- [ ] Pin the exact request parameter name and units for the confirmation
-      window (e.g. `stationary_window_seconds`) and its validation range
-      (180–900) — §34 `REPORT_VALIDATION_ERROR` on anything outside it.
-- [ ] Pin the new engine config field name replacing
-      `StaticConfirmationSeconds`/`JourneyEndSeconds` (e.g.
-      `StationaryConfirmationSeconds`) and confirm the personal-profile
-      default (currently 600s for both — decide whether personal also
-      becomes adjustable or stays fixed).
-- [ ] Pin the jump-gate constant name (e.g. `MaxImpliedSpeedKph`) and lock
-      the value at 250 km/h per-profile (vehicle only for now — confirm
-      whether personal/asset trackers need a different or no gate, since
-      a personal tracker's sparse cadence could span real long-distance
-      hops between pings, e.g. a flight or ferry).
-- [ ] Write the new rule into SPEC.md: extend §14.7 (data gap) with the
-      plausibility gate as a second, independent trigger; document the
-      "confirmed stop stays separate from a following gap" invariant
-      alongside the existing §8.4 gap-rendering rule.
-- Verify: decisions recorded here and in SPEC.md; no code yet.
+- [x] **Request parameter:** `stationary_window_seconds` (optional,
+      integer seconds). Validates to **180–900**;
+      `REPORT_VALIDATION_ERROR` (400) outside that range. Omitted → the
+      resolved profile's default (vehicle 180, personal 600). Applies to
+      whichever profile the report resolves to (§4.3) — harmless/unused
+      for `asset`/timeline reports, which have no stationary concept
+      (§3.3).
+- [x] **Engine config field:** `StaticConfirmationSeconds` and
+      `JourneyEndSeconds` collapse into one field,
+      **`StationaryConfirmationSeconds`**, read by both the
+      `active_static` and `stationary` branches of `stepStationary`
+      (§14.4–§14.6). Personal profile's default stays **600s** (already
+      identical for both source fields today, so this is a no-op merge
+      for personal); personal also accepts the same
+      `stationary_window_seconds` override rather than a separate
+      request field — one parameter, both profiles.
+- [x] **Jump-gate field:** reusing the name already drafted (and never
+      implemented) in the root design doc §40 —
+      **`MaximumPlausibleSpeedKph`** — rather than inventing a new one.
+      **Both vehicle and personal: 250 km/h**, same value, same rule —
+      not the design doc's original split draft (220 vehicle / 160
+      personal). Decided 2026-07-20: mode (`journey` vs `timeline`), not
+      asset type, is what should actually decide whether the gate
+      applies — a real ferry/flight between two sparse pings is the
+      scenario that would make a fixed gate unsafe for "personal," but
+      that only matters once a slow-pinging personal tracker can
+      actually resolve to `timeline` mode instead of being forced through
+      `journey`. That auto mode-switch doesn't exist yet — §4.3 today is
+      asset-type-only (`personal` always → `journey`) — building it is
+      Phase 6's job, gated on real sparse-tracker data. Until then, every
+      personal-profile report IS a journey report, so it gets the same
+      physical-plausibility reasoning as a vehicle. In practice today
+      both production personal devices report every ~20s anyway — dense
+      enough that this makes no observable difference. Revisit this
+      split once Phase 6 ships the real cadence-based mode switch.
+- [x] Rule written into `docs/iotrack_activity_report_design.md`: new
+      **§14.8 "Implausible jump to data gap"** alongside §14.7, and a
+      "confirmed stop stays separate" note added to §8.4. See Step 1 for
+      the engine implementation and §36.2-style fixtures.
+- Verify: decisions recorded here and in the design doc. DONE 2026-07-20.
+  No code yet.
 
 ### Step 1 — Engine: unify the confirmation window
 
-- [ ] `internal/report/config.go`: replace
-      `StaticConfirmationSeconds`/`JourneyEndSeconds` with the single
-      field decided in Step 0; update `VehicleConfig()`/`PersonalConfig()`
-      defaults; thread an optional per-request override through
-      `services.ActivityReportRequest` → engine config construction.
-- [ ] `internal/report/engine.go`: `stepStationary` (§14) reads the one
-      field for both the `active_static` and `stationary` branches instead
-      of two separate constants.
-- [ ] Existing scenario/unit tests (§36.2 fixtures) updated for the merged
-      field; add a case confirming the window is respected at both the 3
-      min default and a non-default override.
-- Verify: `GOCACHE=/tmp/gocache go test ./internal/report`.
+- [x] `internal/report/config.go`: `StaticConfirmationSeconds`/
+      `JourneyEndSeconds` replaced by `StationaryConfirmationSeconds`;
+      `VehicleConfig()` → 180, `PersonalConfig()` → 600 (unchanged, was
+      already identical for both source fields). `MaximumPlausibleSpeedKph`
+      also corrected to 250 for both profiles while in this file — it
+      already existed as a dead/unwired field (Step 2 wires it up).
+      `services.ActivityReportRequest` gains
+      `StationaryWindowSeconds *int`; `report_service.go` applies it to
+      the resolved profile config before `BuildSegments` when present.
+- [x] `internal/report/engine.go`: `stepStationary` (§14) — both the
+      `active_static` and `stationary` branches now read
+      `e.cfg.StationaryConfirmationSeconds`.
+- [x] `scenario_test.go` comment updated for the merged field name/value
+      (behavior unchanged — 90s test fixture stays under the new 180s
+      threshold same as the old 120s one). New
+      `config_test.go`: `TestStationaryConfirmationSecondsUsesConfiguredWindow`
+      — confirms both branches respect the configured window (present at
+      the 180s default within a 400s span; absent when overridden to 600s,
+      same span) and that active_static isn't reading a stale hardcoded
+      value.
+- Verify: `GOCACHE=/tmp/gocache go test ./internal/report` and
+  `go build ./...` clean 2026-07-20; full `go test ./...` also clean.
 
 ### Step 2 — Engine: jump plausibility gate
 
@@ -367,12 +400,12 @@ recognised as PRODUCTION, not a dev DB):
 Threshold tuning (found while building the §36.2 fixtures, 2026-07-19 —
 revisit with real telemetry, §40 says the defaults are starting values):
 
-- [ ] An ignition-on stop ≥ `StaticConfirmationSeconds` (120s) becomes
-      **active_static** via the §11 ignition fallback — a long red light
-      or traffic queue reads as "working". Options when real data decides:
-      a longer confirmation for ignition-sourced activity, or requiring a
-      stronger §11 source (pto/engine_running/work input) for
-      active_static.
+- [ ] An ignition-on stop ≥ `StationaryConfirmationSeconds` (180s as of
+      Phase 5, was 120s) becomes **active_static** via the §11 ignition
+      fallback — a long red light or traffic queue reads as "working".
+      Options when real data decides: a longer confirmation for
+      ignition-sourced activity, or requiring a stronger §11 source
+      (pto/engine_running/work input) for active_static.
 - [ ] A single GPS spike ≥ `MinimumMovementMeters` (25m) yields TWO
       "moving" points (out and back), which meets
       `MovementConfirmationPoints` (2) and confirms a phantom journey.

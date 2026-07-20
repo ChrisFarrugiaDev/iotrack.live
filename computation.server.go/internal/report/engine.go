@@ -21,8 +21,8 @@ import (
 //     drift blip's points stay inside the stationary period. Only points
 //     buffered before any segment exists are dropped, as in §17.
 //   - §36.2 G: a confirmed stop with activity UNKNOWN becomes stationary
-//     after JourneyEndSeconds — never an invented active_static. The
-//     pseudocode would buffer forever on nil activity.
+//     after StationaryConfirmationSeconds — never an invented active_static.
+//     The pseudocode would buffer forever on nil activity.
 //   - Transitions are contiguous by construction: the closing segment's
 //     EndAt is the opening segment's StartAt (backdating per §15), and a
 //     data gap spans exactly [previous point, next point].
@@ -161,7 +161,7 @@ func (e *engine) stepStationary(point TelemetryPoint) {
 	active, source := ResolveActivity(point)
 
 	switch {
-	case active != nil && *active && stationarySeconds >= e.cfg.StaticConfirmationSeconds:
+	case active != nil && *active && stationarySeconds >= e.cfg.StationaryConfirmationSeconds:
 		// §14.3: stationary but working. Backdate to the stop's start.
 		if e.current == nil || e.current.kind != "active_static" {
 			startAt := e.pendingStationary[0].Timestamp
@@ -180,7 +180,7 @@ func (e *engine) stepStationary(point TelemetryPoint) {
 	// §14.4 for activity=false; §36.2 G for activity unknown: a confirmed
 	// stop without a work signal is stationary — active_static is never
 	// invented. (§17's pseudocode would buffer nil-activity forever.)
-	case (active == nil || !*active) && stationarySeconds >= e.cfg.JourneyEndSeconds:
+	case (active == nil || !*active) && stationarySeconds >= e.cfg.StationaryConfirmationSeconds:
 		if e.current == nil || e.current.kind != "stationary" {
 			startAt := e.pendingStationary[0].Timestamp
 			e.closeCurrent(startAt, "became_stationary")

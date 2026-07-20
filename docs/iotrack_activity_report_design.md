@@ -444,7 +444,7 @@ Short pauses such as traffic lights should remain inside a journey and should no
 
 ## 8.4 Data Gap
 
-A data gap means the elapsed time between consecutive points is too large to safely infer continuous activity.
+A data gap means either the elapsed time between consecutive points is too large to safely infer continuous activity (§14.7), or the implied speed between two consecutive points is physically impossible for the tracker (§14.8) — a GPS jump, not a real movement.
 
 The system must not assume:
 
@@ -458,6 +458,8 @@ On the map:
 - do not draw a normal solid route through the gap;
 - optionally draw a dotted line;
 - show a clear data-gap indicator.
+
+**Invariant: a confirmed stop is never retroactively folded into a following gap.** If a `stationary` or `active_static` segment was already confirmed (it took multiple agreeing points and the full confirmation window, §14.4–§14.6) and the *next* point after it trips a data-gap trigger (§14.7 or §14.8), the confirmed segment stays as its own segment. The data gap starts at that segment's end, not before it. A single bad point after a well-evidenced stop doesn't invalidate the stop — the two are reported as separate, adjacent segments, exactly as an elapsed-time gap following a confirmed stop already is today.
 
 ---
 
@@ -780,6 +782,29 @@ Actions:
 2. Add a `data_gap` segment.
 3. Start interpretation again from the next point.
 4. Do not assume the route through the gap.
+
+---
+
+## 14.8 Implausible jump to data gap
+
+A second, independent trigger for `data_gap` — decoupled from §14.7's elapsed-time check. Time between two points can be well under `maximumPointGapSeconds` and still be impossible: no real vehicle covers that distance in that time.
+
+Transition:
+
+```text
+distance(previous point, point) / elapsed time > maximumPlausibleSpeedKph
+```
+
+Actions — identical to §14.7 once triggered:
+
+1. Close current segment (per the §8.4 invariant: if that segment was an already-confirmed `stationary`/`active_static` stop, it closes and stays as-is — it is not folded into the gap).
+2. Add a `data_gap` segment spanning exactly the two points.
+3. Start interpretation again from the next point.
+4. Do not assume the route through the gap.
+
+Applies everywhere a transition can occur — mid-journey (splits the journey around the gap, same as §14.7) or right after a confirmed stop. Neither trigger depends on the other; either one alone is sufficient to produce a `data_gap`.
+
+`maximumPlausibleSpeedKph` is set per profile (§40): **250 km/h for both vehicle and personal**. This is a mode question, not an asset-type question — the gate belongs to `journey` mode (dense enough reporting that a physically-impossible jump means bad data, not honest travel); it doesn't apply to `timeline` mode at all, which has no speed/duration concept to check (§3.3). The risk case for personal — a real ferry or short flight between two sparse pings honestly implying a high speed — only matters once a slow-pinging personal tracker can resolve to `timeline` mode instead of always being forced through `journey`. That auto mode-switch is §4.3's `auto` rule, not yet implemented (asset type alone decides today) — see the Timeline Mode phase, which builds it from real sparse-tracker data. Until then every personal-profile report is a `journey` report, so it gets the same gate as vehicle.
 
 ---
 
@@ -2292,11 +2317,17 @@ type JourneyConfig = {
     movementConfirmationPoints: number;
     movementConfirmationMeters: number;
 
-    staticConfirmationSeconds: number;
-    journeyEndSeconds: number;
+    // Unified 2026-07-20 (Phase 5): was two fields (staticConfirmationSeconds,
+    // journeyEndSeconds) — one shared, user-adjustable window now confirms
+    // both active_static and stationary (§14.4-§14.6). Request-overridable,
+    // 180-900s.
+    stationaryConfirmationSeconds: number;
 
     maximumPointGapSeconds: number;
 
+    // §14.8. A journey-mode concept, not asset-type-specific — applies to
+    // vehicle and personal alike (both always resolve to journey mode
+    // today; §4.3's auto/cadence rule doesn't exist yet).
     maximumPlausibleSpeedKph?: number;
 };
 ```
@@ -2309,10 +2340,9 @@ const vehicleConfig: JourneyConfig = {
     minimumMovementMeters: 25,
     movementConfirmationPoints: 2,
     movementConfirmationMeters: 50,
-    staticConfirmationSeconds: 120,
-    journeyEndSeconds: 180,
+    stationaryConfirmationSeconds: 180,
     maximumPointGapSeconds: 300,
-    maximumPlausibleSpeedKph: 220,
+    maximumPlausibleSpeedKph: 250,
 };
 
 const personalConfig: JourneyConfig = {
@@ -2320,14 +2350,24 @@ const personalConfig: JourneyConfig = {
     minimumMovementMeters: 20,
     movementConfirmationPoints: 2,
     movementConfirmationMeters: 40,
-    staticConfirmationSeconds: 600,
-    journeyEndSeconds: 600,
+    stationaryConfirmationSeconds: 600,
     maximumPointGapSeconds: 900,
-    maximumPlausibleSpeedKph: 160,
+    // Same gate as vehicle (250), same reasoning: every personal-profile
+    // report is a journey report until §4.3's auto/cadence mode-switch
+    // exists (Timeline Mode phase). Once that ships, a personal tracker
+    // reporting sparsely enough to resolve to timeline mode won't hit
+    // this check at all — timeline mode has no speed/duration concept.
+    // Both current production personal devices report every ~20s, dense
+    // enough that this makes no practical difference today.
+    maximumPlausibleSpeedKph: 250,
 };
 ```
 
 These values require testing against real iotrack.live telemetry.
+`stationaryConfirmationSeconds` and `maximumPlausibleSpeedKph` above are
+what real drive-day review (2026-07-20) settled on — both less
+speculative than the values (and the vehicle/personal split) they
+replace. See §14.8.
 
 ---
 

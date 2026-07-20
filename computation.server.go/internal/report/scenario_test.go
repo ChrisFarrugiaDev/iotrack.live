@@ -107,7 +107,7 @@ func concat(tracks ...[]TelemetryPoint) []TelemetryPoint {
 //
 // One deliberate departure from the mock: its traffic light lasts 160s,
 // but with ignition reported the §11 fallback makes any stop ≥
-// StaticConfirmationSeconds (120s) active_static — so here the light is
+// StationaryConfirmationSeconds (180s) active_static — so here the light is
 // 90s and the tension is recorded in the roadmap's tuning note.
 func TestScenarioCCherryPickerDay(t *testing.T) {
 	day := time.Date(2026, 7, 12, 0, 0, 0, 0, time.UTC)

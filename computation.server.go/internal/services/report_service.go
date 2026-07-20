@@ -27,6 +27,12 @@ type ActivityReportRequest struct {
 	From      time.Time
 	To        time.Time
 
+	// StationaryWindowSeconds overrides JourneyConfig.StationaryConfirmationSeconds
+	// (§14.3/§14.4). Nil means "use the resolved profile's default". Shape
+	// validated (180-900) at the handler, same as from/to (§34) — this
+	// layer trusts it's already in range.
+	StationaryWindowSeconds *int
+
 	UserID int64
 	OrgID  int64
 }
@@ -131,7 +137,11 @@ func (s *Service) GenerateActivityReport(ctx context.Context, req ActivityReport
 
 	// 7. Segment (§14–§17) and summarise (§23). BuildSegments always returns
 	// a non-nil slice, so an empty range marshals to [] rather than null.
-	segments := report.BuildSegments(points, report.ConfigFor(asset.AssetType), req.From, req.To)
+	cfg := report.ConfigFor(asset.AssetType)
+	if req.StationaryWindowSeconds != nil {
+		cfg.StationaryConfirmationSeconds = *req.StationaryWindowSeconds
+	}
+	segments := report.BuildSegments(points, cfg, req.From, req.To)
 
 	return &ActivityReportResult{
 		Report: ReportMeta{
