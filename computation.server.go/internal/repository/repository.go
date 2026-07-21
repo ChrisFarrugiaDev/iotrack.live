@@ -26,9 +26,10 @@ type Repository struct {
 	// still prefer a named method on the relevant repository.
 	Pool *pgxpool.Pool
 
-	Access    *AccessRepository
-	Asset     *AssetRepository
-	Telemetry *TelemetryRepository
+	Access       *AccessRepository
+	Asset        *AssetRepository
+	Organisation *OrganisationRepository
+	Telemetry    *TelemetryRepository
 }
 
 func NewRepository(pool *pgxpool.Pool) (*Repository, error) {
@@ -43,9 +44,10 @@ func NewRepository(pool *pgxpool.Pool) (*Repository, error) {
 	}
 
 	return &Repository{
-		Pool:      pool,
-		Access:    NewAccessRepository(pool),
-		Asset:     NewAssetRepository(sess),
-		Telemetry: NewTelemetryRepository(pool),
+		Pool:         pool,
+		Access:       NewAccessRepository(pool),
+		Asset:        NewAssetRepository(sess),
+		Organisation: NewOrganisationRepository(pool),
+		Telemetry:    NewTelemetryRepository(pool),
 	}, nil
 }

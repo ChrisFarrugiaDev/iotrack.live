@@ -29,6 +29,23 @@ export const useAssetStore = defineStore('assetStore', () => {
     const getAssets = computed(() => assets.value);
     const getAssetIDs = computed(() => Object.keys(assets.value || {}));
 
+    /**
+     * Assets with live position data — the same condition as
+     * getAssetsWithDevice, but WITHOUT filterStore's map UI toggles (org/
+     * type deselection, activity date, search). Those are persistent,
+     * localStorage-backed Live Map preferences; reusing getAssetsWithDevice
+     * outside the map would silently inherit whatever filter state the user
+     * happened to leave there. For other pages (e.g. the Activity Report
+     * asset picker), this is "assets shown on the map" without that coupling.
+     */
+    const getReportableAssets = computed(() => {
+        if (!assets.value) return [];
+        return Object.values(assets.value).filter(asset =>
+            asset?.devices?.length &&
+            asset.devices[0]?.last_telemetry &&
+            Object.keys(asset.devices[0].last_telemetry).length > 0
+        );
+    });
 
     const getAssetsWithDevice = computed(() => {
         if (!assets.value) return [];
@@ -219,6 +236,7 @@ export const useAssetStore = defineStore('assetStore', () => {
         addAssetToStore,
         removeAssetFromStore,
         getAssetsWithDevice,
+        getReportableAssets,
         toggleFavorites,
         isFavorite,
 

@@ -444,7 +444,7 @@ Short pauses such as traffic lights should remain inside a journey and should no
 
 ## 8.4 Data Gap
 
-A data gap means the elapsed time between consecutive points is too large to safely infer continuous activity.
+A data gap means either the elapsed time between consecutive points is too large to safely infer continuous activity (§14.7), or the implied speed between two consecutive points is physically impossible for the tracker (§14.8) — a GPS jump, not a real movement.
 
 The system must not assume:
 
@@ -458,6 +458,8 @@ On the map:
 - do not draw a normal solid route through the gap;
 - optionally draw a dotted line;
 - show a clear data-gap indicator.
+
+**Invariant: a confirmed stop is never retroactively folded into a following gap.** If a `stationary` or `active_static` segment was already confirmed (it took multiple agreeing points and the full confirmation window, §14.4–§14.6) and the *next* point after it trips a data-gap trigger (§14.7 or §14.8), the confirmed segment stays as its own segment. The data gap starts at that segment's end, not before it. A single bad point after a well-evidenced stop doesn't invalidate the stop — the two are reported as separate, adjacent segments, exactly as an elapsed-time gap following a confirmed stop already is today.
 
 ---
 
@@ -606,6 +608,18 @@ const isMoving =
     distanceFromPreviousMeters >= minimumMovementMeters ||
     movementDetected === true;
 ```
+
+**Revised 2026-07-20, against real production data (AFO-544):** the original rule treats all three indicators as peers — any one is enough, regardless of the others. Real telemetry showed why that's wrong: on this device, `movementDetected` just mirrors ignition state (true for the entire time ignition is on, including 10+ minutes parked at speed=0), not real relocation. Treating it as a peer meant a bare flag overrode a speed reading that was actually present and said the opposite — fragmenting long parked, ignition-on periods into chains of phantom "journeys" with near-zero speed and distance (in one case, a genuine two-point, three-second, seven-metre "journey" out of pure idling).
+
+`movementDetected` is a fallback, not a peer — only consulted when there's no GPS-derived speed reading to go on at all:
+
+```ts
+const isMoving = speedKph != null
+    ? speedKph >= movingSpeedKph || distanceFromPreviousMeters >= minimumMovementMeters
+    : distanceFromPreviousMeters >= minimumMovementMeters || movementDetected === true;
+```
+
+This still honours the flag's original purpose — a GPS blackout with real accelerometer-detected movement, where speed is unavailable and it's the only signal left — without letting it override a speed reading that's actually present and known.
 
 Recommended starting values for a vehicle tracker:
 
@@ -780,6 +794,71 @@ Actions:
 2. Add a `data_gap` segment.
 3. Start interpretation again from the next point.
 4. Do not assume the route through the gap.
+
+---
+
+## 14.8 Implausible jump to data gap
+
+A second, independent trigger for `data_gap` — decoupled from §14.7's elapsed-time check. Time between two points can be well under `maximumPointGapSeconds` and still be impossible: no real vehicle covers that distance in that time.
+
+Transition:
+
+```text
+distance(previous point, point) >= minimumJumpMeters
+AND distance(previous point, point) / elapsed time > maximumPlausibleSpeedKph
+```
+
+The distance floor (`minimumJumpMeters`, §40 — 500m) was added 2026-07-20 against real production data (YSM-815): pulling away from a 30-second traffic stop, the position snapped ~330m in 3 seconds (ordinary GPS reacquisition) — an implied ~400 km/h that tripped the speed check and split a real journey with a zero-duration `data_gap`. Implied speed over very short elapsed times amplifies ordinary positional noise; the gate is a **teleport detector** (km-scale displacement), not a jitter detector. Sub-floor discontinuities stay with the normal §12/§13 movement handling, which absorbs them.
+
+Actions — identical to §14.7 once triggered:
+
+1. Close current segment (per the §8.4 invariant: if that segment was an already-confirmed `stationary`/`active_static` stop, it closes and stays as-is — it is not folded into the gap).
+2. Add a `data_gap` segment spanning exactly the two points.
+3. Start interpretation again from the next point.
+4. Do not assume the route through the gap.
+
+Applies everywhere a transition can occur — mid-journey (splits the journey around the gap, same as §14.7) or right after a confirmed stop. Neither trigger depends on the other; either one alone is sufficient to produce a `data_gap`.
+
+`maximumPlausibleSpeedKph` is set per profile (§40): **250 km/h for both vehicle and personal**. This is a mode question, not an asset-type question — the gate belongs to `journey` mode (dense enough reporting that a physically-impossible jump means bad data, not honest travel); it doesn't apply to `timeline` mode at all, which has no speed/duration concept to check (§3.3). The risk case for personal — a real ferry or short flight between two sparse pings honestly implying a high speed — only matters once a slow-pinging personal tracker can resolve to `timeline` mode instead of always being forced through `journey`. That auto mode-switch is §4.3's `auto` rule, not yet implemented (asset type alone decides today) — see the Timeline Mode phase, which builds it from real sparse-tracker data. Until then every personal-profile report is a `journey` report, so it gets the same gate as vehicle.
+
+---
+
+## 14.9 Bridge a silent-but-parked gap
+
+Found 2026-07-20 against real production data: a tracker can deliberately drop to an infrequent heartbeat while parked (observed: roughly once every 6h) instead of its normal dense cadence. Every one of those silences exceeds `maximumPointGapSeconds`, so §14.7 alone would turn an entire off-shift period into `data_gap` — even when the two points bounding the silence agree on position and activity, which is real evidence nothing happened, not an absence of information.
+
+A silence tripped by §14.7 alone (§14.8's jump gate still applies first, independently and unconditionally — a large jump is never bridged) is bridged instead of gapped when:
+
+```text
+NOT isMoving(point)
+```
+
+The non-moving check matters for a second reason beyond "didn't travel a real distance": two separate journeys can share an endpoint by coincidence — a vehicle stops at the same spot it happened to pass through 40 minutes earlier on a different leg. That point's reported speed still marks it moving, so checking `isMoving` as a whole (not a bare distance comparison) is what keeps the far side of a *moving* transition from ever bridging and silently stitching two journeys together across an unknown gap (pinned by the existing "gap not bridged" scenario test). `isMoving` already checks distance against `minimumMovementMeters` (§40) — the same question ("did it really move, or is this jitter") — so no separate distance check is needed here.
+
+**Position alone decides the bridge — the activity signal deliberately does not.** The first version of this rule also refused to bridge when `resolveActivity` conflicted across the silence (true on one side, false on the other), reasoning that a real state change meant "something happened we can't account for." Real production data (YSM-815, 2026-07-20) disproved that: parked trackers wake in short bursts whose ignition reading flickers 1→0 within seconds (§14.6's debounce warning made real), so *every* silence boundary "conflicted" and an unmoved 47-minute parked period shredded into `active_static 4m / data_gap 23m / data_gap 15m / active_static 4m`. The decisive argument: `data_gap` means **route unknown** (§8.4) — with identical coordinates on both sides there is no unknown route.
+
+**Every bridged silence claims only what the position proves: plain `stationary`, never `active_static`.** Refined twice against real data. First (2026-07-21, ACA-448, conflicted sides): the driver parked at 13:30, switched the engine off at 13:33 — *recorded* — and returned at 15:26; the wake burst's first fix read ignition=1 and stamped the entire 1h52m silence "Working — IGNITION". Then (same day, AIC-497, *agreeing* sides): heartbeats hours apart that both read ignition-on stamped multi-hour silences as "Working" — but two isolated samples prove only that the ignition read on at those two instants, not that the engine ran throughout. So the confirmation that closes any bridged silence is demoted to `stationary` unconditionally; the far point's own activity counts again from the points that follow it. Dense observed data remains the only path to `active_static` — which is exactly what the label claims to be: observed working time.
+
+When bridged, the pair is not turned into a `data_gap` at all — it flows into the normal moving/stationary classification (§12–§14) as if the elapsed time were unremarkable. The already-large elapsed time trivially clears `stationaryConfirmationSeconds` the moment the bridge lands, so confirmation is immediate — the resulting segment's `startAt` still backdates to when the stop was first buffered (§14.3/§14.4), before the silence began, same as any other confirmed stop. Two bridged silences in a row extend the same segment rather than starting a new one, exactly like any other run of matching stationary points.
+
+No cap on how long a bridge can span. The evidence — an unchanged position on both ends — doesn't weaken with duration; a 6h silence and a 3-day silence get the same treatment.
+
+---
+
+## 14.10 A short silence hiding too much road
+
+A third, independent `data_gap` trigger. Found 2026-07-21 on real data (AFO-544): 235 seconds of silence while driving covered 1156 metres — under `maximumPointGapSeconds`, and the implied speed (~18 km/h) is entirely plausible, so neither §14.7 nor §14.8 fired — and the report drew a straight fabricated "route" across terrain the tracker never reported. §8.4 forbids assuming the vehicle travelled directly between two points; past a real displacement, the straight-line interpolation stops being a rendering shortcut and becomes a fabricated route.
+
+Transition:
+
+```text
+elapsed time >= minimumRouteHoleSeconds
+AND distance(previous point, point) >= minimumJumpMeters
+```
+
+Actions — identical to §14.7/§14.8 once triggered.
+
+`minimumRouteHoleSeconds` (§40, 90s both profiles) keeps ordinary dense cadence exempt: at the fleet's ~10s cadence, covering `minimumJumpMeters` (500m) in a single step would imply 180 km/h and is glitch territory anyway. A silence this long that also moved this far is precisely "we don't know the route" — which is what `data_gap` means. Note the far point is by definition moving (500m ≫ `minimumMovementMeters`), so these holes can never be bridged by §14.9 — no interaction between the rules.
 
 ---
 
@@ -2292,12 +2371,32 @@ type JourneyConfig = {
     movementConfirmationPoints: number;
     movementConfirmationMeters: number;
 
-    staticConfirmationSeconds: number;
-    journeyEndSeconds: number;
+    // Unified 2026-07-20 (Phase 5): was two fields (staticConfirmationSeconds,
+    // journeyEndSeconds) — one shared, user-adjustable window now confirms
+    // both active_static and stationary (§14.4-§14.6). Request-overridable,
+    // 180-900s.
+    stationaryConfirmationSeconds: number;
 
     maximumPointGapSeconds: number;
 
+    // §14.8. A journey-mode concept, not asset-type-specific — applies to
+    // vehicle and personal alike (both always resolve to journey mode
+    // today; §4.3's auto/cadence rule doesn't exist yet).
     maximumPlausibleSpeedKph?: number;
+
+    // §14.8's distance floor: the speed gate only fires when the
+    // displacement is at least this large. Keeps ordinary GPS
+    // reacquisition snap (~330m over 3s implies ~400 km/h — observed on
+    // real data) from splitting journeys; the gate is a teleport
+    // detector, not a jitter detector. Shared with §14.10 as the
+    // "too much unseen road" displacement floor.
+    minimumJumpMeters: number;
+
+    // §14.10: a silence at least this long that also covers at least
+    // minimumJumpMeters of displacement is a data_gap even under
+    // maximumPointGapSeconds — the straight line through it would be a
+    // fabricated route (§8.4).
+    minimumRouteHoleSeconds: number;
 };
 ```
 
@@ -2309,10 +2408,11 @@ const vehicleConfig: JourneyConfig = {
     minimumMovementMeters: 25,
     movementConfirmationPoints: 2,
     movementConfirmationMeters: 50,
-    staticConfirmationSeconds: 120,
-    journeyEndSeconds: 180,
+    stationaryConfirmationSeconds: 180,
     maximumPointGapSeconds: 300,
-    maximumPlausibleSpeedKph: 220,
+    maximumPlausibleSpeedKph: 250,
+    minimumJumpMeters: 500,
+    minimumRouteHoleSeconds: 90,
 };
 
 const personalConfig: JourneyConfig = {
@@ -2320,14 +2420,26 @@ const personalConfig: JourneyConfig = {
     minimumMovementMeters: 20,
     movementConfirmationPoints: 2,
     movementConfirmationMeters: 40,
-    staticConfirmationSeconds: 600,
-    journeyEndSeconds: 600,
+    stationaryConfirmationSeconds: 600,
     maximumPointGapSeconds: 900,
-    maximumPlausibleSpeedKph: 160,
+    // Same gate as vehicle (250), same reasoning: every personal-profile
+    // report is a journey report until §4.3's auto/cadence mode-switch
+    // exists (Timeline Mode phase). Once that ships, a personal tracker
+    // reporting sparsely enough to resolve to timeline mode won't hit
+    // this check at all — timeline mode has no speed/duration concept.
+    // Both current production personal devices report every ~20s, dense
+    // enough that this makes no practical difference today.
+    maximumPlausibleSpeedKph: 250,
+    minimumJumpMeters: 500,
+    minimumRouteHoleSeconds: 90,
 };
 ```
 
 These values require testing against real iotrack.live telemetry.
+`stationaryConfirmationSeconds` and `maximumPlausibleSpeedKph` above are
+what real drive-day review (2026-07-20) settled on — both less
+speculative than the values (and the vehicle/personal split) they
+replace. See §14.8.
 
 ---
 

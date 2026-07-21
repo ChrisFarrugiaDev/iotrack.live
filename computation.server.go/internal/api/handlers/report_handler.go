@@ -45,7 +45,17 @@ type activityReportBody struct {
 	AssetUUID string `json:"asset_uuid"`
 	From      string `json:"from"`
 	To        string `json:"to"`
+
+	// StationaryWindowSeconds overrides §14.3/§14.4's confirmation window
+	// (Phase 5). Optional; omitted means the resolved profile's default.
+	StationaryWindowSeconds *int `json:"stationary_window_seconds,omitempty"`
 }
+
+// Bounds for StationaryWindowSeconds (Phase 5 Step 0): 3-15 minutes.
+const (
+	minStationaryWindowSeconds = 180
+	maxStationaryWindowSeconds = 900
+)
 
 // ActivityReport handles POST /compute/reports/activity. Validation here is
 // shape-only (fields present, dates parseable, from < to); anything needing
@@ -70,6 +80,14 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if body.StationaryWindowSeconds != nil {
+		window := *body.StationaryWindowSeconds
+		if window < minStationaryWindowSeconds || window > maxStationaryWindowSeconds {
+			writeError(w, http.StatusBadRequest, "Invalid report filters.", "REPORT_VALIDATION_ERROR")
+			return
+		}
+	}
+
 	// Take a computation slot, or leave the queue if the client
 	// disconnects while waiting. The defer returns the slot on every
 	// exit path. Details: notes/03_semaphore_channel_pattern.md
@@ -85,11 +103,12 @@ func (h *ReportHandler) ActivityReport(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	result, err := h.svc.GenerateActivityReport(r.Context(), services.ActivityReportRequest{
-		AssetUUID: body.AssetUUID,
-		From:      from.UTC(),
-		To:        to.UTC(),
-		UserID:    userID,
-		OrgID:     orgID,
+		AssetUUID:               body.AssetUUID,
+		From:                    from.UTC(),
+		To:                      to.UTC(),
+		StationaryWindowSeconds: body.StationaryWindowSeconds,
+		UserID:                  userID,
+		OrgID:                   orgID,
 	})
 
 	var outcome string

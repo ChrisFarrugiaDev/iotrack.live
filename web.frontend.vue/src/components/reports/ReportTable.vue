@@ -83,6 +83,7 @@
                             <table class="rpoints">
                                 <thead>
                                     <tr>
+                                        <th class="rpoints__th">ID</th>
                                         <th class="rpoints__th">Time</th>
                                         <th class="rpoints__th">Position</th>
                                         <th class="rpoints__th rtable__th--num">Speed</th>
@@ -99,6 +100,8 @@
                                         :class="{ 'rpoints__row--selected': point.id === selectedPointId }"
                                         @click.stop="emit('select-point', point)"
                                     >
+                                        <!-- app.telemetry row id — for checking the raw DB row -->
+                                        <td class="rpoints__cell">{{ point.id }}</td>
                                         <td class="rpoints__cell">{{ formatTime(point.timestamp, timezone) }}</td>
                                         <td class="rpoints__cell">{{ formatCoords(point.latitude, point.longitude) }}</td>
                                         <td class="rpoints__cell rtable__cell--num">{{ formatSpeed(point.speedKph) }}</td>

@@ -148,7 +148,12 @@ export const useActivityReportStore = defineStore('activityReportStore', () => {
                 report.value = res.data.data;
             }
 
+            // Both selections must reset: a pinned point kept from the
+            // previous report renders on the NEW report's map — observed as
+            // a phantom "coordinate jump" when the previous asset was on a
+            // different island.
             selectedSegmentId.value = null;
+            selectedPoint.value = null;
             return report.value;
 
         } catch (err: any) {

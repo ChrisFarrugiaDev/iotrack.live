@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"iotrack.live/computation.server.go/internal/report"
@@ -26,6 +27,12 @@ type ActivityReportRequest struct {
 	AssetUUID string
 	From      time.Time
 	To        time.Time
+
+	// StationaryWindowSeconds overrides JourneyConfig.StationaryConfirmationSeconds
+	// (§14.3/§14.4). Nil means "use the resolved profile's default". Shape
+	// validated (180-900) at the handler, same as from/to (§34) — this
+	// layer trusts it's already in range.
+	StationaryWindowSeconds *int
 
 	UserID int64
 	OrgID  int64
@@ -65,6 +72,29 @@ type ReportSubject struct {
 	TrackerType string `json:"trackerType"`
 }
 
+// mergeScopeWithOverrides mirrors Organisation.mergeScopeWithOverrides in
+// web.backend.node.ts's organisation.model.ts: allow overrides are applied
+// first (can add an org outside the default descendant scope), then deny
+// overrides are applied last and always win, even over a descendant org.
+func mergeScopeWithOverrides(defaultScope, allow, deny []int64) []int64 {
+	set := make(map[int64]struct{}, len(defaultScope)+len(allow))
+	for _, id := range defaultScope {
+		set[id] = struct{}{}
+	}
+	for _, id := range allow {
+		set[id] = struct{}{}
+	}
+	for _, id := range deny {
+		delete(set, id)
+	}
+
+	result := make([]int64, 0, len(set))
+	for id := range set {
+		result = append(result, id)
+	}
+	return result
+}
+
 // trackerTypeOf maps app.assets.asset_type onto the contract's TrackerType.
 // Nil or unknown values fall back to "vehicle", consistent with the
 // range-limit and JourneyConfig defaults.
@@ -93,12 +123,25 @@ func (s *Service) GenerateActivityReport(ctx context.Context, req ActivityReport
 		return nil, err
 	}
 
-	// 2. Org check: the asset must belong to the JWT's active organisation.
-	// A plain field comparison — see AccessRepository.UserHasAssetAccess for
-	// why this is deliberately simpler than Node's org-scope computation.
-	if asset.OrganisationID != req.OrgID {
-		return nil, fmt.Errorf("%w: asset %s is not in organisation %d",
-			ErrAssetAccessDenied, req.AssetUUID, req.OrgID)
+	// 2. Org check: the asset must belong to an organisation within the
+	// caller's org scope — the JWT's org plus every descendant, with the
+	// caller's own org-level allow/deny overrides applied. Mirrors Node's
+	// access-profile computeAccessibleOrganisationIds (getOrgScope +
+	// mergeScopeWithOverrides) exactly: allow can add orgs outside the
+	// default scope, deny is applied last and always wins.
+	scope, err := s.App.Repo.Organisation.GetOrgScope(ctx, req.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	allowOrgs, denyOrgs, err := s.App.Repo.Organisation.GetUserOrgOverrides(ctx, req.UserID)
+	if err != nil {
+		return nil, err
+	}
+	orgScope := mergeScopeWithOverrides(scope, allowOrgs, denyOrgs)
+
+	if !slices.Contains(orgScope, asset.OrganisationID) {
+		return nil, fmt.Errorf("%w: asset %s is not in the caller's organisation scope",
+			ErrAssetAccessDenied, req.AssetUUID)
 	}
 
 	// 3. Per-user override: only an explicit deny row removes access.
@@ -131,7 +174,11 @@ func (s *Service) GenerateActivityReport(ctx context.Context, req ActivityReport
 
 	// 7. Segment (§14–§17) and summarise (§23). BuildSegments always returns
 	// a non-nil slice, so an empty range marshals to [] rather than null.
-	segments := report.BuildSegments(points, report.ConfigFor(asset.AssetType), req.From, req.To)
+	cfg := report.ConfigFor(asset.AssetType)
+	if req.StationaryWindowSeconds != nil {
+		cfg.StationaryConfirmationSeconds = *req.StationaryWindowSeconds
+	}
+	segments := report.BuildSegments(points, cfg, req.From, req.To)
 
 	return &ActivityReportResult{
 		Report: ReportMeta{
