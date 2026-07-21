@@ -39,11 +39,16 @@ only what is current or still ahead.
 - Tests: httptest tables (middlewares, handler), engine unit + scenario
   suites (no DB), RUN_DB_TESTS=1 read-only integration suites, and the
   per-phase acceptance matrices in the archives.
-- **Next: Phase 4 — wire the frontend.** The detailed step roadmap is
-  below (Step 0 decisions → packaging → deploy/Apache → store seam swap →
-  report.view gating → browser acceptance). Work on branch
-  `feat/computation-phase4`. Step 0 is docs-only and must land before any
-  code, as with every phase.
+- **Phase 5 is COMPLETE (2026-07-21).** Steps 0–9 (unified confirmation
+  window, jump plausibility gate, the silent-but-parked bridge, the
+  movement-flag/known-speed fix, conflicted-silence attribution, route
+  holes) and Step 10's live acceptance walk are all done — confirmed by
+  Chris against real drive days (ACA-448/AFO-544, AIC-497's 19-20 Jul
+  window) and the 15 min dropdown setting, on branch
+  `feat/computation-phase5`.
+- **Next: Phase 6 — Timeline Mode**, gated on real sparse-cadence data
+  being collected first (see that section below) — do not start the
+  detailed step roadmap until that data exists.
 
 ## Phase 4 — Wire the Frontend (§38 Phase 4)
 
@@ -660,22 +665,23 @@ AIC-497, PXH-605 real reports):
 
 ### Step 10 — Phase 5 acceptance
 
-- [ ] Re-run a report against a real drive day that previously showed
+- [x] Re-run a report against a real drive day that previously showed
       short data_gap bands between journeys (e.g. ACA-448/AFO-544) with
       the default 3 min window; confirm short idle periods that are
       genuinely stationary (no implausible jump) now read as `stationary`
       not `data_gap`, and that ordinary idling no longer fragments into
       phantom journeys (Step 6).
-- [ ] Re-run AIC-497's 19-20 Jul window specifically — Step 5's bridge
+- [x] Re-run AIC-497's 19-20 Jul window specifically — Step 5's bridge
       fix — confirm `stationary`/`active_static` are no longer 0m and
       the ~6h off-shift periods now read as one continuous segment.
-- [ ] Confirm a real or fixture-simulated GPS jump still reads as
+- [x] Confirm a real or fixture-simulated GPS jump still reads as
       `data_gap`, and that it does NOT merge into a preceding confirmed
       stop segment.
-- [ ] Adjust the dropdown to 15 min in the browser and confirm the report
+- [x] Adjust the dropdown to 15 min in the browser and confirm the report
       changes accordingly.
-- [ ] Docs updated: this file's Current State, SPEC.md status.
-- Verify: acceptance walk recorded here, boxes ticked.
+- [x] Docs updated: this file's Current State, SPEC.md status.
+- **Verify: acceptance walk confirmed by Chris 2026-07-21 — Phase 5 is
+      COMPLETE.**
 
 ## Phase 6 — Timeline Mode (§4.2, scenario F) — planned, data first
 

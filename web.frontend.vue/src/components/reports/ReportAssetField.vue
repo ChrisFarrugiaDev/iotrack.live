@@ -24,7 +24,16 @@
                 class="asset-field__panel v-ui"
                 :style="panelStyle"
             >
-                <template v-for="node in options" :key="node.id">
+                <input
+                    ref="searchRef"
+                    v-model="searchQuery"
+                    class="asset-field__search"
+                    type="text"
+                    placeholder="Search assets…"
+                    @click.stop
+                />
+                <div class="asset-field__list">
+                <template v-for="node in filteredOptions" :key="node.id">
                     <!-- Branch: org header, pure expand/collapse, never selectable. -->
                     <div
                         v-if="node.children"
@@ -34,12 +43,12 @@
                         <span>{{ node.label }}</span>
                         <svg
                             class="asset-field__chevron"
-                            :class="{ 'asset-field__chevron--open': expandedOrgIds.has(node.id) }"
+                            :class="{ 'asset-field__chevron--open': isExpanded(node.id) }"
                         >
                             <use xlink:href="@/ui/svg/sprite.svg#icon-select-chevron"></use>
                         </svg>
                     </div>
-                    <template v-if="node.children && expandedOrgIds.has(node.id)">
+                    <template v-if="node.children && isExpanded(node.id)">
                         <div
                             v-for="leaf in node.children"
                             :key="leaf.id"
@@ -61,6 +70,8 @@
                         {{ node.label }}
                     </div>
                 </template>
+                <div v-if="!filteredOptions.length" class="asset-field__empty">No matching assets</div>
+                </div>
             </div>
         </Teleport>
     </div>
@@ -108,9 +119,34 @@ const emit = defineEmits<{ 'update:modelValue': [string] }>();
 
 const rootRef = ref<HTMLElement>();
 const panelRef = ref<HTMLElement>();
+const searchRef = ref<HTMLInputElement>();
 const isOpen = ref(false);
 const panelStyle = ref<Record<string, string>>({});
 const expandedOrgIds = ref(new Set<string>());
+const searchQuery = ref('');
+
+// Branches are shown expanded while searching, regardless of their
+// collapsed/expanded state — the whole point of a search is not having to
+// expand things by hand to find a match.
+function isExpanded(orgId: string): boolean {
+    return searchQuery.value.trim() !== '' || expandedOrgIds.value.has(orgId);
+}
+
+const filteredOptions = computed<TreeNode[]>(() => {
+    const q = searchQuery.value.trim().toLowerCase();
+    if (!q) return props.options;
+
+    const result: TreeNode[] = [];
+    for (const node of props.options) {
+        if (node.children) {
+            const matches = node.children.filter(leaf => leaf.label.toLowerCase().includes(q));
+            if (matches.length) result.push({ ...node, children: matches });
+        } else if (node.label.toLowerCase().includes(q)) {
+            result.push(node);
+        }
+    }
+    return result;
+});
 
 /** Depth-first lookup — options may be a flat leaf list (single org) or
  *  org branches with leaf children (multi-org). */
@@ -148,7 +184,7 @@ function updatePosition() {
     if (!rect) return;
 
     const top = rect.bottom + 4;
-    const available = window.innerHeight - top - 16;
+    const available = window.innerHeight - top - 32;
 
     panelStyle.value = {
         position: 'fixed',
@@ -180,6 +216,7 @@ async function open() {
     isOpen.value = true;
     await nextTick();
     updatePosition();
+    searchRef.value?.focus();
 
     // Deferred for the same reason as ReportDateField.vue: focusing the
     // (readonly) input can itself trigger a native "scroll into view",
@@ -194,6 +231,7 @@ async function open() {
 
 function close() {
     isOpen.value = false;
+    searchQuery.value = '';
     window.removeEventListener('scroll', closeOnScroll, true);
     window.removeEventListener('resize', closeOnScroll);
 }
@@ -245,7 +283,41 @@ onBeforeUnmount(() => {
     border: 1px solid var(--color-zinc-300);
     border-radius: var(--radius-md, 0.375rem);
     box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+}
+
+// Sticky within the panel's own scroll, so it stays put while the list
+// beneath it scrolls — same background as the panel so scrolled rows
+// don't show through underneath it.
+.asset-field__search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    padding: .6rem 1rem;
+    border: none;
+    border-bottom: 1px solid var(--color-zinc-300);
+    background: var(--color-bg-hi);
+    color: var(--color-text-1);
+    font-family: var(--font-primary);
+    font-size: .95rem;
+    outline: none;
+
+    &:focus {
+        border-bottom-color: var(--color-blue-500);
+    }
+}
+
+.asset-field__list {
     padding: .25rem 0;
+}
+
+.asset-field__empty {
+    padding: .6rem 1rem;
+    color: var(--color-text-1);
+    opacity: .6;
+    font-family: var(--font-primary);
+    font-size: .95rem;
 }
 
 .asset-field__row {
