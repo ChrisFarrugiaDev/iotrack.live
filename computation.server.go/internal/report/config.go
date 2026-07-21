@@ -32,6 +32,24 @@ type JourneyConfig struct {
 	// journey-mode concept, not an asset-type one (every personal-profile
 	// report is journey mode until §4.3's auto/cadence mode-switch exists).
 	MaximumPlausibleSpeedKph float64
+
+	// §14.8 also requires at least this much displacement before the speed
+	// gate can fire. Found 2026-07-20 on real data (YSM-815): a ~330m GPS
+	// reacquisition snap over 3s implies ~400 km/h and split a real journey
+	// with a zero-duration data_gap. The gate exists to catch km-scale
+	// teleports; sub-floor discontinuities are ordinary GPS noise and stay
+	// with the normal §12/§13 movement handling. Shared with §14.10 as the
+	// "too much unseen road" displacement floor.
+	MinimumJumpMeters float64
+
+	// §14.10: a silence at least this long that also covers at least
+	// MinimumJumpMeters of displacement is a data_gap even though it's
+	// under MaximumPointGapSeconds — the route through it is a fabrication
+	// (§8.4). Found 2026-07-21 on real data (AFO-544): 235s of silence
+	// while driving covered 1156m, drawn as a straight line across fields.
+	// Well above the fleet's ~10s cadence so ordinary reporting never
+	// trips it.
+	MinimumRouteHoleSeconds int
 }
 
 // VehicleConfig is the §40 starting profile for vehicle trackers. The
@@ -46,6 +64,8 @@ func VehicleConfig() JourneyConfig {
 		StationaryConfirmationSeconds: 180,
 		MaximumPointGapSeconds:        300,
 		MaximumPlausibleSpeedKph:      250,
+		MinimumJumpMeters:             500,
+		MinimumRouteHoleSeconds:       90,
 	}
 }
 
@@ -59,6 +79,8 @@ func PersonalConfig() JourneyConfig {
 		StationaryConfirmationSeconds: 600,
 		MaximumPointGapSeconds:        900,
 		MaximumPlausibleSpeedKph:      250,
+		MinimumJumpMeters:             500,
+		MinimumRouteHoleSeconds:       90,
 	}
 }
 

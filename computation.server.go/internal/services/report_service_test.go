@@ -95,6 +95,40 @@ func TestGenerateActivityReport_WrongOrgIsDenied(t *testing.T) {
 	}
 }
 
+// TestGenerateActivityReport_DescendantOrgIsAllowed is the actual bug this
+// covers: a caller whose JWT org is an ASCENDANT of the asset's own
+// organisation must be granted access — the org check is a scope
+// membership test (org + every descendant), not a flat equality. Confirmed
+// against a real parent/child pair rather than a fixture, since the
+// recursive CTE's correctness depends on the real parent_org_id chain.
+func TestGenerateActivityReport_DescendantOrgIsAllowed(t *testing.T) {
+	s := testService(t)
+
+	var uuid string
+	var childOrgID, parentOrgID int64
+	err := s.App.Repo.Pool.QueryRow(context.Background(), `
+		SELECT a.uuid::text, a.organisation_id, o.parent_org_id
+		  FROM app.assets a
+		  JOIN app.organisations o ON o.id = a.organisation_id
+		 WHERE o.parent_org_id IS NOT NULL
+		 LIMIT 1`,
+	).Scan(&uuid, &childOrgID, &parentOrgID)
+	if err != nil {
+		t.Skip("no asset in a child organisation in the live database")
+	}
+
+	_, err = s.GenerateActivityReport(context.Background(), ActivityReportRequest{
+		AssetUUID: uuid,
+		From:      time.Now().Add(-24 * time.Hour),
+		To:        time.Now(),
+		UserID:    999_999_999, // no override row -> access defaults to allowed
+		OrgID:     parentOrgID, // the asset's PARENT org, not its own
+	})
+	if err != nil {
+		t.Fatalf("caller from the parent org of asset's organisation %d was denied: %v", childOrgID, err)
+	}
+}
+
 func TestGenerateActivityReport_RangeOverLimit(t *testing.T) {
 	s := testService(t)
 	uuid, orgID := realAsset(t, s)

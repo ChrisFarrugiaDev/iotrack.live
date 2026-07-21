@@ -8,19 +8,16 @@
                 <label class="vform__label" for="report_asset">
                     Asset <span class="vform__required">*</span>
                 </label>
-                <!-- Teleported out of Vview's scrolling body, which would clip the
-                     menu. Target is .dashboard rather than body: it carries .v-ui,
-                     so the menu keeps its design tokens and theme. -->
-                <VueSelect
-                    v-model="assetUuid"
+                <!-- Collapsible, grouped by org (only when more than one org is in
+                     scope) — org branches are pure expand/collapse, never a
+                     selectable value. Options come from getReportableAssets (has
+                     live telemetry — "shown on the map"), not the raw access list. -->
+                <ReportAssetField
                     id="report_asset"
-                    class="vform__group"
-                    teleport=".dashboard"
-                    :shouldAutofocusOption="false"
-                    :isDisabled="loading"
-                    :style="selectErrorStyle(!!errors.asset)"
-                    :options="assetOptions"
-                    placeholder=""
+                    v-model="assetUuid"
+                    :options="assetTreeOptions"
+                    :disabled="loading"
+                    :error="!!errors.asset"
                 />
                 <p class="vform__error">{{ errors.asset }}</p>
             </div>
@@ -49,6 +46,22 @@
                 />
             </div>
 
+            <!-- Stationary confirmation window (§14.3/§14.4, Phase 5) -->
+            <div class="vform__group vform__group--narrow mb-7">
+                <label class="vform__label" for="report_stationary_window">Confirm after</label>
+                <VueSelect
+                    v-model="stationaryWindowSeconds"
+                    id="report_stationary_window"
+                    class="vform__group"
+                    teleport=".dashboard"
+                    :isClearable="false"
+                    :isSearchable="false"
+                    :shouldAutofocusOption="false"
+                    :isDisabled="loading"
+                    :options="stationaryWindowOptions"
+                />
+            </div>
+
         </div>
 
         <p v-if="errors.range" class="vform__error vform__error--block">{{ errors.range }}</p>
@@ -68,13 +81,15 @@ import { storeToRefs } from 'pinia';
 import VueSelect from 'vue3-select-component';
 
 import ReportDateField from './ReportDateField.vue';
-import { selectErrorStyle } from '@/composables/useVueSelectStyles';
+import ReportAssetField from './ReportAssetField.vue';
 import { useAssetStore } from '@/stores/assetStore';
+import { useOrganisationStore } from '@/stores/organisationStore';
 import { useActivityReportStore } from '@/stores/activityReportStore';
 
 // - Store -------------------------------------------------------------
 
 const assetStore = useAssetStore();
+const organisationStore = useOrganisationStore();
 const activityReportStore = useActivityReportStore();
 const { loading } = storeToRefs(activityReportStore);
 
@@ -88,21 +103,64 @@ const { loading } = storeToRefs(activityReportStore);
 // Vehicle tracker limit from design doc §30.
 const MAX_RANGE_DAYS = 7;
 
+// §14.3/§14.4 confirmation window (Phase 5): 180-900s, default 180 (3 min).
+const STATIONARY_WINDOW_DEFAULT_SECONDS = 180;
+
 const assetUuid = ref<string>('');
 const from = ref<Date>(startOfToday());
 const to = ref<Date>(new Date());
+const stationaryWindowSeconds = ref<number>(STATIONARY_WINDOW_DEFAULT_SECONDS);
 
 const errors = reactive<{ asset: string; range: string }>({ asset: '', range: '' });
 
 // - Computed ----------------------------------------------------------
 
-const assetOptions = computed(() => {
-    const assets = assetStore.getAssets ?? {};
+// Access is already fully resolved server-side (org scope + org/asset
+// overrides — see AccessProfileController.getAccessibleAssetsForUser in
+// web.backend.node.ts) by the time an asset reaches assetStore, so no
+// client-side access filtering belongs here. What this computed adds is
+// scoping to assets actually shown on the map (getReportableAssets — has
+// live telemetry) and grouping them into a collapsible tree: a branch per
+// org (using organisationStore only to look up org NAMES for labels, not
+// to filter), skipped entirely when everything's in one org.
+const assetTreeOptions = computed(() => {
+    const reportable = assetStore.getReportableAssets ?? [];
+    const orgScope = organisationStore.getOrganisationScope ?? {};
 
-    return Object.values(assets)
-        .map(asset => ({ label: asset.name, value: asset.uuid }))
-        .sort((a, b) => a.label.localeCompare(b.label));
+    const byOrg = new Map<string, typeof reportable>();
+    for (const asset of reportable) {
+        const group = byOrg.get(asset.organisation_id) ?? [];
+        group.push(asset);
+        byOrg.set(asset.organisation_id, group);
+    }
+
+    const orgIds = [...byOrg.keys()].sort((a, b) =>
+        (orgScope[a]?.name ?? '').localeCompare(orgScope[b]?.name ?? '')
+    );
+
+    const leavesFor = (orgId: string) =>
+        [...(byOrg.get(orgId) ?? [])]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(asset => ({ id: asset.uuid, label: `${asset.id} - ${asset.name}` }));
+
+    if (orgIds.length <= 1) {
+        return orgIds.flatMap(orgId => leavesFor(orgId));
+    }
+
+    return orgIds.map(orgId => ({
+        id: `org-${orgId}`,
+        label: orgScope[orgId]?.name ?? `Org ${orgId}`,
+        children: leavesFor(orgId),
+    }));
 });
+
+// Discrete stops across the backend's 180-900s range (Phase 5 Step 0).
+const stationaryWindowOptions = [
+    { label: '3 min', value: 180 },
+    { label: '5 min', value: 300 },
+    { label: '10 min', value: 600 },
+    { label: '15 min', value: 900 },
+];
 
 // - Methods -----------------------------------------------------------
 
@@ -143,6 +201,7 @@ async function generate() {
             asset_uuid: assetUuid.value,
             from: from.value.toISOString(),
             to: to.value.toISOString(),
+            stationary_window_seconds: stationaryWindowSeconds.value,
         });
     } catch {
         // The store records the error; the view renders it.
@@ -155,5 +214,12 @@ async function generate() {
 <style lang="scss" scoped>
 .vform__error--block {
     margin-bottom: .5rem;
+}
+
+// Roughly half the width of the other fields (Phase 5 Step 0) — this
+// field's option set is short and doesn't need equal billing with Asset/
+// From/To.
+.vform__group--narrow {
+    flex: 0.5;
 }
 </style>

@@ -56,19 +56,18 @@ func (r *AccessRepository) HasPermission(ctx context.Context, userID, roleID int
 //
 // Node's real rule has two parts. First it computes the caller's accessible
 // organisation scope (the org tree plus org-level overrides) and lists every
-// asset inside it — so presence in that scope is the default grant. Then it
+// asset inside it — so presence in that scope is the default grant (see
+// OrganisationRepository, used by the caller for that half). Then it
 // subtracts assets with an explicit deny row in app.user_asset_access. It
 // also collects per-asset "allow" overrides, but never applies them to add
 // assets outside the scope — that branch is unused in the Node source
 // (marked with its own "can be implemented in the future" comment) — so an
 // allow row does nothing beyond what the scope already grants.
 //
-// The report endpoint's org-scope equivalent is simpler by design: it checks
-// the asset's organisation_id against the JWT's org_id directly (design doc
-// §20, done by the caller before this runs — never here, since that check
-// needs no query). Once that holds, this mirrors the second half: only a
-// deny row can take away access; anything else, including no row at all or
-// an allow row, defaults to access granted.
+// This method covers the second half only: only a deny row can take away
+// access; anything else, including no row at all or an allow row, defaults
+// to access granted. The org-scope half is the caller's responsibility
+// (see report_service.go), done via OrganisationRepository.
 func (r *AccessRepository) UserHasAssetAccess(ctx context.Context, userID, assetID int64) (bool, error) {
 	const query = `
 		SELECT COALESCE(

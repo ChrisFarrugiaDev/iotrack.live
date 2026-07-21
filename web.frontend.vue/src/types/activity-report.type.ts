@@ -179,4 +179,8 @@ export interface ActivityReportRequest {
     asset_uuid: string;
     from: string;
     to: string;
+    // Overrides the stationary/active_static confirmation window (§14.3/
+    // §14.4). Seconds, 180-900 (3-15 min). Omitted -> the backend's
+    // per-profile default.
+    stationary_window_seconds?: number;
 }

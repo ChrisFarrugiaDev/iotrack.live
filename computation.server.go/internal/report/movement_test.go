@@ -55,8 +55,16 @@ func TestIsMoving(t *testing.T) {
 		{"too slow, no distance", TelemetryPoint{SpeedKph: f64(4.9)}, 0, false},
 		{"slow but far enough", TelemetryPoint{SpeedKph: f64(0)}, 25, true},
 		{"drift-scale distance is not movement", TelemetryPoint{SpeedKph: f64(0)}, 10, false},
-		{"movement flag alone", TelemetryPoint{SpeedKph: f64(0), MovementDetected: b(true)}, 0, true},
-		{"movement flag false", TelemetryPoint{SpeedKph: f64(0), MovementDetected: b(false)}, 0, false},
+		// The movement flag is a fallback for when speed is unavailable —
+		// not a peer that can override a speed reading that's actually
+		// present. Found 2026-07-20 against real production data
+		// (AFO-544): on that device the flag just mirrors ignition state
+		// (true for the whole time ignition is on, including 10+ minutes
+		// parked at speed=0), so trusting it over a known-zero speed
+		// produced phantom journeys out of pure idling.
+		{"movement flag can't override a present zero speed", TelemetryPoint{SpeedKph: f64(0), MovementDetected: b(true)}, 0, false},
+		{"movement flag is the fallback when speed is unknown", TelemetryPoint{SpeedKph: nil, MovementDetected: b(true)}, 0, true},
+		{"movement flag false, speed unknown", TelemetryPoint{SpeedKph: nil, MovementDetected: b(false)}, 0, false},
 		// nil speed and nil flag: only distance can speak (§41.4 — nil is
 		// not zero, but it grants nothing either).
 		{"all signals unknown, small distance", TelemetryPoint{}, 10, false},
